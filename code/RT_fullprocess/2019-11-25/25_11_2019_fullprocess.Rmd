@@ -1,0 +1,76 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+### Create genotype matrix from vcf files
+
+#### Example on how to get the info from the vcf files
+```{r eval=FALSE}
+chr1_vcf  <- read.vcfR("/Genomics/ayroleslab2/carolina/results/vcf_genotypes/subset_vcf/subset/sub_chr1.vcf.gz",verbose=FALSE)
+geno1 <- extract.gt(chr1_vcf, element = "GT", IDtoRowNames=FALSE)
+rownames(geno1) <- chr1_vcf@fix[,'ID']
+```
+Do this for all the chromosomes/ files
+
+```{r eval=FALSE}
+genotypes <- rbind(geno1,geno2,geno3,geno4,geno5,geno6,geno7,geno8,geno9,geno10,geno11,geno12,geno13,geno14,geno15,geno16,geno17,geno18,geno19,geno20,geno21,geno22)
+```
+
+genotypes <- contains the genotype information from all chromosomes - taken from the vcf files
+
+#### Create the genotype matrix
+```{r}
+geno <- matrix(nrow = nrow(genotypes), ncol = ncol(genotypes))
+colnames(geno) <- colnames(genotypes)
+rownames(geno) <- rownames(genotypes)
+
+# reference allele = 0
+# alternative allele = 1
+for (row in 1:nrow(genotypes)){
+  for (col in 1:ncol(genotypes)){
+    if (!is.na(genotypes[row, col])){
+        # reference homozygous
+      if (genotypes[row, col] == "0|0" | genotypes[row, col] == "0/0"){
+        geno[row,col] <- 2
+
+        # heterozygous
+      } else if (genotypes[row, col] == "0|1" |genotypes[row, col] == "1|0" | genotypes[row, col] == "0/1" |genotypes[row, col] == "1/0"){
+        geno[row,col] <- 1
+
+        # alternative homozygous
+      } else if (genotypes[row,col] == "1|1" | genotypes[row, col] == "1/1"){
+        geno[row,col] <- 0
+      }
+    } else if (is.na(genotypes[row,col])){
+      geno[row,col] <- NA
+    }
+  }
+}
+```
+
+Save the genotype matrix to a file
+
+### Create the phenotype matrix from the expression data and save the gene position information for later
+```{r}
+phenotype <-fread("/Users/Carolina/gen-comp/data/expression/GD462.GeneQuantRPKM.50FN.samplename.resk10.txt.gz", header = TRUE)
+```
+
+#### Get table with gene position
+```{r}
+gene_pos <- phenotype[,.(gene = TargetID, chr = Chr, pos = Coord)]
+```
+
+### Get table with expression data 
+```{r}
+pheno <- phenotype[,-c("Gene_Symbol", "Chr", "Coord")]
+```
+
+Save the phenotype matrix and the gene positions to a file
+
+
+### Input
+* geno: matrix with columns = snps and rows = samples
+* pheno: matrix with columns = genes and rows = samples
+The samples (rows) in geno and pheno should be in the same order
+Only keep sampels that are present in both genotype and phenotype matrix
