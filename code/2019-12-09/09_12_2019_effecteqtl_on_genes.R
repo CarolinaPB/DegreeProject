@@ -63,4 +63,4 @@ for (eqtl in eqtls.list){
 end_time <- Sys.time()
 end_time - start_time
 
-fwrite(gene_eqtl.anova, paste0("/Users/Carolina/Documents/GitHub/DegreeProject/results/2019-12-09/09_12_2019_anova_", start, "_", end), sep="\t")
+fwrite(gene_eqtl.anova, paste0("/home/carolpb/DegreeProject/results/2019_12_09/09_12_2019_anova_", start, "_", end), sep="\t")
