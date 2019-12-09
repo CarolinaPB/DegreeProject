@@ -61,16 +61,137 @@ phenotype <-fread("/Users/Carolina/gen-comp/data/expression/GD462.GeneQuantRPKM.
 gene_pos <- phenotype[,.(gene = TargetID, chr = Chr, pos = Coord)]
 ```
 
-### Get table with expression data 
+#### Get table with expression data 
 ```{r}
 pheno <- phenotype[,-c("Gene_Symbol", "Chr", "Coord")]
 ```
 
 Save the phenotype matrix and the gene positions to a file
 
-
-### Input
+####
 * geno: matrix with columns = snps and rows = samples
 * pheno: matrix with columns = genes and rows = samples
 The samples (rows) in geno and pheno should be in the same order
-Only keep sampels that are present in both genotype and phenotype matrix
+Only keep samples that are present in both genotype and phenotype matrix
+
+
+#### Get mean expression for each gene at each 
+```{r}
+library(data.table)
+geno_original <- fread("/path/to/geno.gz")
+pheno_original <- fread("/path/to/pheno.gz")
+
+block_num = commandArgs(trailingOnly=TRUE)
+message(block_num)
+
+#####
+
+snp_ids <- geno_original$V1
+gene_ids <- pheno_original$V1
+
+phenot <- t(pheno_original[,2:ncol(pheno_original)])
+
+
+dt_phenot <- data.table(phenot, keep.rownames = TRUE)
+colnames(dt_phenot) <- c("samples",gene_ids)
+pheno0 <- dt_phenot
+
+## for full dataset
+geno <- as.matrix(geno_original[,2:ncol(geno_original)])
+rownames(geno) <- snp_ids
+pheno <- pheno0[,2:ncol(pheno0)]
+
+# gene expression
+gene_exp <- as.matrix(pheno[1:nrow(pheno),1:ncol(pheno)])
+
+
+nGenes <- ncol(pheno)
+nSNPs <- nrow(geno)
+
+#####
+chuncksize <- 20000
+block <- as.numeric(block_num)
+start <- (block*chuncksize) +1
+end <- (start + chuncksize) -1
+end <- min(end, nSNPs)
+#####
+
+# to store the results
+res_0 <- matrix(ncol = nGenes, nrow = length(start:end))
+colnames(res_0) <- colnames(pheno)
+res_1 <- matrix(ncol = nGenes, nrow = length(start:end))
+colnames(res_1) <- colnames(pheno)
+res_2 <- matrix(ncol = nGenes, nrow = length(start:end))
+colnames(res_2) <- colnames(pheno)
+
+nrow <- 0
+for (i in start:end){ 
+  nrow <- nrow+1
+  
+  geno_0 <- ifelse(geno[i,] == 0, 1,0) # for one snp
+  geno_1 <- ifelse(geno[i,] == 1, 1,0)
+  geno_2 <- ifelse(geno[i,] == 2, 1,0)
+  
+  # get the mean expression per gene for that snp for each genotype (0,1,2)
+  res_0[nrow,] <- (geno_0 %*% gene_exp)/sum(geno_0)
+  res_1[nrow,] <- (geno_1 %*% gene_exp)/sum(geno_1)
+  res_2[nrow,] <- (geno_2 %*% gene_exp)/sum(geno_2)
+  message(paste("snp", i))
+  
+}
+rownames(res_0) <- snp_ids[start:end]
+rownames(res_1) <- snp_ids[start:end]
+rownames(res_2) <- snp_ids[start:end]
+
+fwrite(data.table(res_0, keep.rownames = TRUE), file = paste0("/path/to/mean_geno0_",start,"_", end, ".gz"))
+fwrite(data.table(res_1, keep.rownames = TRUE), file = paste0("/path/to/mean_geno1_",start,"_", end, ".gz"))
+fwrite(data.table(res_2, keep.rownames = TRUE), file = paste0("/path/to /mean_geno2_",start,"_", end, ".gz"))
+```
+
+
+
+
+
+
+
+#### Get gene correlation matrix
+Function to create a table with the correlation value and correlation p-value between two genes
+```{r}
+flat_cor_mat <- function(cor_r, cor_p){
+  #This function provides a simple formatting of a correlation matrix
+  #into a table with 4 columns containing :
+  # Column 1 : row names (variable 1 for the correlation test)
+  # Column 2 : column names (variable 2 for the correlation test)
+  # Column 3 : the correlation coefficients
+  # Column 4 : the p-values of the correlations
+  
+  library("dplyr")
+  library(tidyr)
+  library(tibble)
+  cor_r <- rownames_to_column(as.data.frame(cor_r), var = "row")
+  cor_r <- gather(cor_r, column, cor, -1)
+  cor_p <- rownames_to_column(as.data.frame(cor_p), var = "row")
+  cor_p <- gather(cor_p, column, p, -1)
+  cor_p_matrix <- left_join(cor_r, cor_p, by = c("row", "column"))
+}
+```
+
+```{r}
+cor_traits <- rcorr(as.matrix(pheno))
+```
+
+```{r eval=FALSE}
+cor_traits.cor <- cor_traits$r
+cor_traits.p <- cor_traits$P
+```
+
+```{r eval=FALSE}
+cor_traits.cor[upper.tri(cor_traits.cor)] <- NA
+cor_traits.p[upper.tri(cor_traits.p)] <- NA
+
+my_cor_matr_flat <- flat_cor_mat(cor_traits.cor,cor_traits.p)
+my_cor_matr_flat.dt <- data.table(my_cor_matr_flat)
+my_cor_matr_flat.noNA <- na.omit(my_cor_matr_flat.dt)
+colnames(my_cor_matr_flat.noNA) <- c("Trait1", "Trait2", "cor", "pval")
+```
+Save the correlation table to a file
