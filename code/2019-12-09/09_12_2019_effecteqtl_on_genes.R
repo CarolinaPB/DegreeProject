@@ -1,9 +1,12 @@
 #   ____________________________________________________________________________
 #   Load stuff                                                              ####
 library(data.table)
-phenotype <- fread("/home/carolpb/DegreeProject/data/SI_Data_01_expressionValues.txt")
-genotype <- fread("/home/carolpb/DegreeProject/data/SI_Data_03_genotypes.txt")
-eqtl_results <- fread("/home/carolpb/DegreeProject/data/SI_Data_04_eQTL.csv")
+path <- "/home/carolpb/DegreeProject/" # use with UPPMAX
+#path <- "/Users/Carolina/Documents/GitHub/DegreeProject/" # use with own computer
+
+phenotype <- fread(paste0(path,"data/SI_Data_01_expressionValues.txt"))
+genotype <- fread(paste0(path,"data/SI_Data_03_genotypes.txt"))
+eqtl_results <- fread(paste0(path,"data/SI_Data_04_eQTL.csv"))
 
 
 #   ____________________________________________________________________________
