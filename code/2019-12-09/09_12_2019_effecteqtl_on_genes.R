@@ -1,9 +1,9 @@
 #   ____________________________________________________________________________
 #   Load stuff                                                              ####
 library(data.table)
-phenotype <- fread("/Users/Carolina/Documents/GitHub/DegreeProject/data/SI_Data_01_expressionValues.txt")
-genotype <- fread("data/SI_Data_03_genotypes.txt")
-eqtl_results <- fread("data/SI_Data_04_eQTL.csv")
+phenotype <- fread("/home/carolpb/DegreeProject/data/SI_Data_01_expressionValues.txt")
+genotype <- fread("/home/carolpb/DegreeProject/data/SI_Data_03_genotypes.txt")
+eqtl_results <- fread("/home/carolpb/DegreeProject/data/SI_Data_04_eQTL.csv")
 
 
 #   ____________________________________________________________________________
@@ -28,20 +28,11 @@ allgenes <- colnames(phenotype[,2:ncol(phenotype)])
 chuncksize <- 1000
 block <- as.numeric(block_num)
 start <- (block*chuncksize) +1
-# end.eqtls <- (start + chuncksize) -1
-# end.eqtls <- min(end.eqtls, length(eqtls.list))
-
 end <- (start + chuncksize) -1
 end <- min(end, length(allgenes))
 
-
-
-
-
-# eqtls.list <- head(eqtls.list, 6281)
-# allgenes <- head(allgenes, 10)
-
 allgenes <- allgenes[start:end]
+
 gene_eqtl.anova <- data.table(matrix(ncol = 4, nrow = length(eqtls.list)*length(allgenes)))
 colnames(gene_eqtl.anova) <- c("gene", "eqtl", "pval", "r2")
 
