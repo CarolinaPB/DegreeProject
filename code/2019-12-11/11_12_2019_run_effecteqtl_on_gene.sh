@@ -2,7 +2,7 @@
 #SBATCH -A g2019026
 #SBATCH -p core #partition
 #SBATCH -n 4 #number of tasks
-#SBATCH -t 06:00:00 #total run time of the job allocation
+#SBATCH -t 12:00:00 #total run time of the job allocation
 #SBATCH --array=1-4
 #SBATCH --output="%A_%a.out"
 #SBATCH --error="%A_%a.error"
