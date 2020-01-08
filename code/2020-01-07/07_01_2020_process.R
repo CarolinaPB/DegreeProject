@@ -18,6 +18,14 @@ eqtl_results[cis=="FALSO"]$cis <- F
 ##### PARAMETERS #####
 var.exp.lim <- 0.1
 
+nSNPs <- length(colnames(genotype))-1
+nGenes <- length(colnames(phenotype))-1
+
+snp.pval <- 0.05/(as.numeric(nGenes) * as.numeric(nSNPs))
+snp.pval.nsign <- as.numeric(1e-5)
+
+corr.pval <-  0.05/(nGenes*nGenes)
+
 #####
 #subset eqtl_results table
 eqtl_results.sub <- eqtl_results[,.(gene, pmarker, cis, var.exp)]
@@ -170,7 +178,7 @@ effects_table.eqtlA_geneB <- merge_after_anova(res.eqtlA_geneB, "B", "A", effect
 effects_table.anova <- merge_after_anova(res.eqtlB_geneA, gene.AB="A", eqtl.AB="B", effects_table.eqtlA_geneB )
 setcolorder(effects_table.anova, c("geneA", "geneB", "eqtl.A", "eqtl.B", "cis.A", "cis.B"))
 
-fwrite(effects_table.anova, paste0(path, "results/2020-01-08/08_01_2020_anovatable_test.gz"))
+fwrite(effects_table.anova, paste0(path, "results/2020-01-08/08_01_2020_anovatable_test.gz"), na = NA)
 effects_table.anova <- fread(paste0(path, "results/2020-01-08/08_01_2020_anovatable_test.gz"))
 
 # Find number of each geno for each SNP ######
@@ -192,21 +200,46 @@ fwrite(numgenos, paste0(path, "results/2020-01-08/08_01_2020_numgenos.gz"))
 # all genos are represented by a large amount of samples ####
 
 
-nSNPs <- length(colnames(genotype))-1
-nGenes <- length(colnames(phenotype))-1
 
-snp.pval <- 0.05/(as.numeric(nGenes) * as.numeric(nSNPs))
-snp.pval.nsign <- as.numeric(1e-5)
+### correlation ####
+cor_traits <- rcorr(as.matrix(phenotype[,2:ncol(phenotype)])) # to remove the sample names
+save(cor_traits,file= "/Users/Carolina/Documents/GitHub/DegreeProject/results/2020-01-08/full_cor.Rdata")
 
-find.effects <- data.table(effects_table.anova) # use data.table to change the memory addresses (can be checked by tracemem(find.effects)==tracemem(effects_table.anova))
-find.effects$`A->B` <- NA
-find.effects$`B->A` <- NA
+cor_traits.cor <- cor_traits$r
+cor_traits.p <- cor_traits$P
 
-find.effects[as.numeric(eqtlA_geneB.pval) < snp.pval]$`A->B` <-  TRUE
-find.effects[as.numeric(eqtlA_geneB.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B))]$`A->B` <-  FALSE
+cor_traits.cor[upper.tri(cor_traits.cor)] <- NA
+cor_traits.p[upper.tri(cor_traits.p)] <- NA
 
-find.effects[as.numeric(eqtlB_geneA.pval) < snp.pval]$`B->A` <-  TRUE
-find.effects[as.numeric(eqtlB_geneA.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.B) != as.character(eqtl.A))]$`B->A` <-  FALSE
+my_cor_matr_flat <- flat_cor_mat(cor_traits.cor,cor_traits.p)
+my_cor_matr_flat.dt <- data.table(my_cor_matr_flat)
+my_cor_matr_flat.noNA <- na.omit(my_cor_matr_flat.dt)
+colnames(my_cor_matr_flat.noNA) <- c("Trait1", "Trait2", "cor", "pval")
+
+fwrite(my_cor_matr_flat.noNA, "/Users/Carolina/Documents/GitHub/DegreeProject/results/2020-01-08/flat_cor_matr.gz")
+#####
+my_cor_matr_flat.noNA <- fread("/Users/Carolina/Documents/GitHub/DegreeProject/results/2020-01-08/flat_cor_matr.gz")
+
+
+setnames(my_cor_matr_flat.noNA, "Trait1", "geneA")
+setnames(my_cor_matr_flat.noNA, "Trait2", "geneB")
+effects_table_cor.1 <- merge(effects_table.anova, my_cor_matr_flat.noNA, by=c("geneA", "geneB"), all.x = T)
+
+
+
+
+
+
+
+######
+# find.effects$`A->B` <- NA
+# find.effects$`B->A` <- NA
+# 
+# find.effects[as.numeric(eqtlA_geneB.pval) < snp.pval]$`A->B` <-  TRUE
+# find.effects[as.numeric(eqtlA_geneB.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B))]$`A->B` <-  FALSE
+# 
+# find.effects[as.numeric(eqtlB_geneA.pval) < snp.pval]$`B->A` <-  TRUE
+# find.effects[as.numeric(eqtlB_geneA.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.B) != as.character(eqtl.A))]$`B->A` <-  FALSE
 
 find.effects_fun <- function(effects.table, dir){
   if (dir == "A_B"){
@@ -221,9 +254,16 @@ find.effects_fun <- function(effects.table, dir){
   # find.effects[as.numeric(eqtlA_geneB.pval) < snp.pval]$`A->B` <-  TRUE
   # find.effects[as.numeric(eqtlA_geneB.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B))]$`A->B` <-  FALSE
 }
-find.effects2 <- data.table(effects_table.anova)
+
+
+# only keep the rows where there i
+effects_table_nopvalNA <- effects_table.anova[!is.na(eqtlA_geneB.pval) | !is.na(eqtlB_geneA.pval)]
+
+find.effects <- data.table(effects_table.anova) # use data.table to change the memory addresses (can be checked by tracemem(find.effects)==tracemem(effects_table.anova))
+
 
 find.effects2[as.numeric(eqtlA_geneB.pval) < snp.pval]$`A->B` <-  TRUE
+
 find.effects[, (dir.val):=NA][as.numeric(eqtlA_geneB.pval) < snp.pval, (dir.val):=TRUE]
 find.effects[, (dir.val):=NA][as.numeric(eqtlA_geneB.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B)), (dir.val):=FALSE]
 
@@ -385,20 +425,4 @@ plot(allcases.graph, layout=layout_with_fr, vertex.label.dist=2, main="Case1 - T
 # end_time <- Sys.time()
 # end_time - start_time
 
-### correlation
-cor_traits <- rcorr(as.matrix(phenotype[,2:ncol(phenotype)])) # to remove the sample names
-save(cor_traits,file= "/Users/Carolina/Documents/GitHub/DegreeProject/results/2020-01-08/full_cor.Rdata")
 
-cor_traits.cor <- cor_traits$r
-cor_traits.p <- cor_traits$P
-
-cor_traits.cor[upper.tri(cor_traits.cor)] <- NA
-cor_traits.p[upper.tri(cor_traits.p)] <- NA
-
-my_cor_matr_flat <- flat_cor_mat(cor_traits.cor,cor_traits.p)
-my_cor_matr_flat.dt <- data.table(my_cor_matr_flat)
-my_cor_matr_flat.noNA <- na.omit(my_cor_matr_flat.dt)
-colnames(my_cor_matr_flat.noNA) <- c("Trait1", "Trait2", "cor", "pval")
-
-fwrite(my_cor_matr_flat.noNA, "/Users/Carolina/Documents/GitHub/DegreeProject/results/2020-01-08/flat_cor_matr.gz")
-# **corr.pval**  | < 0.05/(ngenes*ngenes)
