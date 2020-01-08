@@ -50,25 +50,20 @@ effectsA_B.sepA_B
 fwrite(effectsA_B.sepA_B,"results/2020-01-07/infoA_B.gz")
 
 
+effectsA_B.sepA_B <- fread(paste0(path,"results/2020-01-07/infoA_B.gz"))
 
-### Find effect of eqtls from geneA in expression of geneB
-eqtls <- unique(effectsA_B.sepA_B$eqtl.A)
-genes <- unique(effectsA_B.sepA_B$geneB)
-res.tot <- data.table(expand.grid(gene=genes, eqtl=eqtls, anv.res=NA))
-res <- res.tot[1:2000,]
 
-lmp <- function (modelobject) {
-  if (class(modelobject) != "lm") stop("Not an object of class 'lm' ")
-  f <- summary(modelobject)$fstatistic
-  p <- pf(f[1],f[2],f[3],lower.tail=F)
-  attributes(p) <- NULL
-  return(p)
-}
 
+##### FUNCTIONS #####
 
 effect_eqtl_gene <- function(res, pheno=phenotype, geno=genotype){
-  
+  # function that calculates the effect of a qtl on a gene - using anova
+  # outputs a string with anova.pval__anova.r2
+  # res - data.table with 2 columns; 
+  # first column: gene 
+  # second column: eqtl
   lmp <- function (modelobject) {
+    # function to get the p-value out of a lm
     if (class(modelobject) != "lm") stop("Not an object of class 'lm' ")
     f <- summary(modelobject)$fstatistic
     p <- pf(f[1],f[2],f[3],lower.tail=F)
@@ -81,56 +76,89 @@ effect_eqtl_gene <- function(res, pheno=phenotype, geno=genotype){
   
   anv <- lm(unlist(pheno[ , ..gene]) ~ unlist(geno[ ,..eqtl]))
   anv.res <- paste(lmp(anv), summary(anv)$adj.r.squared, sep="__")
-
+  
   return(anv.res)
-  # return(gene)
+  
 }
 
-# res$anv.res <- apply(res,1,effect_eqtl_gene)
+merge_after_anova <- function(res.effect_eqtl_gene, gene.AB, eqtl.AB, effects.table){
+  # requires library(tidyr) for the separate
+  gene.AB <- toupper(gene.AB)
+  eqtl.AB <- toupper(eqtl.AB)
+  
+  pval.name <- paste0("eqtl",eqtl.AB, "_", "gene", gene.AB, ".pval")
+  r2.name <- paste0("eqtl",eqtl.AB, "_", "gene", gene.AB, ".r2")
+  
+  res.sep <- res.effect_eqtl_gene %>% separate(anv.res, c(pval.name, r2.name), sep="__")
+  
+  setnames(res.sep,"gene", paste0("gene", gene.AB))
+  setnames(res.sep,"eqtl", paste0("eqtl.", eqtl.AB))
+  
+  effects.eqtlB <- merge(effects.table, res.sep, by=c(paste0("gene", gene.AB),paste0("eqtl.", eqtl.AB)), all.x=T)
+  
+  return(effects.eqtlB)
+}
 
+get_num_genos <- function(res, genotype){
+  # get the number of each geno per snp
+  # res is a data.table with one row - the snp ids
+  snp <- res[1]
+  
+  geno_0 <- sum(ifelse(genotype[,..snp] == 0, 1,0)) # for one snp
+  geno_1 <- sum(ifelse(genotype[,..snp] == 1, 1,0))
+  geno_2 <- sum(ifelse(genotype[,..snp] == 2, 1,0))
+  
+  return(paste(geno_0,geno_1, geno_2, sep="__"))
+}
+
+#######
+### Find effect of eqtls from geneA in expression of geneB
+eqtls.A <- unique(effectsA_B.sepA_B$eqtl.A)
+genes.B <- unique(effectsA_B.sepA_B$geneB)
+res.tot.eqtlA_geneB <- data.table(expand.grid(gene=genes.B, eqtl=eqtls.A))#, anv.res=NA))
+res.eqtlA_geneB <- res.tot.eqtlA_geneB[1:10,]
+
+# run the anova function in parallel -- effect of eqtlA on geneB
 system.time({
 cl = makeCluster(detectCores() - 1, type="FORK")
-res$anv.res <- parApply(cl=cl,res,1,effect_eqtl_gene, phenotype, genotype)
+res.eqtlA_geneB$anv.res <- parApply(cl=cl,res.eqtlA_geneB,1,effect_eqtl_gene, phenotype, genotype)
 stopCluster(cl)
 })
 
+### Find effect of eqtls from geneB in expression of geneA
+eqtls.B <- na.omit(unique(effectsA_B.sepA_B$eqtl.B))
+genes.A <- unique(effectsA_B.sepA_B$geneA)
+res.tot.eqtlB_geneA <- data.table(expand.grid(gene=genes.A, eqtl=eqtls.B))#, anv.res=NA))
+res.eqtlB_geneA <- res.tot.eqtlB_geneA[1:10,]
+
+# run the anova function in parallel -- effect of eqtlB on geneA
+system.time({
+  cl = makeCluster(detectCores() - 1, type="FORK")
+  res.eqtlB_geneA$anv.res <- parApply(cl=cl,res.eqtlB_geneA,1,effect_eqtl_gene, phenotype, genotype)
+  stopCluster(cl)
+})
 
 
-effect_eqtlA_geneB <- res %>% separate(anv.res, c("eqtlA_geneB.pval", "eqtlA_geneB.r2"), sep="__")
+## merge anova results with the information table to create an effects table
+# results from effect of eqtlA on geneB
+effects_table.eqtlA_geneB <- merge_after_anova(res.eqtlA_geneB, "B", "A", effectsA_B.sepA_B)
 
-
-
-
-
-
-
-# for (rownum in 1:nrow(res)){
-#   gene <- res$gene[rownum]
-#   eqtl <- res$eqtl[rownum]
-#   
-#   anv <- lm(unlist(phenotype[ , ..gene]) ~ unlist(genotype[ ,..eqtl]))
-#   res$anova.pval[rownum] <- lmp(anv)
-#   res$anova.r2[rownum] <- summary(anv)$adj.r.squared
-# }
-
-
-
-# TODO
-# get effect of eqtlA in all unique geneB --> function
+# results from effect of eqtlB on geneA
+effects_table.anova <- merge_after_anova(res.eqtlB_geneA, gene.AB="A", eqtl.AB="B", effects_table.eqtlA_geneB )
 
 
 
 
+# Find number of each geno for each SNP
+snp_ids <- colnames(genotype)[2:length(colnames(genotype))]
+nSNPs <- length(snp_ids)
 
+ngenos.dt <- data.table(snp_ids[1:1000])
 
+system.time({
+  cl = makeCluster(detectCores() - 1, type="FORK")
+  ngenos.dt$nums <- parApply(cl=cl,ngenos.dt,1,get_num_genos, genotype)
+  stopCluster(cl)
+})
 
-
-
-gene <-  eqtl_results$gene[rownum]
-eqtl <- eqtl_results$pmarker[rownum]
-
-anv <- lm(unlist(phenotype[ , ..gene]) ~ unlist(genotype[ ,..eqtl]))
-
-eqtl_results$anova.pval[rownum] <- lmp(anv)
-eqtl_results$anova.r2[rownum] <- summary(anv)$adj.r.squared
-
+numgenos <- ngenos.dt %>% separate(nums, c("n0", "n1", "n2"), sep="__")
