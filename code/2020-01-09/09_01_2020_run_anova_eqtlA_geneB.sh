@@ -8,4 +8,4 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user carolina.pitabarros@gmail.com
 
-Rscript 09_01_2020_anova_uppmax_parallel.R
+Rscript /home/carolpb/DegreeProject/code/2020-01-09/09_01_2020_anova_uppmax_parallel.R
