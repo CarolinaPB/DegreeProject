@@ -36,7 +36,7 @@ effectsA_B.sepA_B <- fread(paste0(path,"results/2020-01-07/infoA_B.gz"))
 eqtls.A <- unique(effectsA_B.sepA_B$eqtl.A)
 genes.B <- unique(effectsA_B.sepA_B$geneB)
 res.tot.eqtlA_geneB <- data.table(expand.grid(gene=genes.B, eqtl=eqtls.A))#, anv.res=NA))
-res.eqtlA_geneB <- res.tot.eqtlA_geneB[1:1000,]
+res.eqtlA_geneB <- res.tot.eqtlA_geneB
 
 clusterEvalQ(cl, c(library(data.table), library(parallel)))
 clusterExport(cl, c("path", "phenotype", "genotype", "effectsA_B.sepA_B", "effect_eqtl_gene", "res.eqtlA_geneB"))
