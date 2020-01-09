@@ -41,7 +41,7 @@ res.eqtlB_geneA <- res.tot.eqtlB_geneA
 clusterEvalQ(cl, c(library(data.table), library(parallel)))
 clusterExport(cl, c("path", "phenotype", "genotype", "effectsA_B.sepA_B", "effect_eqtl_gene", "res.eqtlB_geneA"))
 
-res.eqtlB_geneA$anv.res <- parApply(cl=cl,res.eqtlB_genea,1,effect_eqtl_gene, phenotype, genotype)
+res.eqtlB_geneA$anv.res <- parApply(cl=cl,res.eqtlB_geneA,1,effect_eqtl_gene, phenotype, genotype)
 stopCluster(cl)
 
 
