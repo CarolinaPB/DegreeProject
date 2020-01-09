@@ -5,6 +5,7 @@
 #SBATCH -t 24:00:00 #total run time of the job allocation
 #SBATCH --output="%A_%a.out"
 #SBATCH --error="%A_%a.error"
+#SBATCH --qos=short # for test jobs
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user carolina.pitabarros@gmail.com
 
