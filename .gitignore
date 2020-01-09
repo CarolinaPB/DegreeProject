@@ -7,3 +7,5 @@
 *.xlsx
 *.zip
 *.docx
+data/
+results/
