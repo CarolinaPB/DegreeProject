@@ -1,5 +1,4 @@
 library(data.table)
-# library(tidyr)
 library(parallel)
 
 effect_eqtl_gene <- function(res, pheno=phenotype, geno=genotype){
