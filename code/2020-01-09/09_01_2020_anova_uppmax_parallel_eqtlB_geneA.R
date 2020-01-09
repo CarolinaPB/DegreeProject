@@ -41,11 +41,11 @@ res.eqtlB_geneA <- res.tot.eqtlB_geneA
 clusterEvalQ(cl, c(library(data.table), library(parallel)))
 clusterExport(cl, c("path", "phenotype", "genotype", "effectsA_B.sepA_B", "effect_eqtl_gene", "res.eqtlB_geneA"))
 
-res.eqtlA_geneB$anv.res <- parApply(cl=cl,res.eqtlA_geneB,1,effect_eqtl_gene, phenotype, genotype)
+res.eqtlB_geneA$anv.res <- parApply(cl=cl,res.eqtlB_genea,1,effect_eqtl_gene, phenotype, genotype)
 stopCluster(cl)
 
 
-fwrite(res.eqtlA_geneB, paste0(path, "results/2020-01-09/anova_eqtlB_geneA.gz"))
+fwrite(res.eqtlB_geneA, paste0(path, "results/2020-01-09/anova_eqtlB_geneA.gz"))
 end_time <- Sys.time()
 end_time - start_time
 
