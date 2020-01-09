@@ -28,7 +28,7 @@ effect_eqtl_gene <- function(res, pheno=phenotype, geno=genotype){
 
 start_time <- Sys.time()
 
-cl = makeCluster(detectCores() - 1, type="FORK")
+cl = makeCluster(detectCores(), type="FORK")
 path <- "/home/carolpb/DegreeProject/"
 phenotype <- fread(paste0(path,"data/SI_Data_01_expressionValues.txt"))
 genotype <- fread(paste0(path,"data/SI_Data_03_genotypes.txt"))
