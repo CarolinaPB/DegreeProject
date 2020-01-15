@@ -9,3 +9,5 @@
 *.docx
 data/
 results/
+*.error
+*.out
