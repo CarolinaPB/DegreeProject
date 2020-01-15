@@ -102,38 +102,55 @@ flat_cor_mat <- function(cor_r, cor_p){
   cor_p <- gather(cor_p, column, p, -1)
   cor_p_matrix <- left_join(cor_r, cor_p, by = c("row", "column"))
 }
+
+expand.grid.faster <- function(seq1,seq2) {
+  # faster alternative to expand.grid
+  cbind(Var1=rep.int(seq1, length(seq2)), Var2=rep(seq2, each=length(seq1)))
+}
+
+create_ini_table <- function(eqtl.table, genesB, var.exp.lim){
+  # requires data.table, tidyr
+  # takes a talbe with 4 columns: gene, eqtl, cis and var.exp and creates a table with all the possible combinations
+  # of geneA-eqtlA with geneB-eqtlB
+  # cis is a True/false - if the eqtl is in cis with the gene
+  # genesB is the genes we want to compare the gene-eqtl pairs with
+  # var.exp.lim is chosen by the user
+  # For the first set of pairs, only the gene-eqtl that are in cis and where the variance explained is 
+  # above the set limit will be kept
+  
+  # Keep only the gene-eqtl pairs where the eqtl is in cis with the gene and where the var.exp >0.1
+  eqtl.tableA <- eqtl.table[cis==T & var.exp > var.exp.lim]
+  
+  # unite columns so they act as one block of information
+  eqtl.tableA.unite <- eqtl.tableA %>% unite(infoA, gene, pmarker, cis, var.exp, sep = "__")
+  
+  # get table with all genes that are going to be tested with eqtlA (geneB migth have an eqtl or not)
+  eqtl.tableB<- merge(data.table(genesB),eqtl.table, by.x="genesB", by.y="gene", all.x=T)
+  
+  # unite columns so they act as one block of information
+  eqtl.tableB.unite <- eqtl.tableB %>% unite(infoB, genesB, pmarker, cis, var.exp, sep = "__")
+  
+  # get all combinations of geneA and geneB with corresponding eqtls
+  eqtl.table.combineAB <- expand.grid.faster(eqtl.tableA.unite$infoA,eqtl.tableB.unite$infoB)
+  eqtl.table.combineAB.dt <- data.table(eqtl.table.combineAB)
+  setnames(eqtl.table.combineAB.dt, old=c("Var1", "Var2"), new=c("infoA", "infoB"))
+  
+  # separate info blocks into normal columns again
+  eqtl.table.sepA <- eqtl.table.combineAB.dt %>% separate(infoA, c("geneA", "eqtl.A", "cis.A", "var.exp.A"), sep="__")
+  eqtl.table.sepAB <- eqtl.table.sepA %>% separate(infoB, c("geneB", "eqtl.B", "cis.B", "var.exp.B"), sep="__")
+}
 #####
 #subset eqtl_results table
 eqtl_results.sub <- eqtl_results[,.(gene, pmarker, cis, var.exp)]
 
-# the first group of information in the table we are creating will correspond to the genes that have the eqtl in cis and that have var.exp > lim
-# Keep only the gene-eqtl pairs where the eqtl is in cis with the gene and where the var.exp >0.1
-eqtl_results.sub.cis <- eqtl_results.sub[cis==T & var.exp > var.exp.lim]
-
-# unite columns so they act as one block of information
-eqtl_results.sub.uniteA <- eqtl_results.sub.cis %>% unite(infoA, gene, pmarker, cis, var.exp, sep = "__")
-
-# the second group of information in the table corresponds to all the genes (with or without eqtl)
 genesB <- colnames(phenotype[,2:ncol(phenotype)])
+effectsA_B.sepA_B <- create_ini_table(eqtl_results.sub, genesB, var.exp.lim)
 
-# get table with all genes that are going to be tested with eqtlA (geneB migth have an eqtl or not)
-eqtl_results.sub.B<- merge(data.table(genesB),eqtl_results.sub, by.x="genesB", by.y="gene", all.x=T)
-
-# unite columns so they act as one block of information
-eqtl_results.sub.uniteB <- eqtl_results.sub.B %>% unite(infoB, genesB, pmarker, cis, var.exp, sep = "__")
-
-# get all combinations of geneA and geneB with corresponding eqtls
-effectsA_B.temp <- expand.grid(infoA =eqtl_results.sub.uniteA$infoA,infoB=eqtl_results.sub.uniteB$infoB)
-effectsA_B.temp.dt <- data.table(effectsA_B.temp)
-
-# separate info blocks into normal columns again
-effectsA_B.sepA <- effectsA_B.temp.dt %>% separate(infoA, c("geneA", "eqtl.A", "cis.A", "var.exp.A"), sep="__")
-effectsA_B.sepA_B <- effectsA_B.sepA %>% separate(infoB, c("geneB", "eqtl.B", "cis.B", "var.exp.B"), sep="__")
 
 # Final table with geneA and geneB and their corresponding eqtls (geneB might not have an eqtl)
 effectsA_B.sepA_B
 
-fwrite(effectsA_B.sepA_B,"results/2020-01-07/infoA_B.gz")
+fwrite(effectsA_B.sepA_B,"results/2020-01-01/infoA_B.gz")
 
 
 effectsA_B.sepA_B <- fread(paste0(path,"results/2020-01-07/infoA_B.gz"))
@@ -172,7 +189,9 @@ end_time - start_time
 
 
 ## merge anova results with the information table to create an effects table
+# read in the anova results files
 res.eqtlA_geneB <- fread(paste0(path, "results/2020-01-09/anova_eqtlA_geneB.gz"))
+res.eqtlB_geneA <- fread(paste0(path, "results/2020-01-09/anova_eqtlB_geneA.gz"))
 
 # results from effect of eqtlA on geneB
 effects_table.eqtlA_geneB <- merge_after_anova(res.eqtlA_geneB, "B", "A", effectsA_B.sepA_B)
@@ -181,8 +200,250 @@ effects_table.eqtlA_geneB <- merge_after_anova(res.eqtlA_geneB, "B", "A", effect
 effects_table.anova <- merge_after_anova(res.eqtlB_geneA, gene.AB="A", eqtl.AB="B", effects_table.eqtlA_geneB )
 setcolorder(effects_table.anova, c("geneA", "geneB", "eqtl.A", "eqtl.B", "cis.A", "cis.B"))
 
-fwrite(effects_table.anova, paste0(path, "results/2020-01-08/08_01_2020_anovatable_test.gz"), na = NA)
-effects_table.anova <- fread(paste0(path, "results/2020-01-08/08_01_2020_anovatable_test.gz"))
+fwrite(effects_table.anova, paste0(path, "results/2020-01-09/09_01_2020_anovatable.gz"), na = NA)
+effects_table.anova <- fread(paste0(path, "results/2020-01-09/09_01_2020_anovatable.gz"))
+
+
+
+
+
+### correlation ####
+cor_traits <- rcorr(as.matrix(phenotype[,2:ncol(phenotype)])) # to remove the sample names
+save(cor_traits,file= "/Users/Carolina/Documents/GitHub/DegreeProject/results/2020-01-08/full_cor.Rdata")
+load(file = paste0(path, "results/2020-01-08/full_cor.Rdata"))
+
+cor_traits.cor <- cor_traits$r
+cor_traits.p <- cor_traits$P
+
+my_cor_matr_flat <- flat_cor_mat(cor_traits.cor,cor_traits.p)
+my_cor_matr_flat <- data.table(my_cor_matr_flat)
+
+cor_matr <- my_cor_matr_flat[!duplicated(t(apply(my_cor_matr_flat, 1, sort))), ]
+
+fwrite(cor_matr, paste0(path, "results/2020-01-10/cor_matr_unique.gz"))
+
+cor_matr <- fread(paste0(path, "results/2020-01-10/cor_matr_unique.gz"))
+
+
+
+setnames(cor_matr, old=c("row","column", "pval"), new=c("geneA","geneB", "cor.pval"))
+
+effects_table.cor <- merge(effects_table.anova, cor_matr, by=c("geneA","geneB"), all.x=T)
+
+fwrite(effects_table.cor, paste0(path, "results/2020-01-10/effectstable.gz"), na=NA)
+effects_table.cor <- fread(paste0(path, "results/2020-01-10/effectstable.gz"))
+
+######
+
+find.effects <- effects_table.cor[cor.pval < corr.pval & cis.A ==T & cis.B==T & geneA!=geneB]
+effects.table <- effects_table.cor[cor.pval < corr.pval & cis.A ==T & cis.B==T & geneA!=geneB]
+
+find.effects_fun <- function(effects.table, snp.pval, snp.pval.nsign){
+  # # function to find if an eqtl is affecting a gene
+  # if (dir != "A_B" & dir != "B_A"){
+  #   warning('A_B for the effect of eqtlA on geneB and B_A for the effect of eqtlB on geneA')
+  # } else if (dir == "A_B"){
+  #   dir.val="A->B"
+  # } else if (dir == "B_A"){
+  #   dir.val="B->A"
+  # }
+  
+  # TODO need to change the column name assignment
+  
+  # don't remember why I had them having different eqtls for the false
+  effects.table[, ("A->B") := NA]; effects.table[as.numeric(eqtlA_geneB.pval) < snp.pval, ("A->B") := T];
+  effects.table[(as.numeric(eqtlA_geneB.pval) > as.numeric(snp.pval.nsign) ), ("A->B") := F]
+  # effects.table[(as.numeric(eqtlA_geneB.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B))), ("A->B") := F]
+  
+  effects.table[, ("B->A") := NA]; effects.table[as.numeric(eqtlB_geneA.pval) < snp.pval, ("B->A") := T];
+  effects.table[(as.numeric(eqtlB_geneA.pval) > as.numeric(snp.pval.nsign)), ("B->A") := F]
+  # effects.table[(as.numeric(eqtlB_geneA.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B))), ("B->A") := F]
+  
+  
+  return(effects.table)
+}
+
+
+
+a <- find.effects_fun(find.effects, "A_B", snp.pval, snp.pval.nsign)
+b <- find.effects_fun(find.effects, "B_A", snp.pval, snp.pval.nsign)
+
+# only keep the rows where there i
+effects_table_nopvalNA <- effects_table.anova[is.na(eqtl.A)]
+
+find.effects <- data.table(effects_table.anova) # use data.table to change the memory addresses (can be checked by tracemem(find.effects)==tracemem(effects_table.anova))
+find.effects2 <- data.table(effects_table.anova)
+
+find.effects2$`A->B` <- NA
+find.effects2[as.numeric(eqtlA_geneB.pval) < snp.pval]$`A->B` <-  TRUE
+find.effects2[as.numeric(eqtlA_geneB.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B))]$`A->B` <-  FALSE
+
+
+find.effects[, (dir.val):=NA][as.numeric(eqtlA_geneB.pval) < snp.pval, (dir.val):=TRUE]
+find.effects[, (dir.val):=NA][as.numeric(eqtlA_geneB.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B)), (dir.val):=FALSE]
+
+find.effects[,(dir.val):=NULL]
+
+
+
+
+#####
+
+
+effects <- effects.table
+effects <- find.effects
+
+# one gene affects the other but we don't know the action of the other
+case1 <- effects[(is.na(effects$`A->B`) & effects$`B->A` == TRUE) | (is.na(effects$`B->A`) & effects$`A->B` == TRUE)]
+# one gene affects the other but is not affected by the other gene
+case2 <- effects[(effects$`A->B` == FALSE & effects$`B->A` == TRUE) | (effects$`A->B` == T & effects$`B->A` == F)]
+# we don't know if the genes affect each other
+case3 <- effects[is.na(effects$`A->B`) & is.na(effects$`B->A`)]
+# a gene affects the other but it's also affected by that other gene
+case4 <- effects[(effects$`A->B` == TRUE & effects$`B->A` == TRUE) | (effects$`B->A` == TRUE & effects$`A->B` == TRUE)]
+# no gene affects the other
+case5 <- effects[(effects$`A->B` == FALSE & effects$`B->A` == FALSE) | (effects$`B->A` == FALSE & effects$`A->B` == FALSE)]
+
+case1.A_to_B <- case1[case1$`A->B`==TRUE & is.na(case1$`B->A`)]
+case1.A_to_B <- case1.A_to_B[,c("geneA","geneB", "A->B")]
+
+case1.B_to_A <- case1[case1$`B->A`==TRUE & is.na(case1$`A->B`)]
+case1.B_to_A <- case1.B_to_A[,c("geneB", "geneA", "B->A")]
+
+if (nrow(case1.A_to_B) > 0 & nrow(case1.B_to_A) > 0){
+  case1.links <- rbind(case1.A_to_B, case1.B_to_A, use.names=FALSE)
+  
+} else if (nrow(case1.A_to_B) == 0 & nrow(case1.B_to_A) > 0){
+  case1.links <- case1.B_to_A
+  
+} else if (nrow(case1.A_to_B) > 0 & nrow(case1.B_to_A) == 0){
+  case1.links <- case1.A_to_B
+  
+} else if (nrow(case1.A_to_B) == 0 & nrow(case1.B_to_A) == 0){
+  case1.links <- case1.A_to_B
+}
+
+colnames(case1.links) <- c("from", "to", "type")
+case1.links$case <- 1
+case1.links <- unique(case1.links)
+
+case2.A_to_B <- case2[case2$`A->B`==TRUE & case2$`B->A`==FALSE]
+case2.A_to_B <- case2.A_to_B[,c("geneA","geneB", "A->B")]
+
+case2.B_to_A <- case2[case2$`B->A`==TRUE & case2$`A->B`==FALSE]
+case2.B_to_A <- case2.B_to_A[,c("geneB", "geneA", "B->A")]
+
+if (nrow(case2.A_to_B) > 0 & nrow(case2.B_to_A) > 0){
+  case2.links <- rbind(case2.A_to_B, case2.B_to_A, use.names=FALSE)
+  
+} else if (nrow(case2.A_to_B) == 0 & nrow(case2.B_to_A) > 0){
+  case2.links <- case2.B_to_A
+  
+} else if (nrow(case2.A_to_B) > 0 & nrow(case2.B_to_A) == 0){
+  case2.links <- case2.A_to_B
+  
+} else if (nrow(case2.A_to_B) == 0 & nrow(case2.B_to_A) == 0){
+  case2.links <- case2.A_to_B
+}
+
+colnames(case2.links) <- c("from", "to", "type")
+case2.links$case <- 2
+case2.links <- unique(case2.links)
+
+case3.links <- case3[,c("geneA", "geneB")]
+case3.links$type <- NA
+case3.links <- unique(case3.links)
+colnames(case3.links) <- c("from", "to", "type")
+case3.links$case <- 3
+
+case4.A_to_B <- case4[case4$`A->B`==TRUE & case4$`A->B`==TRUE]
+case4.A_to_B <- case4.A_to_B[,c("geneA","geneB", "A->B")]
+
+case4.B_to_A <- case4[case4$`B->A`==TRUE & case4$`B->A`==TRUE]
+case4.B_to_A <- case4.B_to_A[,c("geneB", "geneA", "B->A")]
+
+if (nrow(case4.A_to_B) > 0 & nrow(case4.B_to_A) > 0){
+  case4.links <- rbind(case4.A_to_B, case4.B_to_A, use.names=FALSE)
+  
+} else if (nrow(case4.A_to_B) == 0 & nrow(case4.B_to_A) > 0){
+  case4.links <- case4.B_to_A
+  
+} else if (nrow(case4.A_to_B) > 0 & nrow(case4.B_to_A) == 0){
+  case4.links <- case4.A_to_B
+  
+} else if (nrow(case4.A_to_B) == 0 & nrow(case4.B_to_A) == 0){
+  case4.links <- case4.A_to_B
+}
+
+colnames(case4.links) <- c("from", "to", "type")
+case4.links$case <- 4
+case4.links <- unique(case4.links)
+
+
+case5.A_to_B <- case5[case5$`A->B`==FALSE & case5$`A->B`==FALSE]
+case5.A_to_B <- case5.A_to_B[,c("geneA","geneB", "A->B")]
+
+case5.B_to_A <- case5[case5$`B->A`==FALSE & case5$`B->A`==FALSE]
+case5.B_to_A <- case5.B_to_A[,c("geneB", "geneA", "B->A")]
+
+if (nrow(case5.A_to_B) > 0 & nrow(case5.B_to_A) > 0){
+  case5.links <- rbind(case5.A_to_B, case5.B_to_A, use.names=FALSE)
+  
+} else if (nrow(case5.A_to_B) == 0 & nrow(case5.B_to_A) > 0){
+  case5.links <- case5.B_to_A
+  
+} else if (nrow(case5.A_to_B) > 0 & nrow(case5.B_to_A) == 0){
+  case5.links <- case5.A_to_B
+  
+} else if (nrow(case5.A_to_B) == 0 & nrow(case5.B_to_A) == 0){
+  case5.links <- case5.A_to_B
+}
+
+colnames(case5.links) <- c("from", "to", "type")
+case5.links$case <- 5
+case5.links <- unique(case5.links)
+
+
+
+allcases.links <- do.call("rbind", list(case1.links, case2.links, case3.links, case4.links, case5.links))
+
+
+
+
+#### Case2 plot
+allcases.graph <- graph_from_data_frame(allcases.links[allcases.links$case == 2],directed=TRUE)
+
+E(allcases.graph)$color <- as.factor(E(allcases.graph)$case)
+
+V(allcases.graph)$label <- NA
+
+E(allcases.graph)$color[E(allcases.graph)$case == 1] <- 'red'    
+E(allcases.graph)$color[E(allcases.graph)$case == 2] <- 'blue'  
+E(allcases.graph)$color[E(allcases.graph)$case == 4] <- 'red'  
+
+# V(allcases.graph)$label.cex = 1.5
+
+# plot(allcases.graph, layout = layout_with_fr,vertex.label.degree=0)
+# plot(allcases.graph, layout = layout_with_fr, vertex.label.dist=2)
+plot(allcases.graph, layout = layout_as_tree, vertex.label.dist=2, main="Case1 - TRUE and NA")
+plot(allcases.graph, layout=layout_with_graphopt, vertex.label.dist=2, main="Case2 - TRUE and FALSE")
+ # plot(allcases.graph, layout = layout_with_fr, vertex.label.dist=1)
+
+
+
+
+
+
+
+
+# start_time <- Sys.time()
+# end_time <- Sys.time()
+# end_time - start_time
+
+
+
+
+
 
 
 # Find number of each geno for each SNP ######
@@ -203,257 +464,3 @@ fwrite(numgenos, paste0(path, "results/2020-01-08/08_01_2020_numgenos.gz"))
 
 numgenos <- fread(paste0(path, "results/2020-01-08/08_01_2020_numgenos.gz"))
 # all genos are represented by a large amount of samples ####
-
-
-
-### correlation ####
-cor_traits <- rcorr(as.matrix(phenotype[,2:ncol(phenotype)])) # to remove the sample names
-save(cor_traits,file= "/Users/Carolina/Documents/GitHub/DegreeProject/results/2020-01-08/full_cor.Rdata")
-load(file = paste0(path, "results/2020-01-08/full_cor.Rdata"))
-
-cor_traits.cor <- cor_traits$r
-cor_traits.p <- cor_traits$P
-
-my_cor_matr_flat <- flat_cor_mat(cor_traits.cor,cor_traits.p)
-
-
-cor_matr <- unique(t(apply(my_cor_matr_flat, 1, sort)))
-# cor_matr <- my_cor_matr_flat[!duplicated(t(apply(my_cor_matr_flat, 1, sort))),]
-
-
-
-# all.genes <- colnames(phenotype[,2:ncol(phenotype)])
-# 
-# all.comb <- data.table(expand.grid(row=all.genes, column=all.genes))
-# 
-# cor_matr <- merge(my_cor_matr_flat, all.comb, by=c("row", "column"), all.y=T)
-
-
-
-
-colnames(my_cor_matr_flat) <- c("Trait1", "Trait2", "cor", "pval")
-fwrite(my_cor_matr_flat, paste0(path,"results/2020-01-09/flat_cor_matr.gz"))
-#####
-my_cor_matr_flat.noNA <- fread(paste0(path,"results/2020-01-08/flat_cor_matr.gz"))
-# 
-# 
-# # merge the gene correlation values with the main table
-# setnames(my_cor_matr_flat.noNA, old=c("Trait1", "Trait2", "pval"), new=c("geneA", "geneB", "cor.pval"))
-# 
-# effects_table_cor.1 <- merge(effects_table.anova, my_cor_matr_flat.noNA, by=c("geneA", "geneB"), all.x = T)
-# setnames(my_cor_matr_flat.noNA, old = c('geneA','geneB'), new = c('geneB','geneA'))
-# 
-# effects_table_cor.2 <- merge(effects_table_cor.1, my_cor_matr_flat.noNA, by=c("geneA", "geneB"), all.x = T)
-# # There will be two columns for the corr value and two columns for the corr pvalue, so we need to combine each pair in just one column
-# 
-# # combine corr values in one column and pvals in one column 
-# effects_table_cor.2$cor.pval <- coalesce(effects_table_cor.2$cor.pval.x, effects_table_cor.2$cor.pval.y)
-# effects_table_cor.2$cor <- coalesce(effects_table_cor.2$cor.x, effects_table_cor.2$cor.y)
- 
- 
- 
- 
- 
- 
- ######
- 
- find.effects_fun <- function(effects.table, dir, snp.pval, snp.pval.nsign){
-   # function to find if an eqtl is affecting a gene
-   if (dir != "A_B" | dir != "B_A"){
-     warning('x not between 0 and 1')
-   }
-   if (dir == "A_B"){
-     dir.val="A->B"
-   } else if (dir == "B_A"){
-     dir.val="B->A"
-   }
-   effects.table[, (dir.val):=NA]
-   
-   # TODO need to change the column name assignment
-   effects.table[as.numeric(eqtlA_geneB.pval) < snp.pval]$`A->B` <-  TRUE
-   effects.table[as.numeric(eqtlA_geneB.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B))]$`A->B` <-  FALSE
-   
-   effects.table[as.numeric(eqtlB_geneA.pval) < snp.pval]$`A->B` <-  TRUE
-   effects.table[as.numeric(eqtlB_geneB.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B))]$`A->B` <-  FALSE
-   
-   return(effects.table)
- }
- 
- 
- a <- find.effects_fun(find.effects, "A_B", snp.pval)
- b <- find.effects_fun(find.effects, "B_A", snp.pval, snp.pval.nsign)
- 
- # only keep the rows where there i
- effects_table_nopvalNA <- effects_table.anova[is.na(eqtl.A)]
- 
- find.effects <- data.table(effects_table.anova) # use data.table to change the memory addresses (can be checked by tracemem(find.effects)==tracemem(effects_table.anova))
- find.effects2 <- data.table(effects_table.anova)
- 
- find.effects2$`A->B` <- NA
- find.effects2[as.numeric(eqtlA_geneB.pval) < snp.pval]$`A->B` <-  TRUE
- find.effects2[as.numeric(eqtlA_geneB.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B))]$`A->B` <-  FALSE
- 
- 
- find.effects[, (dir.val):=NA][as.numeric(eqtlA_geneB.pval) < snp.pval, (dir.val):=TRUE]
- find.effects[, (dir.val):=NA][as.numeric(eqtlA_geneB.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B)), (dir.val):=FALSE]
- 
- find.effects[,(dir.val):=NULL]
- 
- 
- 
- 
- #####
- 
- 
- 
- effects <- find.effects
- 
- # one gene affects the other but we don't know the action of the other
- case1 <- effects[(is.na(effects$`A->B`) & effects$`B->A` == TRUE) | (is.na(effects$`B->A`) & effects$`A->B` == TRUE)]
- # one gene affects the other but is not affected by the other gene
- case2 <- effects[(effects$`A->B` == FALSE & effects$`B->A` == TRUE) | (effects$`B->A` == FALSE & effects$`A->B` == TRUE)]
- # we don't know if the genes affect each other
- case3 <- effects[is.na(effects$`A->B`) & is.na(effects$`B->A`)]
- # a gene affects the other but it's also affected by that other gene
- case4 <- effects[(effects$`A->B` == TRUE & effects$`B->A` == TRUE) | (effects$`B->A` == TRUE & effects$`A->B` == TRUE)]
- # no gene affects the other
- case5 <- effects[(effects$`A->B` == FALSE & effects$`B->A` == FALSE) | (effects$`B->A` == FALSE & effects$`A->B` == FALSE)]
- 
- case1.A_to_B <- case1[case1$`A->B`==TRUE & is.na(case1$`B->A`)]
- case1.A_to_B <- case1.A_to_B[,c("geneA","geneB", "A->B")]
- 
- case1.B_to_A <- case1[case1$`B->A`==TRUE & is.na(case1$`A->B`)]
- case1.B_to_A <- case1.B_to_A[,c("geneB", "geneA", "B->A")]
- 
- if (nrow(case1.A_to_B) > 0 & nrow(case1.B_to_A) > 0){
-   case1.links <- rbind(case1.A_to_B, case1.B_to_A, use.names=FALSE)
-   
- } else if (nrow(case1.A_to_B) == 0 & nrow(case1.B_to_A) > 0){
-   case1.links <- case1.B_to_A
-   
- } else if (nrow(case1.A_to_B) > 0 & nrow(case1.B_to_A) == 0){
-   case1.links <- case1.A_to_B
-   
- } else if (nrow(case1.A_to_B) == 0 & nrow(case1.B_to_A) == 0){
-   case1.links <- case1.A_to_B
- }
- 
- colnames(case1.links) <- c("from", "to", "type")
- case1.links$case <- 1
- case1.links <- unique(case1.links)
- 
- case2.A_to_B <- case2[case2$`A->B`==TRUE & case2$`B->A`==FALSE]
- case2.A_to_B <- case2.A_to_B[,c("geneA","geneB", "A->B")]
- 
- case2.B_to_A <- case2[case2$`B->A`==TRUE & case2$`A->B`==FALSE]
- case2.B_to_A <- case2.B_to_A[,c("geneB", "geneA", "B->A")]
- 
- if (nrow(case2.A_to_B) > 0 & nrow(case2.B_to_A) > 0){
-   case2.links <- rbind(case2.A_to_B, case2.B_to_A, use.names=FALSE)
-   
- } else if (nrow(case2.A_to_B) == 0 & nrow(case2.B_to_A) > 0){
-   case2.links <- case2.B_to_A
-   
- } else if (nrow(case2.A_to_B) > 0 & nrow(case2.B_to_A) == 0){
-   case2.links <- case2.A_to_B
-   
- } else if (nrow(case2.A_to_B) == 0 & nrow(case2.B_to_A) == 0){
-   case2.links <- case2.A_to_B
- }
- 
- colnames(case2.links) <- c("from", "to", "type")
- case2.links$case <- 2
- case2.links <- unique(case2.links)
- 
- case3.links <- case3[,c("geneA", "geneB")]
- case3.links$type <- NA
- case3.links <- unique(case3.links)
- colnames(case3.links) <- c("from", "to", "type")
- case3.links$case <- 3
- 
- case4.A_to_B <- case4[case4$`A->B`==TRUE & case4$`A->B`==TRUE]
- case4.A_to_B <- case4.A_to_B[,c("geneA","geneB", "A->B")]
- 
- case4.B_to_A <- case4[case4$`B->A`==TRUE & case4$`B->A`==TRUE]
- case4.B_to_A <- case4.B_to_A[,c("geneB", "geneA", "B->A")]
- 
- if (nrow(case4.A_to_B) > 0 & nrow(case4.B_to_A) > 0){
-   case4.links <- rbind(case4.A_to_B, case4.B_to_A, use.names=FALSE)
-   
- } else if (nrow(case4.A_to_B) == 0 & nrow(case4.B_to_A) > 0){
-   case4.links <- case4.B_to_A
-   
- } else if (nrow(case4.A_to_B) > 0 & nrow(case4.B_to_A) == 0){
-   case4.links <- case4.A_to_B
-   
- } else if (nrow(case4.A_to_B) == 0 & nrow(case4.B_to_A) == 0){
-   case4.links <- case4.A_to_B
- }
- 
- colnames(case4.links) <- c("from", "to", "type")
- case4.links$case <- 4
- case4.links <- unique(case4.links)
- 
- 
- case5.A_to_B <- case5[case5$`A->B`==FALSE & case5$`A->B`==FALSE]
- case5.A_to_B <- case5.A_to_B[,c("geneA","geneB", "A->B")]
- 
- case5.B_to_A <- case5[case5$`B->A`==FALSE & case5$`B->A`==FALSE]
- case5.B_to_A <- case5.B_to_A[,c("geneB", "geneA", "B->A")]
- 
- if (nrow(case5.A_to_B) > 0 & nrow(case5.B_to_A) > 0){
-   case5.links <- rbind(case5.A_to_B, case5.B_to_A, use.names=FALSE)
-   
- } else if (nrow(case5.A_to_B) == 0 & nrow(case5.B_to_A) > 0){
-   case5.links <- case5.B_to_A
-   
- } else if (nrow(case5.A_to_B) > 0 & nrow(case5.B_to_A) == 0){
-   case5.links <- case5.A_to_B
-   
- } else if (nrow(case5.A_to_B) == 0 & nrow(case5.B_to_A) == 0){
-   case5.links <- case5.A_to_B
- }
- 
- colnames(case5.links) <- c("from", "to", "type")
- case5.links$case <- 5
- case5.links <- unique(case5.links)
- 
- 
- 
- allcases.links <- do.call("rbind", list(case1.links, case2.links, case3.links, case4.links, case5.links))
- 
- 
- 
- 
- #### Case1 plot
- allcases.graph <- graph_from_data_frame(allcases.links[allcases.links$case == 1],directed=TRUE)
- 
- E(allcases.graph)$color <- as.factor(E(allcases.graph)$case)
- 
- V(allcases.graph)$label <- NA
- 
- E(allcases.graph)$color[E(allcases.graph)$case == 1] <- 'red'    
- E(allcases.graph)$color[E(allcases.graph)$case == 2] <- 'blue'  
- E(allcases.graph)$color[E(allcases.graph)$case == 4] <- 'red'  
- 
- # V(allcases.graph)$label.cex = 1.5
- 
- # plot(allcases.graph, layout = layout_with_fr,vertex.label.degree=0)
- # plot(allcases.graph, layout = layout_with_fr, vertex.label.dist=2)
- plot(allcases.graph, layout = layout_as_tree, vertex.label.dist=2, main="Case1 - TRUE and NA")
- plot(allcases.graph, layout=layout_with_fr, vertex.label.dist=2, main="Case1 - TRUE and NA")
- # plot(allcases.graph, layout = layout_with_fr, vertex.label.dist=1)
- 
- 
- 
- 
- 
- 
- 
- 
- # start_time <- Sys.time()
- # end_time <- Sys.time()
- # end_time - start_time
- 
- 
- 
