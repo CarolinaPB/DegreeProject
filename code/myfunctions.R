@@ -151,8 +151,8 @@ testparams <- function(params, tab){
   temp_TF <- unique(temp_TF.2)
   
   temp_TF$sign.p <- sign_p
-  temp_TF$non_sign_p <- non_sign_p
-  temp_TF$cis_p <- cor_p
+  temp_TF$non_sign.p <- non_sign_p
+  temp_TF$cor.p <- cor_p
   
   return(temp_TF)
 }
