@@ -2,8 +2,10 @@ library(data.table)
 library(parallel)
 
 #path <- "/Users/Carolina/Documents/GitHub/DegreeProject/" # use with own computer
-path <- "/home/carolpb/DegreeProject/" # use with uppmax
-respath <- "/proj/snic2019-8-367/private/carol/results"
+# path <- "/home/carolpb/DegreeProject/" # use with uppmax
+#respath <- "/proj/snic2019-8-367/private/carol/results"
+path <- "/home/carolina/DegreeProject/" # use with diprotodon
+respath <- "/home/carolina/DegreeProject/results/"
 
 effects_table.cor <- fread(paste0(path, "results/2020-01-10/effectstable.gz"))
 
@@ -23,8 +25,9 @@ cor_p <- c(1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2)
 params0 <- data.table(expand.grid(sign_p=sign_p, non_sign_p=non_sign_p, cor_p=cor_p))
 
 
-cl = makeCluster(detectCores(), type="FORK")
+# cl = makeCluster(detectCores()-2, type="FORK")
+cl = makeCluster(4, type="FORK")
 res <- parApply(cl=cl,params0,1, testparams, effects_table.cor)
 stopCluster(cl)
 
-save(res, file=paste0(respath, "20_01_2020_resparams.Rdata"))
+save(res, file=paste0(respath, "2020-01-20/20_01_2020_resparams.Rdata"))
