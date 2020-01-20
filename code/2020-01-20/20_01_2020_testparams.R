@@ -27,4 +27,4 @@ cl = makeCluster(detectCores(), type="FORK")
 res <- parApply(cl=cl,params0,1, testparams, effects_table.cor)
 stopCluster(cl)
 
-save(res, file=paste0(pathres, "20_01_2020_resparams.Rdata"))
+save(res, file=paste0(respath, "20_01_2020_resparams.Rdata"))
