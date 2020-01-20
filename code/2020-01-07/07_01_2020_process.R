@@ -18,6 +18,9 @@ eqtl_results <- fread(paste0(path,"data/SI_Data_04_eQTL.csv"))
 eqtl_results[cis=="VERDADEIRO"]$cis <- T
 eqtl_results[cis=="FALSO"]$cis <- F
 
+
+source("code/myfunctions.R")
+
 ##### PARAMETERS #####
 var.exp.lim <- 0.1
 
@@ -29,116 +32,7 @@ snp.pval.nsign <- as.numeric(1e-5)
 
 corr.pval <-  0.05/(nGenes*nGenes)
 
-##### FUNCTIONS #####
 
-effect_eqtl_gene <- function(res, pheno=phenotype, geno=genotype){
-  # function that calculates the effect of a qtl on a gene - using anova
-  # outputs a string with anova.pval__anova.r2
-  # res - data.table with 2 columns; 
-  # first column: gene 
-  # second column: eqtl
-  lmp <- function (modelobject) {
-    # function to get the p-value out of a lm
-    if (class(modelobject) != "lm") stop("Not an object of class 'lm' ")
-    f <- summary(modelobject)$fstatistic
-    p <- pf(f[1],f[2],f[3],lower.tail=F)
-    attributes(p) <- NULL
-    return(p)
-  }
-  
-  gene <- res[1]
-  eqtl <- res[2]
-  
-  anv <- lm(unlist(pheno[ , ..gene]) ~ unlist(geno[ ,..eqtl]))
-  anv.res <- paste(lmp(anv), summary(anv)$adj.r.squared, sep="__")
-  
-  return(anv.res)
-}
-
-merge_after_anova <- function(res.effect_eqtl_gene, gene.AB, eqtl.AB, effects.table){
-  # merge the results of the anova with the main table
-  # requires library(tidyr) for the separate
-  gene.AB <- toupper(gene.AB)
-  eqtl.AB <- toupper(eqtl.AB)
-  
-  pval.name <- paste0("eqtl",eqtl.AB, "_", "gene", gene.AB, ".pval")
-  r2.name <- paste0("eqtl",eqtl.AB, "_", "gene", gene.AB, ".r2")
-  
-  res.sep <- res.effect_eqtl_gene %>% separate(anv.res, c(pval.name, r2.name), sep="__")
-  
-  setnames(res.sep,"gene", paste0("gene", gene.AB))
-  setnames(res.sep,"eqtl", paste0("eqtl.", eqtl.AB))
-  
-  effects.eqtlB <- merge(effects.table, res.sep, by=c(paste0("gene", gene.AB),paste0("eqtl.", eqtl.AB)), all.x=T)
-  
-  return(effects.eqtlB)
-}
-
-get_num_genos <- function(res, genotype){
-  # get the number of each geno per snp
-  # res is a data.table with one row - the snp ids
-  snp <- res[1]
-  
-  geno_1 <- sum(ifelse(genotype[,..snp] == 1, 1,0))
-  geno_neg1 <- sum(ifelse(genotype[,..snp] == -1, 1,0))
-  
-  return(paste(geno_1, geno_neg1, sep="__"))
-}
-
-flat_cor_mat <- function(cor_r, cor_p){
-  #This function provides a simple formatting of a correlation matrix
-  #into a table with 4 columns containing :
-  # Column 1 : row names (variable 1 for the correlation test)
-  # Column 2 : column names (variable 2 for the correlation test)
-  # Column 3 : the correlation coefficients
-  # Column 4 : the p-values of the correlations
-  
-  library("dplyr")
-  library(tidyr)
-  library(tibble)
-  cor_r <- rownames_to_column(as.data.frame(cor_r), var = "row")
-  cor_r <- gather(cor_r, column, cor, -1)
-  cor_p <- rownames_to_column(as.data.frame(cor_p), var = "row")
-  cor_p <- gather(cor_p, column, p, -1)
-  cor_p_matrix <- left_join(cor_r, cor_p, by = c("row", "column"))
-}
-
-expand.grid.faster <- function(seq1,seq2) {
-  # faster alternative to expand.grid
-  cbind(Var1=rep.int(seq1, length(seq2)), Var2=rep(seq2, each=length(seq1)))
-}
-
-create_ini_table <- function(eqtl.table, genesB, var.exp.lim){
-  # requires data.table, tidyr
-  # takes a talbe with 4 columns: gene, eqtl, cis and var.exp and creates a table with all the possible combinations
-  # of geneA-eqtlA with geneB-eqtlB
-  # cis is a True/false - if the eqtl is in cis with the gene
-  # genesB is the genes we want to compare the gene-eqtl pairs with
-  # var.exp.lim is chosen by the user
-  # For the first set of pairs, only the gene-eqtl that are in cis and where the variance explained is 
-  # above the set limit will be kept
-  
-  # Keep only the gene-eqtl pairs where the eqtl is in cis with the gene and where the var.exp >0.1
-  eqtl.tableA <- eqtl.table[cis==T & var.exp > var.exp.lim]
-  
-  # unite columns so they act as one block of information
-  eqtl.tableA.unite <- eqtl.tableA %>% unite(infoA, gene, pmarker, cis, var.exp, sep = "__")
-  
-  # get table with all genes that are going to be tested with eqtlA (geneB migth have an eqtl or not)
-  eqtl.tableB<- merge(data.table(genesB),eqtl.table, by.x="genesB", by.y="gene", all.x=T)
-  
-  # unite columns so they act as one block of information
-  eqtl.tableB.unite <- eqtl.tableB %>% unite(infoB, genesB, pmarker, cis, var.exp, sep = "__")
-  
-  # get all combinations of geneA and geneB with corresponding eqtls
-  eqtl.table.combineAB <- expand.grid.faster(eqtl.tableA.unite$infoA,eqtl.tableB.unite$infoB)
-  eqtl.table.combineAB.dt <- data.table(eqtl.table.combineAB)
-  setnames(eqtl.table.combineAB.dt, old=c("Var1", "Var2"), new=c("infoA", "infoB"))
-  
-  # separate info blocks into normal columns again
-  eqtl.table.sepA <- eqtl.table.combineAB.dt %>% separate(infoA, c("geneA", "eqtl.A", "cis.A", "var.exp.A"), sep="__")
-  eqtl.table.sepAB <- eqtl.table.sepA %>% separate(infoB, c("geneB", "eqtl.B", "cis.B", "var.exp.B"), sep="__")
-}
 #####
 #subset eqtl_results table
 eqtl_results.sub <- eqtl_results[,.(gene, pmarker, cis, var.exp)]
@@ -157,7 +51,7 @@ effectsA_B.sepA_B <- fread(paste0(path,"results/2020-01-07/infoA_B.gz"))
 
 
 #######
-### Find effect of eqtls from geneA in expression of geneB
+### Find effect of eqtls from geneA in expression of geneB ####
 eqtls.A <- unique(effectsA_B.sepA_B$eqtl.A)
 genes.B <- unique(effectsA_B.sepA_B$geneB)
 res.tot.eqtlA_geneB <- data.table(expand.grid(gene=genes.B, eqtl=eqtls.A))#, anv.res=NA))
@@ -225,7 +119,7 @@ fwrite(cor_matr, paste0(path, "results/2020-01-10/cor_matr_unique.gz"))
 cor_matr <- fread(paste0(path, "results/2020-01-10/cor_matr_unique.gz"))
 
 
-
+# merge the correlation values with the table that has the anova results
 setnames(cor_matr, old=c("row","column", "pval"), new=c("geneA","geneB", "cor.pval"))
 
 effects_table.cor <- merge(effects_table.anova, cor_matr, by=c("geneA","geneB"), all.x=T)
@@ -235,74 +129,115 @@ effects_table.cor <- fread(paste0(path, "results/2020-01-10/effectstable.gz"))
 
 ######
 
-find.effects <- effects_table.cor[cor.pval < corr.pval & cis.A ==T & cis.B==T & geneA!=geneB]
-effects.table <- effects_table.cor[cor.pval < corr.pval & cis.A ==T & cis.B==T & geneA!=geneB]
+# what I can change to get diff results:
+# var.exp.lim
+# snp.pval
+# snp.pval.nsign
+# corr.pval
 
-find.effects_fun <- function(effects.table, snp.pval, snp.pval.nsign){
-  # # function to find if an eqtl is affecting a gene
-  # if (dir != "A_B" & dir != "B_A"){
-  #   warning('A_B for the effect of eqtlA on geneB and B_A for the effect of eqtlB on geneA')
-  # } else if (dir == "A_B"){
-  #   dir.val="A->B"
-  # } else if (dir == "B_A"){
-  #   dir.val="B->A"
-  # }
-  
-  # TODO need to change the column name assignment
-  
-  # don't remember why I had them having different eqtls for the false
-  effects.table[, ("A->B") := NA]; effects.table[as.numeric(eqtlA_geneB.pval) < snp.pval, ("A->B") := T];
-  effects.table[(as.numeric(eqtlA_geneB.pval) > as.numeric(snp.pval.nsign) ), ("A->B") := F]
-  # effects.table[(as.numeric(eqtlA_geneB.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B))), ("A->B") := F]
-  
-  effects.table[, ("B->A") := NA]; effects.table[as.numeric(eqtlB_geneA.pval) < snp.pval, ("B->A") := T];
-  effects.table[(as.numeric(eqtlB_geneA.pval) > as.numeric(snp.pval.nsign)), ("B->A") := F]
-  # effects.table[(as.numeric(eqtlB_geneA.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B))), ("B->A") := F]
-  
-  
-  return(effects.table)
+sign_p <- c(1e-17, 1e-16, 1e-15, 1e-14, 1e-13, 1e-12, 1e-11, 1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2)
+non_sign_p <- c(1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2)
+params0 <- expand.grid(sign_p=sign_p, non_sign_p=non_sign_p)
+
+
+
+
+
+
+
+find.effects <- effects_table.cor[cor.pval < corr.pval & cis.A ==T & cis.B==T & geneA!=geneB]
+
+find.effects <- find.effects_fun(find.effects, snp.pval, snp.pval.nsign)
+
+####
+# find.effects[(find.effects$`A->B`==T & find.effects$`B->A`==F) | (find.effects$`A->B`==F & find.effects$`B->A`==T)]
+
+
+find.effects_TF.1 <- find.effects[find.effects$`A->B`==T & find.effects$`B->A`==F, .(geneA, geneB, eqtl.A, eqtl.B, `A->B`, `B->A`)]
+find.effects_TF.2 <- rbind(find.effects_TF.1, find.effects[find.effects$`A->B`==F & find.effects$`B->A`==T, .(geneA=geneB, geneB=geneA, eqtl.A=eqtl.B, eqtl.B=eqtl.A, `A->B`=`B->A`, `B->A`=`A->B`)])
+find.effects_TF <- unique(find.effects_TF.2)
+
+
+# when one direction is true and the other is false
+find.effects_TF.numpairs <- find.effects_TF[(`A->B`==T & `B->A`==F), .N, by=.(geneA, geneB)]
+
+numpairs.table <- data.table(N = unique(find.effects_TF.numpairs$N), numpairs =NA)
+for (i in 1:nrow(numpairs.table)){
+  numpairs.table$numpairs[i] <- nrow(find.effects_TF.numpairs[N==numpairs.table$N[i]])
 }
 
+# plot the number of times a gene pair appears
+bp <- barplot(numpairs.table$numpairs, numpairs.table$N, names.arg=unique(find.effects_TF.numpairs$N), 
+              width = 0.5, space=0.2, legend.text = F, ylim = c(0,max(numpairs.table$numpairs)+2000),
+              main = "Number of times gene pairs appear \n (A->B = T and B->A = F)", xlab = "# times a gene pair appears", 
+              ylab = "# of gene pairs")
+text(bp,numpairs.table$numpairs, labels=numpairs.table$numpairs, cex=1, pos=3)
+
+# most gene pairs appear 1 time
+
+find.effects_TF.geneeqtl.A <- find.effects_TF[(`A->B`==T & `B->A`==F), .N, by=.(geneA, eqtl.A)]
+find.effects_TF.geneeqtl.B <- find.effects_TF[(`A->B`==T & `B->A`==F), .N, by=.(geneB, eqtl.B)]
+
+find.effects_TF.geneeqtl.A.plot <- find.effects_TF.geneeqtl.A %>% unite(gene_eqtlA, geneA, eqtl.A, sep = "__")
+#find.effects_TF.geneeqtl.B.plot <- find.effects_TF.geneeqtl.B %>% unite(gene_eqtlB, geneB, eqtl.B, sep = "__")
+
+plot(as.factor(find.effects_TF.geneeqtl.A.plot$gene_eqtlA), find.effects_TF.geneeqtl.A.plot$N, 
+     xlab="gene-eqtl pairs", ylab="# times each pair appears", axes=FALSE, 
+     main="Num times of times each gene-eqtl pair appears \n (A->B = T and B->A = F)")
+Axis(side=2, labels=T)
 
 
-a <- find.effects_fun(find.effects, "A_B", snp.pval, snp.pval.nsign)
-b <- find.effects_fun(find.effects, "B_A", snp.pval, snp.pval.nsign)
+# freq of gene-eqtl pairs
+numpairs.table2 <- data.table(N = unique(find.effects_TF.geneeqtl.A.plot$N), numpairs =NA)
+for (i in 1:nrow(numpairs.table2)){
+  numpairs.table2$numpairs[i] <- nrow(find.effects_TF.geneeqtl.A[N==numpairs.table2$N[i]])
+}
+numpairs.table2 <- numpairs.table2[order(N)]
 
-# only keep the rows where there i
-effects_table_nopvalNA <- effects_table.anova[is.na(eqtl.A)]
+# all values individually
+bp2 <- barplot(numpairs.table2$numpairs, numpairs.table2$N, names.arg=unique(numpairs.table2$N), 
+              width = 0.5, space=0.2, legend.text = F, ylim = c(0,max(numpairs.table2$numpairs)+100),
+              main = "Number of times gene-eqtl pairs appear \n (A->B = T and B->A = F)", xlab = "# times a gene-eqtl pair appears", 
+              ylab = "Freq of gene-eqtl pairs", cex.names=0.8)
 
-find.effects <- data.table(effects_table.anova) # use data.table to change the memory addresses (can be checked by tracemem(find.effects)==tracemem(effects_table.anova))
-find.effects2 <- data.table(effects_table.anova)
-
-find.effects2$`A->B` <- NA
-find.effects2[as.numeric(eqtlA_geneB.pval) < snp.pval]$`A->B` <-  TRUE
-find.effects2[as.numeric(eqtlA_geneB.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B))]$`A->B` <-  FALSE
+# by binning values 
+hist(find.effects_TF.geneeqtl.A.plot$N, main = "Frequency of gene-eqtl pairs", xlab = "# times gene-eqtl pairs appear",labels = T)
+# the majority of gene-eqtl pairs appear between 0-50 times
 
 
-find.effects[, (dir.val):=NA][as.numeric(eqtlA_geneB.pval) < snp.pval, (dir.val):=TRUE]
-find.effects[, (dir.val):=NA][as.numeric(eqtlA_geneB.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B)), (dir.val):=FALSE]
 
-find.effects[,(dir.val):=NULL]
+
+
+
+
+
+
+
+
+
+
 
 
 
 
 #####
 
-
-effects <- effects.table
 effects <- find.effects
 
+# Define cases
 # one gene affects the other but we don't know the action of the other
 case1 <- effects[(is.na(effects$`A->B`) & effects$`B->A` == TRUE) | (is.na(effects$`B->A`) & effects$`A->B` == TRUE)]
 # one gene affects the other but is not affected by the other gene
-case2 <- effects[(effects$`A->B` == FALSE & effects$`B->A` == TRUE) | (effects$`A->B` == T & effects$`B->A` == F)]
+case2 <- effects[(effects$`A->B` == TRUE & effects$`B->A` == FALSE) | (effects$`A->B` == FALSE & effects$`B->A` == TRUE)]
 # we don't know if the genes affect each other
 case3 <- effects[is.na(effects$`A->B`) & is.na(effects$`B->A`)]
 # a gene affects the other but it's also affected by that other gene
-case4 <- effects[(effects$`A->B` == TRUE & effects$`B->A` == TRUE) | (effects$`B->A` == TRUE & effects$`A->B` == TRUE)]
+case4 <- effects[(effects$`A->B` == TRUE & effects$`B->A` == TRUE)]
 # no gene affects the other
-case5 <- effects[(effects$`A->B` == FALSE & effects$`B->A` == FALSE) | (effects$`B->A` == FALSE & effects$`A->B` == FALSE)]
+case5 <- effects[(effects$`A->B` == FALSE & effects$`B->A` == FALSE)]
+
+
+
 
 case1.A_to_B <- case1[case1$`A->B`==TRUE & is.na(case1$`B->A`)]
 case1.A_to_B <- case1.A_to_B[,c("geneA","geneB", "A->B")]
@@ -425,23 +360,55 @@ E(allcases.graph)$color[E(allcases.graph)$case == 4] <- 'red'
 
 # plot(allcases.graph, layout = layout_with_fr,vertex.label.degree=0)
 # plot(allcases.graph, layout = layout_with_fr, vertex.label.dist=2)
-plot(allcases.graph, layout = layout_as_tree, vertex.label.dist=2, main="Case1 - TRUE and NA")
+plot(allcases.graph, layout = layout_as_tree, vertex.label.dist=2, main="Case2 - TRUE and FALSE")
 plot(allcases.graph, layout=layout_with_graphopt, vertex.label.dist=2, main="Case2 - TRUE and FALSE")
- # plot(allcases.graph, layout = layout_with_fr, vertex.label.dist=1)
+########
+find.effects
 
+# find.effects[,.(count= .N, count=sum(eqtl.A), by=geneA)]
 
+### TODO table with summary numbers
+### TODO plot with diff params
+# ex: n gene pairs with A->B TRUE and B->A FALSE
+# other ex:
+# The summary table shows
+# * number of unique traits
+# * num of unique snps
+# * num of A->B
+# * num of B->A
+# * num of A->B that we can’t say if it’s true or false
+# * num of B->A that we can’t say if it’s true or false
+# * num of unique gene pairs with A->B
+# * num of unique gene pairs with B->A
+# * num of unique gene pairs with A not affecting B
+# * num of unique gene pairs with B not affecting A
+# * num of unique gene pairs with undertermined A->B
+# * num of unique gene pairs with undertermined B->A
 
+res <- find.effects
+tab <- data.table(matrix(ncol=16, nrow=1))
+names(tab) <- c("geneA", "geneB", "eqtl.A", "eqtl.B","A->B", "B->A", "maybeAB","maybeBA", "A->B.gpairs", "B->A.gpairs", "~A->B.gpairs","~B->A.gpairs", "A->Bmaybe.gpairs","B->Amaybe.gpairs", "B->A.gpairs_TF", "A->B.gpairs_TF")
+tab$geneA <- length(unique(res$geneA)) # num of unique genes A
+tab$geneB <- length(unique(res$geneB)) # num of unique genes B
+tab$eqtl.A <- length(unique(res$eqtl.A)) # num of unique eqtlA
+tab$eqtl.B <- length(unique(res$eqtl.B)) # num of unique eqtlB
+tab$maybeBA <- nrow(res[is.na(res$`B->A`)]) # num of gene-eqtl pairs for which we can't say
+tab$maybeAB <- nrow(res[is.na(res$`A->B`)]) # num of gene-eqtl pairs for which we can't say
+tab$`A->B` <- nrow(res[res$`A->B`==TRUE])
+tab$`B->A` <- nrow(res[res$`B->A`==TRUE])
+tab$`A->B.gpairs` <- nrow(res[res$`A->B`==TRUE, .N, by=.(geneA, geneB)])  # number of gene pairs for which A->B is true
+tab$`B->A.gpairs` <- nrow(res[res$`B->A`==TRUE, .N, by=.(geneA, geneB)])  # number of gene pairs for which B->A is true
+tab$`A->Bmaybe.gpairs`<- nrow(res[is.na(res$`A->B`), .N, by=.(geneA, geneB)]) # number of gene pairs for which A->B is maybe
+tab$`B->Amaybe.gpairs`<- nrow(res[is.na(res$`B->A`), .N, by=.(geneA, geneB)]) # number of gene pairs for which B->A is maybe
+tab$`~A->B.gpairs` <- nrow(res[res$`A->B`==FALSE, .N, by=.(geneA, geneB)])  # number of gene pairs for which A->B is false
+tab$`~B->A.gpairs` <- nrow(res[res$`B->A`==FALSE, .N, by=.(geneA, geneB)])  # number of gene pairs for which B->A is false
+tab$`A->B.gpairs_TF` <- nrow(res[res$`B->A`==FALSE & res$`A->B`==TRUE, .N, by=.(geneA, geneB)])  # number of gene pairs for which B->A is false
+tab$`B->A.gpairs_TF` <- nrow(res[res$`B->A`==TRUE & res$`A->B`==FALSE, .N, by=.(geneA, geneB)])  # number of gene pairs for which B->A is false
 
+t(tab)
 
-
-
-
-# start_time <- Sys.time()
-# end_time <- Sys.time()
-# end_time - start_time
-
-
-
+A_to_B <- res[res$`B->A`==FALSE & res$`A->B`==TRUE, .N, by=.(geneA, geneB)]
+B_to_A <- res[res$`B->A`==TRUE & res$`A->B`==FALSE, .N, by=.(geneA, geneB)]
 
 
 
