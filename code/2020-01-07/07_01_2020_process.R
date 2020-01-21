@@ -24,8 +24,11 @@ source("code/myfunctions.R")
 ##### PARAMETERS #####
 var.exp.lim <- 0.1
 
-nSNPs <- length(colnames(genotype))-1
-nGenes <- length(colnames(phenotype))-1
+# nSNPs <- length(colnames(genotype))-1
+# nGenes <- length(colnames(phenotype))-1
+
+nSNPs <- 42052
+nGenes <- 5720
 
 snp.pval <- 0.05/(as.numeric(nGenes) * as.numeric(nSNPs))
 snp.pval.nsign <- as.numeric(1e-5)
@@ -198,10 +201,10 @@ numpairs.table2 <- numpairs.table2[order(N)]
 bp2 <- barplot(numpairs.table2$numpairs, numpairs.table2$N, names.arg=unique(numpairs.table2$N), 
               width = 0.5, space=0.2, legend.text = F, ylim = c(0,max(numpairs.table2$numpairs)+100),
               main = "Number of times gene-eqtl pairs appear \n (A->B = T and B->A = F)", xlab = "# times a gene-eqtl pair appears", 
-              ylab = "Freq of gene-eqtl pairs", cex.names=0.8)
+              ylab = "# gene-eqtl pairs", cex.names=0.8)
 
 # by binning values 
-hist(find.effects_TF.geneeqtl.A.plot$N, main = "Frequency of gene-eqtl pairs", xlab = "# times gene-eqtl pairs appear",labels = T)
+hist(find.effects_TF.geneeqtl.A.plot$N, main = "# gene-eqtl pairs", xlab = "# times gene-eqtl pairs appear",labels = T)
 # the majority of gene-eqtl pairs appear between 0-50 times
 
 
