@@ -156,3 +156,24 @@ testparams <- function(params, tab){
   
   return(temp_TF)
 }
+
+create_res_table <- function(tab){
+  temp <- data.table(matrix(ncol=10, nrow=1))
+  names(temp) <- c("geneA", "geneB", "eqtl.A", "eqtl.B","unique.genepairs", "unique.geneeqtlpairs.A","unique.geneeqtlpairs.B","sign.p", "nonsign.p", "cor.p")
+  
+  temp$geneA <- length(unique(tab$geneA))
+  temp$geneB <- length(unique(tab$geneB))
+  temp$eqtl.A <- length(unique(tab$eqtl.A))
+  temp$eqtl.B <- length(unique(tab$eqtl.B))
+  temp$sign.p <- tab$sign.p[1]
+  temp$nonsign.p <- tab$non_sign_p[1]
+  temp$cor.p <- tab$cis_p[1]
+  un.genepairs <- tab[(tab$`A->B`==T & tab$`B->A`==F), .N, by= .(geneA, geneB)]
+  temp$unique.genepairs <- nrow(un.genepairs[N==1])
+  un.geneeqtl.A <- tab[(tab$`A->B`==T & tab$`B->A`==F), .N, by= .(geneA, eqtl.A)]
+  un.geneeqtl.B <- tab[(tab$`A->B`==T & tab$`B->A`==F), .N, by= .(geneB, eqtl.B)]
+  temp$unique.geneeqtlpairs.A <- nrow(un.geneeqtl.A)
+  temp$unique.geneeqtlpairs.B <- nrow(un.geneeqtl.B)
+  
+  return(temp)
+}

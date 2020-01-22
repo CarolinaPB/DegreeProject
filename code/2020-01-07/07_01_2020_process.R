@@ -218,8 +218,8 @@ nodes <- data.table(id = names(memb),
 nodes <- nodes[order(nodes$id), ]
 nodes
 
+plot(plot_TF, layout=layout_with_gem,edge.arrow.size=.5, vertex.label=NA)
 
-groups(components(plot_TF))
 
 
 

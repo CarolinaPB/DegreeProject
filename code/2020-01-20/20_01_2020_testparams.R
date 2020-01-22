@@ -127,3 +127,4 @@ for (i in 1:length(unique(res_table$nonsign.p))){
 }
 legend(x=20, yrange[2], unique(res_table$nonsign.p), col=colors, lty=linetype, cex=0.8)
 
+
