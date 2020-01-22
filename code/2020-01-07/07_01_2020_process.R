@@ -199,220 +199,51 @@ numpairs.table2 <- numpairs.table2[order(N)]
 
 # all values individually
 bp2 <- barplot(numpairs.table2$numpairs, numpairs.table2$N, names.arg=unique(numpairs.table2$N), 
-              width = 0.5, space=0.2, legend.text = F, ylim = c(0,max(numpairs.table2$numpairs)+100),
-              main = "Number of times gene-eqtl pairs appear \n (A->B = T and B->A = F)", xlab = "# times a gene-eqtl pair appears", 
-              ylab = "# gene-eqtl pairs", cex.names=0.8)
+               width = 0.5, space=0.2, legend.text = F, ylim = c(0,max(numpairs.table2$numpairs)+100),
+               main = "Number of times gene-eqtl pairs appear \n (A->B = T and B->A = F)", xlab = "# times a gene-eqtl pair appears", 
+               ylab = "# gene-eqtl pairs", cex.names=0.8)
 
 # by binning values 
 hist(find.effects_TF.geneeqtl.A.plot$N, main = "# gene-eqtl pairs", xlab = "# times gene-eqtl pairs appear",labels = T)
 # the majority of gene-eqtl pairs appear between 0-50 times
 
 
+##### network plotting ####
+plot_TF <- graph_from_edgelist(as.matrix(find.effects_TF[,.(geneA, geneB)]),directed=TRUE)
+# components(plot_TF)
+
+memb <- components(plot_TF)$membership
+nodes <- data.table(id = names(memb),
+                    group_id = memb)
+nodes <- nodes[order(nodes$id), ]
+nodes
+
+
+groups(components(plot_TF))
 
 
 
 
 
+find.effects_TNA.1 <- find.effects[find.effects$`A->B`==T & is.na(find.effects$`B->A`), .(geneA, geneB, eqtl.A, eqtl.B, `A->B`, `B->A`)]
+find.effects_TNA.2 <- rbind(find.effects_TNA.1, find.effects[is.na(find.effects$`A->B`) & find.effects$`B->A`==T, .(geneA=geneB, geneB=geneA, eqtl.A=eqtl.B, eqtl.B=eqtl.A, `A->B`=`B->A`, `B->A`=`A->B`)])
+find.effects_TNA <- unique(find.effects_TNA.2)
+
+plot_TNA <- graph_from_edgelist(as.matrix(find.effects_TNA[,.(geneA, geneB)]),directed=TRUE)
+# components(plot_TF)
+
+memb <- components(plot_TNA)$membership
+nodes <- data.table(id = names(memb),
+                    group_id = memb)
+nodes <- nodes[order(nodes$id), ]
+nodes
+
+V(plot_TNA)$size <- 5
+plot(plot_TNA, layout=layout_with_gem,edge.arrow.size=.5, vertex.label=NA, edge.curved=.1)
 
 
-
-
-
-
-
-
-
-
-#####
-
-effects <- find.effects
-
-# Define cases
-# one gene affects the other but we don't know the action of the other
-case1 <- effects[(is.na(effects$`A->B`) & effects$`B->A` == TRUE) | (is.na(effects$`B->A`) & effects$`A->B` == TRUE)]
-# one gene affects the other but is not affected by the other gene
-case2 <- effects[(effects$`A->B` == TRUE & effects$`B->A` == FALSE) | (effects$`A->B` == FALSE & effects$`B->A` == TRUE)]
-# we don't know if the genes affect each other
-case3 <- effects[is.na(effects$`A->B`) & is.na(effects$`B->A`)]
-# a gene affects the other but it's also affected by that other gene
-case4 <- effects[(effects$`A->B` == TRUE & effects$`B->A` == TRUE)]
-# no gene affects the other
-case5 <- effects[(effects$`A->B` == FALSE & effects$`B->A` == FALSE)]
-
-
-
-
-case1.A_to_B <- case1[case1$`A->B`==TRUE & is.na(case1$`B->A`)]
-case1.A_to_B <- case1.A_to_B[,c("geneA","geneB", "A->B")]
-
-case1.B_to_A <- case1[case1$`B->A`==TRUE & is.na(case1$`A->B`)]
-case1.B_to_A <- case1.B_to_A[,c("geneB", "geneA", "B->A")]
-
-if (nrow(case1.A_to_B) > 0 & nrow(case1.B_to_A) > 0){
-  case1.links <- rbind(case1.A_to_B, case1.B_to_A, use.names=FALSE)
-  
-} else if (nrow(case1.A_to_B) == 0 & nrow(case1.B_to_A) > 0){
-  case1.links <- case1.B_to_A
-  
-} else if (nrow(case1.A_to_B) > 0 & nrow(case1.B_to_A) == 0){
-  case1.links <- case1.A_to_B
-  
-} else if (nrow(case1.A_to_B) == 0 & nrow(case1.B_to_A) == 0){
-  case1.links <- case1.A_to_B
-}
-
-colnames(case1.links) <- c("from", "to", "type")
-case1.links$case <- 1
-case1.links <- unique(case1.links)
-
-case2.A_to_B <- case2[case2$`A->B`==TRUE & case2$`B->A`==FALSE]
-case2.A_to_B <- case2.A_to_B[,c("geneA","geneB", "A->B")]
-
-case2.B_to_A <- case2[case2$`B->A`==TRUE & case2$`A->B`==FALSE]
-case2.B_to_A <- case2.B_to_A[,c("geneB", "geneA", "B->A")]
-
-if (nrow(case2.A_to_B) > 0 & nrow(case2.B_to_A) > 0){
-  case2.links <- rbind(case2.A_to_B, case2.B_to_A, use.names=FALSE)
-  
-} else if (nrow(case2.A_to_B) == 0 & nrow(case2.B_to_A) > 0){
-  case2.links <- case2.B_to_A
-  
-} else if (nrow(case2.A_to_B) > 0 & nrow(case2.B_to_A) == 0){
-  case2.links <- case2.A_to_B
-  
-} else if (nrow(case2.A_to_B) == 0 & nrow(case2.B_to_A) == 0){
-  case2.links <- case2.A_to_B
-}
-
-colnames(case2.links) <- c("from", "to", "type")
-case2.links$case <- 2
-case2.links <- unique(case2.links)
-
-case3.links <- case3[,c("geneA", "geneB")]
-case3.links$type <- NA
-case3.links <- unique(case3.links)
-colnames(case3.links) <- c("from", "to", "type")
-case3.links$case <- 3
-
-case4.A_to_B <- case4[case4$`A->B`==TRUE & case4$`A->B`==TRUE]
-case4.A_to_B <- case4.A_to_B[,c("geneA","geneB", "A->B")]
-
-case4.B_to_A <- case4[case4$`B->A`==TRUE & case4$`B->A`==TRUE]
-case4.B_to_A <- case4.B_to_A[,c("geneB", "geneA", "B->A")]
-
-if (nrow(case4.A_to_B) > 0 & nrow(case4.B_to_A) > 0){
-  case4.links <- rbind(case4.A_to_B, case4.B_to_A, use.names=FALSE)
-  
-} else if (nrow(case4.A_to_B) == 0 & nrow(case4.B_to_A) > 0){
-  case4.links <- case4.B_to_A
-  
-} else if (nrow(case4.A_to_B) > 0 & nrow(case4.B_to_A) == 0){
-  case4.links <- case4.A_to_B
-  
-} else if (nrow(case4.A_to_B) == 0 & nrow(case4.B_to_A) == 0){
-  case4.links <- case4.A_to_B
-}
-
-colnames(case4.links) <- c("from", "to", "type")
-case4.links$case <- 4
-case4.links <- unique(case4.links)
-
-
-case5.A_to_B <- case5[case5$`A->B`==FALSE & case5$`A->B`==FALSE]
-case5.A_to_B <- case5.A_to_B[,c("geneA","geneB", "A->B")]
-
-case5.B_to_A <- case5[case5$`B->A`==FALSE & case5$`B->A`==FALSE]
-case5.B_to_A <- case5.B_to_A[,c("geneB", "geneA", "B->A")]
-
-if (nrow(case5.A_to_B) > 0 & nrow(case5.B_to_A) > 0){
-  case5.links <- rbind(case5.A_to_B, case5.B_to_A, use.names=FALSE)
-  
-} else if (nrow(case5.A_to_B) == 0 & nrow(case5.B_to_A) > 0){
-  case5.links <- case5.B_to_A
-  
-} else if (nrow(case5.A_to_B) > 0 & nrow(case5.B_to_A) == 0){
-  case5.links <- case5.A_to_B
-  
-} else if (nrow(case5.A_to_B) == 0 & nrow(case5.B_to_A) == 0){
-  case5.links <- case5.A_to_B
-}
-
-colnames(case5.links) <- c("from", "to", "type")
-case5.links$case <- 5
-case5.links <- unique(case5.links)
-
-
-
-allcases.links <- do.call("rbind", list(case1.links, case2.links, case3.links, case4.links, case5.links))
-
-
-
-
-#### Case2 plot
-allcases.graph <- graph_from_data_frame(allcases.links[allcases.links$case == 2],directed=TRUE)
-
-E(allcases.graph)$color <- as.factor(E(allcases.graph)$case)
-
-V(allcases.graph)$label <- NA
-
-E(allcases.graph)$color[E(allcases.graph)$case == 1] <- 'red'    
-E(allcases.graph)$color[E(allcases.graph)$case == 2] <- 'blue'  
-E(allcases.graph)$color[E(allcases.graph)$case == 4] <- 'red'  
-
-# V(allcases.graph)$label.cex = 1.5
-
-# plot(allcases.graph, layout = layout_with_fr,vertex.label.degree=0)
-# plot(allcases.graph, layout = layout_with_fr, vertex.label.dist=2)
-plot(allcases.graph, layout = layout_as_tree, vertex.label.dist=2, main="Case2 - TRUE and FALSE")
-plot(allcases.graph, layout=layout_with_graphopt, vertex.label.dist=2, main="Case2 - TRUE and FALSE")
 ########
 find.effects
-
-# find.effects[,.(count= .N, count=sum(eqtl.A), by=geneA)]
-
-### TODO table with summary numbers
-### TODO plot with diff params
-# ex: n gene pairs with A->B TRUE and B->A FALSE
-# other ex:
-# The summary table shows
-# * number of unique traits
-# * num of unique snps
-# * num of A->B
-# * num of B->A
-# * num of A->B that we can’t say if it’s true or false
-# * num of B->A that we can’t say if it’s true or false
-# * num of unique gene pairs with A->B
-# * num of unique gene pairs with B->A
-# * num of unique gene pairs with A not affecting B
-# * num of unique gene pairs with B not affecting A
-# * num of unique gene pairs with undertermined A->B
-# * num of unique gene pairs with undertermined B->A
-
-res <- find.effects
-tab <- data.table(matrix(ncol=16, nrow=1))
-names(tab) <- c("geneA", "geneB", "eqtl.A", "eqtl.B","A->B", "B->A", "maybeAB","maybeBA", "A->B.gpairs", "B->A.gpairs", "~A->B.gpairs","~B->A.gpairs", "A->Bmaybe.gpairs","B->Amaybe.gpairs", "B->A.gpairs_TF", "A->B.gpairs_TF")
-tab$geneA <- length(unique(res$geneA)) # num of unique genes A
-tab$geneB <- length(unique(res$geneB)) # num of unique genes B
-tab$eqtl.A <- length(unique(res$eqtl.A)) # num of unique eqtlA
-tab$eqtl.B <- length(unique(res$eqtl.B)) # num of unique eqtlB
-tab$maybeBA <- nrow(res[is.na(res$`B->A`)]) # num of gene-eqtl pairs for which we can't say
-tab$maybeAB <- nrow(res[is.na(res$`A->B`)]) # num of gene-eqtl pairs for which we can't say
-tab$`A->B` <- nrow(res[res$`A->B`==TRUE])
-tab$`B->A` <- nrow(res[res$`B->A`==TRUE])
-tab$`A->B.gpairs` <- nrow(res[res$`A->B`==TRUE, .N, by=.(geneA, geneB)])  # number of gene pairs for which A->B is true
-tab$`B->A.gpairs` <- nrow(res[res$`B->A`==TRUE, .N, by=.(geneA, geneB)])  # number of gene pairs for which B->A is true
-tab$`A->Bmaybe.gpairs`<- nrow(res[is.na(res$`A->B`), .N, by=.(geneA, geneB)]) # number of gene pairs for which A->B is maybe
-tab$`B->Amaybe.gpairs`<- nrow(res[is.na(res$`B->A`), .N, by=.(geneA, geneB)]) # number of gene pairs for which B->A is maybe
-tab$`~A->B.gpairs` <- nrow(res[res$`A->B`==FALSE, .N, by=.(geneA, geneB)])  # number of gene pairs for which A->B is false
-tab$`~B->A.gpairs` <- nrow(res[res$`B->A`==FALSE, .N, by=.(geneA, geneB)])  # number of gene pairs for which B->A is false
-tab$`A->B.gpairs_TF` <- nrow(res[res$`B->A`==FALSE & res$`A->B`==TRUE, .N, by=.(geneA, geneB)])  # number of gene pairs for which B->A is false
-tab$`B->A.gpairs_TF` <- nrow(res[res$`B->A`==TRUE & res$`A->B`==FALSE, .N, by=.(geneA, geneB)])  # number of gene pairs for which B->A is false
-
-t(tab)
-
-A_to_B <- res[res$`B->A`==FALSE & res$`A->B`==TRUE, .N, by=.(geneA, geneB)]
-B_to_A <- res[res$`B->A`==TRUE & res$`A->B`==FALSE, .N, by=.(geneA, geneB)]
-
 
 
 
