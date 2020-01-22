@@ -1,0 +1,222 @@
+---
+title: "R Notebook"
+output:
+  html_notebook
+---
+
+### Set up
+```{r eval=FALSE, include=TRUE}
+library(data.table)
+library(tidyr)
+library(igraph)
+library(dplyr)
+library(parallel)
+
+path <- "/home/carolpb/DegreeProject/" # to use on Uppmax
+respath <- "/proj/snic2019-8-367/private/carol/results/"
+
+#respath <- "/Users/Carolina/Documents/GitHub/DegreeProject/results/"
+#path <- "/Users/Carolina/Documents/GitHub/DegreeProject/" to use on my computer
+
+source(paste0(path,"code/myfunctions.R"))
+
+nSNPs <- 42052
+nGenes <- 5720
+
+snp.pval <- 0.05/(as.numeric(nGenes) * as.numeric(nSNPs))
+snp.pval.nsign <- as.numeric(1e-5)
+
+corr.pval <-  0.05/(nGenes*nGenes)
+
+effects_table.cor <- fread(paste0(path, "results/2020-01-10/effectstable.gz"))
+```
+
+
+### Create table with cases where A->B is true and B->A is false
+```{r}
+find.effects <- effects_table.cor[cor.pval < corr.pval & cis.A ==T & cis.B==T & geneA!=geneB]
+
+find.effects <- find.effects_fun(find.effects, snp.pval, snp.pval.nsign)
+
+find.effects_TF.1 <- find.effects[find.effects$`A->B`==T & find.effects$`B->A`==F, .(geneA, geneB, eqtl.A, eqtl.B, `A->B`, `B->A`, eqtlA_geneB.pval)]
+find.effects_TF.2 <- rbind(find.effects_TF.1, find.effects[find.effects$`A->B`==F & find.effects$`B->A`==T, .(geneA=geneB, geneB=geneA, eqtl.A=eqtl.B, eqtl.B=eqtl.A, `A->B`=`B->A`, `B->A`=`A->B`, eqtlA_geneB.pval=eqtlB_geneA.pval)])
+find.effects_TF <- unique(find.effects_TF.2)
+find.effects_TF
+```
+## Histogram of p-vals
+```{r}
+hist(find.effects_TF$eqtlA_geneB.pval)
+hist(log10(find.effects_TF$eqtlA_geneB.pval))
+```
+
+
+
+
+## Gene pairs
+Get table with how many times a gene pair appears - 
+N==1 - these pairs only appear once
+N==2 - these pairs appear twice
+N==3 - these pairs appear three times 
+
+This shows that most gene pairs only appear once
+```{r}
+find.effects_TF.numpairs <- find.effects_TF[(`A->B`==T & `B->A`==F), .N, by=.(geneA, geneB)]
+numpairs.table <- data.table(N = unique(find.effects_TF.numpairs$N), numpairs =NA)
+for (i in 1:nrow(numpairs.table)){
+  numpairs.table$numpairs[i] <- nrow(find.effects_TF.numpairs[N==numpairs.table$N[i]])
+}
+numpairs.table
+```
+
+### plot the number of times a gene pair appears
+```{r}
+bp <- barplot(numpairs.table$numpairs, numpairs.table$N, names.arg=unique(find.effects_TF.numpairs$N), 
+              width = 0.5, space=0.2, legend.text = F, ylim = c(0,max(numpairs.table$numpairs)+3000),
+              main = "Number of times gene pairs appear \n (A->B = T and B->A = F)", xlab = "# times a gene pair appears", 
+              ylab = "# of gene pairs")
+text(bp,numpairs.table$numpairs, labels=numpairs.table$numpairs, cex=1, pos=3)
+```
+
+## Gene-eqtl pairs
+```{r}
+find.effects_TF.geneeqtl.A <- find.effects_TF[(`A->B`==T & `B->A`==F), .N, by=.(geneA, eqtl.A)]
+find.effects_TF.geneeqtl.B <- find.effects_TF[(`A->B`==T & `B->A`==F), .N, by=.(geneB, eqtl.B)]
+
+find.effects_TF.geneeqtl.A.plot <- find.effects_TF.geneeqtl.A %>% unite(gene_eqtlA, geneA, eqtl.A, sep = "__")
+#find.effects_TF.geneeqtl.B.plot <- find.effects_TF.geneeqtl.B %>% unite(gene_eqtlB, geneB, eqtl.B, sep = "__")
+
+plot(as.factor(find.effects_TF.geneeqtl.A.plot$gene_eqtlA), find.effects_TF.geneeqtl.A.plot$N, 
+     xlab="gene-eqtl pairs", ylab="# times each pair appears", axes=FALSE, 
+     main="Num times of times each gene-eqtl pair appears \n (A->B = T and B->A = F)")
+Axis(side=2, labels=T)
+```
+
+### Find number of times a gene-eqtl pair appears (for geneA-eqtlA --> the "origin"/ the gene/eqtl that affects the other) 
+```{r}
+numpairs.table2 <- data.table(N = unique(find.effects_TF.geneeqtl.A.plot$N), numpairs =NA)
+for (i in 1:nrow(numpairs.table2)){
+  numpairs.table2$numpairs[i] <- nrow(find.effects_TF.geneeqtl.A[N==numpairs.table2$N[i]])
+}
+numpairs.table2 <- numpairs.table2[order(N)]
+numpairs.table2
+```
+
+### Bar plot of table above
+```{r}
+# all values individually
+bp2 <- barplot(numpairs.table2$numpairs, numpairs.table2$N, names.arg=unique(numpairs.table2$N), 
+               width = 0.5, space=0.2, legend.text = F, ylim = c(0,max(numpairs.table2$numpairs)+100),
+               main = "Number of times gene-eqtl pairs appear \n (A->B = T and B->A = F)", xlab = "# times a gene-eqtl pair appears", 
+               ylab = "# gene-eqtl pairs", cex.names=0.8)
+```
+
+### Same, but grouping values 
+```{r}
+hist(find.effects_TF.geneeqtl.A.plot$N, main = "# gene-eqtl pairs", xlab = "# times gene-eqtl pairs appear",labels = T, ylim = c(0,max(find.effects_TF.geneeqtl.A.plot$N)+2000))
+```
+the majority of gene-eqtl pairs appear between 0-50 times
+
+### Plot network
+```{r}
+plot_TF <- graph_from_edgelist(as.matrix(find.effects_TF[,.(geneA, geneB)]),directed=TRUE)
+```
+
+```{r}
+V(plot_TF)$size <- 5
+plot(plot_TF, layout=layout_with_fr,edge.arrow.size=.5, vertex.label=NA)
+```
+
+### Check how many groups of connected genes there are
+
+```{r}
+components(plot_TF)$no
+```
+if components(plot_TF)\$no > 1, there are several groups and those groups are not connected to each other  
+if components(plot_TF)\$no == 1, all genes are connected
+
+\n
+table where you have each gene and which group it belongs to  
+- not interesting if there's only one group
+```{r}
+memb <- components(plot_TF)$membership
+nodes <- data.table(id = names(memb),
+                    group_id = memb)
+nodes <- nodes[order(nodes$id), ]
+nodes
+```
+
+
+
+# Testing with different parameters
+```{r}
+sign_p <- c(1e-17, 1e-16, 1e-15, 1e-14, 1e-13, 1e-12, 1e-11, 1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2)
+non_sign_p <- c(1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2)
+cor_p <- c(1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2)
+params0 <- data.table(expand.grid(sign_p=sign_p, non_sign_p=non_sign_p, cor_p=cor_p))
+```
+Ran on diprotodon
+```{r eval=FALSE, include=TRUE}
+# cl = makeCluster(detectCores()-2, type="FORK")
+cl = makeCluster(4, type="FORK")
+res <- parApply(cl=cl,params0,1, testparams, effects_table.cor)
+stopCluster(cl)
+```
+the result is stored in res (list of tables)
+
+```{r}
+load(paste0(respath, "2020-01-20/20_01_2020_resparams.Rdata"))
+```
+
+## create summary table for number of unique gene pairs found and unique gene-eqtl pairs found (both for geneA (the one that has an effect) and for gene B)
+one row per group of parameters
+```{r}
+cl = makeCluster(detectCores()-2, type="FORK")
+res_table.temp <- parLapply(cl=cl, res, create_res_table)
+stopCluster(cl)
+
+res_table <- rbindlist(res_table.temp)
+res_table <- res_table[order(sign.p, -nonsign.p, cor.p)]
+res_table
+```
+
+## plot number of unique gene pairs found when using different parameters combinations
+one panel for each corr.pval   
+The line colors represent different values for the non-significant pval threshold
+x-axis represents the significant p-val treshold
+```{r}
+par(mfrow=c(2,4))
+
+cor.pvals <- unique(res_table$cor.p)
+linetype <- c(1:length(unique(res_table$nonsign.p)))
+
+for (p in cor.pvals){
+  xrange <- range(-log(res_table$sign.p)) # set x-axis range
+  yrange <- range(res_table$unique.genepairs) # set y-axis range
+  plot(xrange, yrange, type = "n", main=paste("corr pval = ", p), xlab = "-log(sign.p)", ylab = " #unique gene pairs") # empty plot
+  colors <- rainbow(length(unique(res_table$nonsign.p)))
+  for (i in 1:length(unique(res_table$nonsign.p))){
+    x <- -log(res_table[nonsign.p==nonsign.p[i] & cor.p==p]$sign.p)
+    y <- res_table[nonsign.p==nonsign.p[i] & cor.p==p]$unique.genepairs
+    lines(x,y,  type="l", lwd=1.5,lty=linetype[i], col=colors[i])
+  }
+}
+```
+Plot without accounting for corr.pval  
+different line colors represent different non-sign pval threshold  
+x-axis represents the significant p-val treshold  
+```{r}
+par(mfrow=c(1,1))
+
+xrange <- range(-log(res_table$sign.p)) # set x-axis range
+yrange <- range(res_table$unique.genepairs) # set y-axis range
+plot(xrange, yrange, type = "n", xlab = "-log(p)", ylab = "#unique gene pairs",  main="#gene pairs where A->B") # empty plot
+colors <- rainbow(length(unique(res_table$nonsign.p)))
+linetype <- c(1:length(unique(res_table$nonsign.p)))
+for (i in 1:length(unique(res_table$nonsign.p))){
+  x <- -log(res_table$sign.p[res_table$nonsign.p==unique(res_table$nonsign.p)[i]])
+  y <- res_table$unique.genepairs[res_table$nonsign.p==unique(res_table$nonsign.p)[i]]
+  lines(x,y,  type="l", lwd=1.5,lty=linetype[i], col=colors[i])
+}
+legend(x=20, yrange[2], unique(res_table$nonsign.p), col=colors, lty=linetype, cex=0.8)
+```
+
