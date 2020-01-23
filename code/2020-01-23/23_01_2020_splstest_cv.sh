@@ -8,4 +8,4 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user carolina.pitabarros@gmail.com
 
-Rscript /home/carolpb/DegreeProject/code/2020-01-23/23_01_2020_spla_test.R
+Rscript /home/carolpb/DegreeProject/code/2020-01-23/23_01_2020_spls_test.R
