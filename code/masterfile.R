@@ -5,8 +5,17 @@
 # SNOWY
 squeue -M snowy
 sbatch -M snowy slurm_script_file
---reservation=job_might_be_killed
 
+# to check usage while job is running --> snowy
+less /sw/share/slurm/snowy/uppmax_jobstats/*/<job_ID>
+# to check usage while job is running --> snowy
+less /sw/share/slurm/rackham/uppmax_jobstats/*/<job_ID>
+  
+# Other job stats
+scontrol show job <job id>
+scontrol -M snowy show job <job id>
+  
+  
 #   ____________________________________________________________________________
 #   Starting data                                                           ####
 library(data.table)
