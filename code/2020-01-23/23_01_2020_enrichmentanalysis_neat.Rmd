@@ -1,0 +1,52 @@
+
+```{r}
+library(neat)
+`%notin%` <- Negate(`%in%`)
+```
+
+```{r}
+induced_genes = list('ESR 2' = yeast$esr2) # set of differentially expressed genes 
+#(ESR 2 is the set of induced ESR genes)
+functional_sets = yeast$goslimproc[c(72,75)] # two functional gene sets of interest: 
+#response to heat and to starvation
+```
+
+# genes that I have that are not in the
+```{r}
+find.effects_TF_notin_list <- find.effects_TF[which(find.effects_TF$geneA %notin% yeast$yeastnet[,1])]
+find.effects_TF_notin_list
+# length(unique(find.effects_TF_notin_list$geneA))
+```
+
+there are 90 geneA that are not in the yeast$yeastnet dataset
+
+```{r}
+alist <- list(geneA = find.effects_TF$geneA, geneB=find.effects_TF$geneB)
+blist <- yeast$goslimproc 
+blist <- yeast$kegg
+#blist <- list(find.effects_TF$geneB)
+
+test <- data.table(neat(alist = alist, blist = blist , network = as.matrix(find.effects_TF[,.(geneA, geneB)]),nettype = 'directed', nodes = unique(c(find.effects_TF$geneA, find.effects_TF$geneB)), alpha = 0.01, mtc.type = 'fdr', anames="genesA", bnames="genesB"))
+test
+```
+
+```{r}
+table(test$conclusion)
+```
+
+```{r}
+over_test=data.table(test[test$conclusion=='Overenrichment',])
+print(over_test)
+```
+
+
+
+
+```{r}
+alist <- list(geneA = find.effects_TF$geneA)
+blist <- list(geneB = find.effects_TF$geneB)
+blist <- yeast$kegg
+
+kegg_neat_test <- data.table(neat(alist = alist, blist = blist , network = yeast$yeastnet,nettype = 'directed', nodes = unique(c(find.effects_TF$geneA, find.effects_TF$geneB)), alpha = 0.01, mtc.type = 'fdr', anames="genesA", bnames="genesB"))
+kegg_neat_test
+```
