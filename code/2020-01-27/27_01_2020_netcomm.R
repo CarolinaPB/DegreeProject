@@ -5,7 +5,7 @@ library(linkcomm)
 path <- "/home/carolpb/DegreeProject/" # use with uppmax
 respath <- "/proj/snic2019-8-367/private/carol/results"
 
-source("code/myfunctions.R")
+source(paste0(path, "code/myfunctions.R"))
 
 ##### PARAMETERS #####
 var.exp.lim <- 0.1
