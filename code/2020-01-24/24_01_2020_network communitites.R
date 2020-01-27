@@ -1,16 +1,56 @@
-demo(topic = "linkcomm", package = "linkcomm")
+library(data.table)
+library(linkcomm)
 
+path <- "/Users/Carolina/Documents/GitHub/DegreeProject/" 
+
+source("code/myfunctions.R")
+
+##### PARAMETERS #####
+var.exp.lim <- 0.1
+
+# nSNPs <- length(colnames(genotype))-1
+# nGenes <- length(colnames(phenotype))-1
+
+nSNPs <- 42052
+nGenes <- 5720
+
+snp.pval <- 0.01
+snp.pval.nsign <- as.numeric(1e-5)
+
+corr.pval <- 0.05/choose(nGenes,2)
+
+
+######
+effects_table.cor <- fread(paste0(path, "results/2020-01-10/effectstable.gz"))
+
+find.effects <- effects_table.cor[cor.pval < corr.pval & cis.A ==T & cis.B==T & geneA!=geneB]
+
+find.effects <- find.effects_fun(find.effects, snp.pval, snp.pval.nsign)
+
+####
+find.effects_TF.1 <- find.effects[find.effects$`A->B`==T & find.effects$`B->A`==F, .(geneA, geneB, eqtl.A, eqtl.B, `A->B`, `B->A`)]
+find.effects_TF.2 <- rbind(find.effects_TF.1, find.effects[find.effects$`A->B`==F & find.effects$`B->A`==T, .(geneA=geneB, geneB=geneA, eqtl.A=eqtl.B, eqtl.B=eqtl.A, `A->B`=`B->A`, `B->A`=`A->B`)])
+find.effects_TF <- unique(find.effects_TF.2)
+
+#### communities stuff
 lc <- getLinkCommunities(find.effects_TF[,.(geneA, geneB)], directed = T)
+
+save(lc, file=paste0(path,"results/2020-01-24/24_01_2020_linkedcommunities_TF.Rdata"))
+
 print(lc)
 
-plot(lc, type = "graph", layout = layout.fruchterman.reingold, vlabel = FALSE)
+plot(lc, type = "graph", layout = layout.fruchterman.reingold, vlabel = FALSE, node.pies=F)
 
 # The following displays only the nodes that belong to 3 or more communities:
-plot(lc, type = "graph", layout = "spencer.circle", shownodesin = 3)
-plot(lc, type = "graph", shownodesin = 2, node.pies = TRUE)
-plot(lc, type = "members")
-plot(lc, type = "summary")
-plot(lc, type = "dend")
+#plot(lc, type = "graph", layout = "spencer.circle", shownodesin = 3, vlabel = FALSE, node.pies=F)
+# visualize node membership to different communities using node pies
+plot(lc, type = "graph", shownodesin = 2, node.pies = TRUE, vlabel = FALSE)
+#visualize node community membership for the top-connected nodes using a community membership matrix
+plot(lc, type = "members", nodes=unique(c(find.effects_TF$geneA, find.effects_TF$geneB)))
+# display a summary of the results of the link communities algorithm
+plot(lc, type = "summary", vlabel = FALSE)
+# plot the dendrogram on its own with coloured community clusters
+plot(lc, type = "dend", vlabel = FALSE)
 
 # for nested communities
 getAllNestedComm(lc)
