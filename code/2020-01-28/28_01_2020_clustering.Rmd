@@ -1,0 +1,150 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r include=FALSE}
+library(data.table)
+library(linkcomm)
+
+path <- "/Users/Carolina/Documents/GitHub/DegreeProject/" 
+respath <- "/Users/Carolina/Documents/GitHub/DegreeProject/results/"
+
+source(paste0(path, "code/myfunctions.R"))
+```
+
+```{r}
+var.exp.lim <- 0.1
+
+nSNPs <- 42052
+nGenes <- 5720
+
+snp.pval <- 0.01
+snp.pval.nsign <- as.numeric(1e-5)
+
+corr.pval <- 0.05/choose(nGenes,2)
+```
+
+```{r}
+find.effects_TF <- fread(paste0(respath, "2020-01-27/findeffects_TF.gz"))
+load(paste0(path,"results/2020-01-27/27_01_2020_linkedcommunities_TF.Rdata"))
+```
+
+```{r}
+print(lc)
+```
+
+
+A data frame consisting of 2 columns; the first contains node names, and the second contains single community IDs for each node. All communities and their nodes are represented, but not necessarily all nodes.
+```{r}
+head(lc$nodeclusters)
+```
+
+
+A list of integer vectors containing the link IDs that belong to each community. Community IDs are the numerical position of the communities in the list.
+```{r}
+head(lc$clusters)
+```
+
+
+A data frame with 3 columns; the first two contain nodes that interact with each other, and the third is an integer vector of community IDs indicating community membership for each link.
+```{r}
+lc.edges <- data.table(lc$edges)
+lc.edges
+```
+
+
+
+A named integer vector. Names are node names and integer values are the number of communities to which each node belongs.
+```{r}
+head(lc$numclusters)
+```
+
+
+A named integer vector. Names are community IDs and integer values indicate the number of nodes that belong in each community.
+```{r}
+head(lc$clustsizes)
+tail(lc$clustsizes)
+```
+
+Nodes that belong to a lot of different communities will get the largest community centrality scores, whereas nodes that belong to overlapping, nested or few communities will get the lowest scores.
+The 5 most central genes
+```{r}
+cc <- getCommunityCentrality(lc)
+head(sort(cc, decreasing = TRUE))
+```
+
+
+
+```{r}
+plot(lc, type = "members")
+```
+Numbers on the right - number of communities a gene belongs to
+Numbers on the top - community(cluster) number
+
+
+
+```{r}
+gr <- graph_from_edgelist(as.matrix(lc.edges[cluster==39, .(node1, node2)]), directed=T)
+
+plot(gr, layout=layout_with_graphopt)
+```
+
+get shared genes between two communities
+```{r}
+get.shared.nodes(lc, comms = c(1,7))
+```
+
+returns the meta-communities (clusters of community IDs)
+```{r}
+cr.20 <- getClusterRelatedness(lc, hcmethod = "ward", cutat = 20)
+cr.5 <- getClusterRelatedness(lc, hcmethod = "ward", cutat = 5)
+getClusterRelatedness(lc, hcmethod = "ward")
+```
+
+```{r}
+cr.pdmax <- getClusterRelatedness(lc, hcmethod = "ward", cutat = lc$pdmax)
+```
+
+
+
+```{r}
+plot(lc, type = "graph", shownodesin = 0, node.pies = T, vlabel=F, clusterids = cr.20[[1]])
+plot(lc, type = "graph", shownodesin = 0, node.pies = T, vlabel=F, clusterids = cr.5[[1]], layout="spencer.circle")
+```
+
+
+
+
+```{r}
+gr.meta <- graph_from_edgelist(as.matrix(lc.edges[cluster %in% cr.5[[1]], .(node1, node2)]), directed=T)
+
+plot(gr.meta, vertex.label=NA)
+```
+
+
+```{r}
+gr.meta2 <- graph_from_edgelist(as.matrix(lc.edges[, .(node1, node2)]), directed=T)
+
+plot(gr.meta2, vertex.label=NA, vertex.color=lc.edges$cluster, layout=layout.fruchterman.reingold)
+```
+
+
+
+```{r}
+cm <- getCommunityConnectedness(lc, conn = "modularity")
+plot(lc, type = "commsumm", summary = "modularity")
+```
+
+
+
+collapse these larger numbers of communitites into smaller numbers of meta-communities
+```{r}
+mc <- meta.communities(lc, hcmethod = "ward", deepSplit = 0)
+```
+
+```{r}
+plot(mc, type = "graph", vlabel = FALSE)
+plot(lc, type = "graph", vlabel = FALSE)
+```
+
