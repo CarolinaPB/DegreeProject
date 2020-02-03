@@ -212,3 +212,13 @@ E(allcases.graph)$color[E(allcases.graph)$case == 4] <- 'red'
 # plot(allcases.graph, layout = layout_with_fr, vertex.label.dist=2)
 plot(allcases.graph, layout = layout_as_tree, vertex.label.dist=2, main="Case2 - TRUE and FALSE")
 plot(allcases.graph, layout=layout_with_graphopt, vertex.label.dist=2, main="Case2 - TRUE and FALSE")
+
+
+
+
+
+
+
+
+# gr.meta2 <- graph_from_edgelist(as.matrix(lc.edges[, .(node1, node2)]), directed=T)
+# plot(gr.meta2, vertex.label=NA, vertex.color=lc.edges$cluster, layout=layout.fruchterman.reingold)
