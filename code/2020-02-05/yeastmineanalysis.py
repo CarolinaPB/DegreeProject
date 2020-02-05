@@ -15,6 +15,9 @@ from __future__ import print_function
 
 # The following two lines will be needed in every python script:
 from intermine.webservice import Service
+# to get API key, go to https://yeastmine.yeastgenome.org/yeastmine/begin.do and create an account
+# go to account details and create a new key
+
 yeastmineAPItoken_file = open('yeastmineAPI.txt', 'r')
 yeastmineAPItoken = yeastmineAPItoken_file.readline().rstrip()
 service = Service("https://yeastmine.yeastgenome.org/yeastmine/service", token = yeastmineAPItoken)
