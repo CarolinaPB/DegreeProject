@@ -38,8 +38,6 @@ query.add_constraint("Gene", "IN", "genelist", code = "A")
 # Uncomment and edit the code below to specify your own custom logic:
 # query.set_logic("A")
 
-print("primaryIdentifier", "secondaryIdentifier", \
-        "symbol", "name", sep='\t')
+print("gene", "symbol", "primaryIdentifier", "name", sep='\t')
 for row in query.rows():
-    print(row["primaryIdentifier"], row["secondaryIdentifier"], \
-        row["symbol"], row["name"], sep='\t')
+    print(row["secondaryIdentifier"], row["symbol"], row["primaryIdentifier"], row["name"], sep='\t')
