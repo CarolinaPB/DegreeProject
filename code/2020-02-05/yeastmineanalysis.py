@@ -18,7 +18,7 @@ from intermine.webservice import Service
 # to get API key, go to https://yeastmine.yeastgenome.org/yeastmine/begin.do and create an account
 # go to account details and create a new key
 
-yeastmineAPItoken_file = open('yeastmineAPI.txt', 'r')
+yeastmineAPItoken_file = open('/Users/Carolina/Documents/GitHub/DegreeProject/code/2020-02-05/yeastmineAPI.txt', 'r')
 yeastmineAPItoken = yeastmineAPItoken_file.readline().rstrip()
 service = Service("https://yeastmine.yeastgenome.org/yeastmine/service", token = yeastmineAPItoken)
 
