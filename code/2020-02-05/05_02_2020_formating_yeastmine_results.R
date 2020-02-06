@@ -4,10 +4,10 @@ path <- "/Users/Carolina/Documents/GitHub/DegreeProject/"
 respath <- "/Users/Carolina/Documents/GitHub/DegreeProject/results/"
 load(paste0(path,"results/2020-01-27/27_01_2020_linkedcommunities_TF.Rdata"))
 
-genelist <- fread(paste0(path,"genelist.txt"))
+genelist <- fread(paste0(path,"genelist.txt"), header = F)
 cluster_table <- data.table(lc$nodeclusters)
 
-#im.yeast = initInterMine(listMines()["HumanMine"],token = Sys.getenv("yeastmine API"))
+im.yeast = initInterMine(listMines()["HumanMine"],token = Sys.getenv("yeastmine API"))
 
 
 # to get API key, go to https://yeastmine.yeastgenome.org/yeastmine/begin.do and create an account
@@ -40,6 +40,16 @@ ympy.GO.cluster <- merge(ympy.GO, cluster_table, by.x="secondaryIdentifier", by.
 # find genes that have "transcription factor in the GO term"
 ympy.GO.cluster[grepl("transcription factor |Transcription factor",goAnnotation.ontologyTerm.name, fixed = F)]
 
+
+
+
+enrichResult = doEnrichment(
+  im = im.yeast,
+  ids = as.data.frame(genelist)$V1,
+  widget = "go_enrichment_for_gene",
+  filter = "biological_process",
+  correction = "Benjamini Hochberg",
+) 
 
 
 
