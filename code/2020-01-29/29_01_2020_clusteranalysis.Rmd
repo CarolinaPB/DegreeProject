@@ -1,0 +1,217 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r include=FALSE}
+library(data.table)
+library(linkcomm)
+path <- "/Users/Carolina/Documents/GitHub/DegreeProject/" 
+respath <- "/Users/Carolina/Documents/GitHub/DegreeProject/results/"
+source(paste0(path, "code/myfunctions.R"))
+```
+
+```{r}
+find.effects_TF <- fread(paste0(respath, "2020-01-27/findeffects_TF.gz"))
+load(paste0(path,"results/2020-01-27/27_01_2020_linkedcommunities_TF.Rdata"))
+```
+
+
+```{r}
+print(lc)
+```
+
+# A data frame consisting of 2 columns; 
+# the first contains node names, and the second contains single community IDs for each node. 
+# head(lc$clusters)All communities and their nodes are represented, but not necessarily all nodes
+```{r}
+head(lc$nodeclusters)
+```
+
+# A list of integer vectors containing the link IDs that belong to each community. 
+# each list has the members of that community
+# Community IDs are the numerical position of the communities in the list.
+```{r}
+head(lc$clusters)
+```
+
+
+# A data frame with 3 columns; 
+# the first two contain genes(nodes) that interact with each other
+# the third is an integer vector of community IDs indicating community membership for each link.
+```{r}
+lc.edges <- data.table(lc$edges)
+lc.edges
+```
+
+# Number of communities each gene(node) belongs to
+```{r}
+head(lc$numclusters)
+```
+
+# Names are community IDs
+# integer values indicate the number of nodes that belong in each community.
+```{r}
+head(lc$clustsizes)
+tail(lc$clustsizes)
+```
+# Nodes that belong to a lot of different communities will get the largest community centrality scores
+# nodes that belong to overlapping, nested or few communities will get the lowest scores.
+#The 5 most central genes
+# cc <- getCommunityCentrality(lc)
+#save(cc, file=paste0(respath, "2020-01-29/communitycentrality.Rdata"))
+```{r}
+load(paste0(respath, "2020-01-29/communitycentrality.Rdata"))
+```
+
+```{r}
+head(sort(cc, decreasing = TRUE))
+```
+# plot genes that belong to the most communities
+
+```{r}
+plot(lc, type = "members")
+```
+# Numbers on the right - number of communities a gene belongs to
+# Numbers on the top - community(cluster) number
+
+# plot a specific cluster (or several )
+```{r}
+gr <- graph_from_edgelist(as.matrix(lc.edges[cluster %in% c(974, 988, 964) , .(node1, node2)]), directed=T)
+plot(gr, layout=layout_with_graphopt, edge.arrow.size=.4, vertex.label=NA, edge.curved=.1)
+```
+
+```{r}
+gr <- graph_from_edgelist(as.matrix(lc.edges[cluster==974 , .(node1, node2)]), directed=T)
+plot(gr, layout=layout_with_graphopt, edge.arrow.size=.4, vertex.label=NA, edge.curved=.1)
+```
+# two communities that share genes
+```{r}
+gr <- graph_from_edgelist(as.matrix(lc.edges[cluster %in% c(1, 7) , .(node1, node2)]), directed=T)
+plot(gr, layout=layout_with_graphopt, edge.arrow.size=.4, edge.curved=.1)
+plot(lc, type = "graph", node.pies = T, vlabel=T, clusterids = c(1, 7))
+```
+# get shared genes between two communities
+```{r}
+get.shared.nodes(lc, comms = c(1,7))
+```
+
+# get nodes in certain communities
+```{r}
+getNodesIn(lc, clusterids = c(1,7))
+```
+
+
+Three measures of centrality include connectivity, closeness and betweenness. 
+Connectivity - describes the number of links that a node has. 
+Closeness centrality - the measure of distance from one node to all other nodes. 
+Betweenness - the number of times a node is used as a bridge for other two nodes along the shortest paths. 
+These centrality measures can determine how important a node in the graph and examine if the network has scale-free property
+
+# Networks with high modularity have dense connections between the nodes within modules
+# but sparse connections between nodes in different modules.
+# Modularity is often used in optimization methods for detecting community structure in networks.
+
+# measure of how relatively outwardly or inwardly connected a community is.
+# names are community IDs and the numbers are community connectedness or modularity scores.
+```{r}
+#cconnect <- getCommunityConnectedness(lc)
+#save(cconnect, file=paste0(respath, "2020-01-29/communityconnectedness.Rdata"))
+load(paste0(respath, "2020-01-29/communityconnectedness.Rdata"))
+```
+
+```{r}
+#cm <- getCommunityConnectedness(lc, conn = "modularity")
+#save(cm, file=paste0(respath, "2020-01-29/communitymodularity.Rdata"))
+
+load(paste0(respath, "2020-01-29/communitymodularity.Rdata"))
+```
+
+Table with cluster number and connectedness and modularity value
+```{r}
+con_mod <- data.table(cluster=1:length(cm),connectedness=cconnect, modularity=cm)
+```
+
+```{r}
+con_mod_numnodes <- merge(con_mod,data.table(cluster=as.integer(names(lc$clustsizes)), numnodes=lc$clustsizes))
+con_mod_numnodes <- con_mod_numnodes[order(-modularity)]
+con_mod_numnodes
+```
+
+
+Plot the cluster with highest modularity
+```{r}
+plot(lc, type = "graph", node.pies = F, vlabel=T, vshape="circle" , vsize=3, ewidth=1, clusterids = con_mod_numnodes$cluster[1:10], layout="spencer.circle")
+plot(lc, type = "graph", node.pies = F, vlabel=T, vshape="circle" , vsize=3, ewidth=1, clusterids = con_mod_numnodes$cluster[1:10])
+plot(lc, type = "graph", node.pies = F, vlabel=T, vshape="circle" , vsize=3, ewidth=1, clusterids = 672, layout="spencer.circle")
+```
+
+```{r}
+shared  <- get.shared.nodes(lc, comms = c(1969,971))
+```
+
+```{r}
+find.effects_TF[geneA %in% shared | geneB %in% shared & geneA=="YLR245"]
+```
+
+```{r}
+plot(lc, type = "commsumm", summary = "modularity")
+```
+
+
+# 10 communities with highest modularity - dense connections within community and sparce between nodes in different communities
+```{r}
+plot(lc, type = "commsumm", summary = "modularity", clusterids=as.integer(names(sort(cm, decreasing = T)[1:10])))
+
+plot(lc, type = "graph", node.pies = T, vlabel=T, clusterids = as.integer(names(sort(cm, decreasing = T)[1:10])))
+
+```
+
+# 10 communities with highest connectivity - dense connections between communities
+```{r}
+plot(lc, type = "commsumm", summary = "connectedness", clusterids=as.integer(names(sort(cconnect, decreasing = T)[1:10])))
+
+plot(lc, type = "graph", node.pies = T, vlabel=T, clusterids = as.integer(names(sort(cconnect, decreasing = T)[1:10])), layout="spencer.circle")
+
+```
+
+Table with number of clusters each gene belongs to and community centrality score
+```{r}
+genes_nclusters_centrality <- data.table(genes=names(cc), numclusters=lc$numclusters, centrality=cc)
+genes_nclusters_centrality[order(-centrality)]
+```
+
+
+```{r}
+get_clusters <- function(res){
+  return(paste(unique(lc.edges[node1==res[[1]] | node2==res[[1]]]$cluster), collapse = ";"))
+}
+genes_nclusters_centrality2 <- data.table(genes_nclusters_centrality)
+genes_nclusters_centrality2[, clustnum := mapply(get_clusters, genes)]
+```
+
+```{r}
+plot(lc, type = "graph", node.pies = F, vlabel=F, vshape="circle" , vsize=5, ewidth=1, clusterids = as.integer(unlist(strsplit(genes_nclusters_centrality2[genes=="YOR342C"]$clustnum, ";"))))
+```
+
+```{r}
+plot(lc, type = "graph", node.pies = F, vlabel=F, vshape="circle" , vsize=3, ewidth=1, clusterids = as.integer(unlist(strsplit(genes_nclusters_centrality2[genes=="YOR342C"]$clustnum, ";"))), layout="spencer.circle")
+```
+
+```{r}
+plot(lc, type = "graph", node.pies = F, vlabel=T, vshape="circle" , vsize=3, ewidth=1, clusterids= c(991, 1445), layout="spencer.circle")
+plot(lc, type = "graph", node.pies = F, vlabel=T, vshape="circle" , vsize=3, ewidth=1, clusterids = 3039)
+```
+
+```{r}
+plot(lc, type = "graph", node.pies = F, vlabel=F, vshape="circle" , vsize=3, ewidth=1, shownodesin=200)
+```
+
+```{r}
+plot(lc, type = "graph", node.pies = F, vlabel=F, vshape="circle" , vsize=5, ewidth=1, clusterids = as.integer(unlist(strsplit(genes_nclusters_centrality2[genes=="YMR029C"]$clustnum, ";"))), layout="spencer.circle")
+```
+
+```{r}
+plot(lc, type = "graph", node.pies = F, vlabel=F, vshape="circle" , vsize=3, ewidth=1, clusterids =2938, layout="spencer.circle")
+```
+
