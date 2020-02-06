@@ -18,7 +18,7 @@ from intermine.webservice import Service
 # to get API key, go to https://yeastmine.yeastgenome.org/yeastmine/begin.do and create an account
 # go to account details and create a new key
 
-yeastmineAPItoken_file = open('yeastmineAPI.txt', 'r')
+yeastmineAPItoken_file = open('/Users/Carolina/Documents/GitHub/DegreeProject/code/2020-02-05/yeastmineAPI.txt', 'r')
 yeastmineAPItoken = yeastmineAPItoken_file.readline().rstrip()
 service = Service("https://yeastmine.yeastgenome.org/yeastmine/service", token = yeastmineAPItoken)
 
@@ -35,14 +35,19 @@ query.add_view(
 
 # You can edit the constraint values below
 query.add_constraint("Gene", "IN", "genelist", code = "A")
-query.add_constraint("goAnnotation.ontologyTerm.parents.identifier", "ONE OF", ["GO:1901362", "GO:0018130", "GO:0019438", "GO:0034654", "GO:0044281", "GO:0006629", "GO:1903506", "GO:2001141", "GO:0019219", "GO:0051252", "GO:1901575", "GO:0006355"], code = "B")
+query.add_constraint("organism.shortName", "=", "S. cerevisiae", code = "F")
+query.add_constraint("status", "IS NULL", code = "C")
+query.add_constraint("status", "=", "Active", code = "B")
+query.add_constraint("goAnnotation.ontologyTerm.namespace", "=", "biological_process", code = "D")
 
+# Your custom constraint logic is specified with the code below:
+query.set_logic("(B or C) and F and A and D")
 # Uncomment and edit the code below to specify your own custom logic:
 # query.set_logic("A and B")
-print("secondaryIdentifier", "symbol", "primaryIdentifier", \
-    "goAnnotation.ontologyTerm.identifier", "goAnnotation.ontologyTerm.name", \
-    "goAnnotation.ontologyTerm.parents.identifier", \
-    "goAnnotation.ontologyTerm.parents.name", sep='\t')
+print("gene", "symbol", "primaryIdentifier", \
+    "ontologyTerm.identifier", "ontologyTerm.name", \
+    "ontologyTerm.parents.identifier", \
+    "ontologyTerm.parents.name", sep='\t')
 for row in query.rows():
     print(row["secondaryIdentifier"], row["symbol"], row["primaryIdentifier"], \
         row["goAnnotation.ontologyTerm.identifier"], row["goAnnotation.ontologyTerm.name"], \
