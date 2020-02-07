@@ -126,21 +126,23 @@ links_perGO <- links_perGO_pergene[,.(gocount=sum(count, na.rm = T)), by=c("onto
 unique(ympy.GO.cluster[grepl("transcription factor",ontologyTerm.name, fixed = F)][,.(gene, symbol, ontologyTerm.identifier, ontologyTerm.name)])
 
 test <- data.table(links_perGO[grepl("transcription factor",ontologyTerm.name, fixed = F) , .(sum_trans=sum(gocount, na.rm = T))], links_perGO[!grepl("transcription factor",ontologyTerm.name, fixed = F) , .(sum_others=sum(gocount, na.rm = T))])
-boxplot(links_perGO[grepl("transcription factor",ontologyTerm.name, fixed = F)], links_perGO[!grepl("transcription factor",ontologyTerm.name, fixed = F)])
+
 bp2<-boxplot(gocount ~ grepl("transcription factor",ontologyTerm.name, fixed = F), data=links_perGO, outline=F, 
              names = c("not transcription factor", "transcription factor"), 
              xlab = "", ylab = "# links",  main="Number of arrows pointing from each GO category", 
              ylim=c(-1,195))
 text(1:length(bp2$n), bp2$stats[5,]+1, paste("n=", bp2$n), pos = 3)
- bp2<-boxplot(gocount ~ grepl("transcription factor",ontologyTerm.name, fixed = F), data=links_perGO, outline=T, names = c("not transcription factor", "transcription factor"), xlab = "", ylab = "# links", main="Number of arrows pointing from each GO category")
+
+bp2<-boxplot(gocount ~ grepl("transcription factor",ontologyTerm.name, fixed = F), data=links_perGO, outline=T, names = c("not transcription factor", "transcription factor"), xlab = "", ylab = "# links", main="Number of arrows pointing from each GO category")
 text(1:length(bp2$n), bp2$stats[5,]+1, paste("n=", bp2$n), pos = 3)
 
 
 # GO term that include transcription and regulation
-links_perGO[grepl("transcription",ontologyTerm.name, fixed = F) & grepl("regulation",ontologyTerm.name, fixed = F)]
+links_perGO[grepl("transcription",ontologyTerm.name, fixed = F) & grepl("regulation",ontologyTerm.name, fixed = F)][order(-gocount)]$gocount
 
+hist(links_perGO[grepl("transcription",ontologyTerm.name, fixed = F) & grepl("regulation",ontologyTerm.name, fixed = F)][order(-gocount)]$gocount)
 bp3<-boxplot(gocount ~ (grepl("transcription",ontologyTerm.name, fixed = F) & grepl("regulation",ontologyTerm.name, fixed = F)), 
-             data=links_perGO, outline=T, 
+             data=links_perGO, outline=F, 
             names = c("not transcription factor", "transcription factor"),
              xlab = "", ylab = "# links",  main="Number of arrows pointing from each GO category", 
              ylim=c(-1,195))
