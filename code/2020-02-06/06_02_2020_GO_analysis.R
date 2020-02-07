@@ -40,8 +40,7 @@ GOterms.count[order(-count)]
 ympy.GO.cluster <- merge(ympy.GO, cluster_table, by.x="gene", by.y="node", all=T, allow.cartesian=TRUE)
 
 # find genes that have "transcription factor" in the GO term
-GO_trans_factor <- ympy.GO.cluster[grepl("transcription factor",ontologyTerm.name, fixed = F)]
-unique(GO_trans_factor[,.(gene, ontologyTerm.identifier, ontologyTerm.name)])
+GO_trans_factor <- unique(ympy.GO.cluster[grepl("transcription factor",ontologyTerm.name, fixed = F)][,.(gene, symbol, ontologyTerm.identifier, ontologyTerm.name, cluster)])
 
 # number of times each geneA points to another gene
 numlinks_from_gene <- find.effects_TF[, .(count=.N), by=geneA]
@@ -52,7 +51,7 @@ links_perGO_pergene <- merge(unique(ympy.GO[,.(gene, ontologyTerm.name, ontology
 # table with GO identifier, description and number of times it belongs to genes pointing to other genes
 links_perGO <- links_perGO_pergene[,.(gocount=sum(count, na.rm = T)), by=c("ontologyTerm.name", "ontologyTerm.identifier")]
 
-# find the GOs that have transcription in the name
+# find the GOs that have transcription factor in the name
 links_perGO_transfactor <- links_perGO[grep(pattern = "transcription factor", ontologyTerm.name)]
 links_perGO_transfactor <- links_perGO_transfactor[order(-gocount)]
 
@@ -73,7 +72,7 @@ find.effects_TF_GO_geneA.cluster <- merge(find.effects_TF_GO_geneA, data.table(l
 
 find.effects_TF_GO_geneA.cluster[!is.na(cluster)] 
 
-
+# plot clusters where there
 ids_to_plot <- unique(find.effects_TF_GO_geneA.cluster[ontologyTerm.identifier %in% links_perGO_transfactor$ontologyTerm.identifier]$cluster)
 
 plot(lc, type = "graph", node.pies = F, vlabel=F, vshape="circle" , vsize=3, ewidth=1, clusterids= ids_to_plot,arrow.size=0.01)
@@ -113,9 +112,37 @@ plot(lc, type = "graph", node.pies = F, vlabel=T, vshape="circle" , vsize=3, ewi
 
 # makes more sense that YEL055C points at YEL056W and YEL067C than YEL036C pointing at those
 
-#### Analyse cluster with second highes modularity
-ympy.GO.cluster.sub[cluster==2568]
+#### Analyse cluster with third highest modularity
+ympy.GO.cluster.sub[cluster==665]
 
 
-plot(lc, type = "graph", node.pies = F, vlabel=T, vshape="circle" , vsize=3, ewidth=1, clusterids= 2568,arrow.size=0.01)
+plot(lc, type = "graph", node.pies = F, vlabel=T, vshape="circle" , vsize=3, ewidth=1, clusterids= 665,arrow.size=0.01)
+
+
+
+######
+links_perGO <- links_perGO_pergene[,.(gocount=sum(count, na.rm = T)), by=c("ontologyTerm.name", "ontologyTerm.identifier")]
+
+unique(ympy.GO.cluster[grepl("transcription factor",ontologyTerm.name, fixed = F)][,.(gene, symbol, ontologyTerm.identifier, ontologyTerm.name)])
+
+test <- data.table(links_perGO[grepl("transcription factor",ontologyTerm.name, fixed = F) , .(sum_trans=sum(gocount, na.rm = T))], links_perGO[!grepl("transcription factor",ontologyTerm.name, fixed = F) , .(sum_others=sum(gocount, na.rm = T))])
+boxplot(links_perGO[grepl("transcription factor",ontologyTerm.name, fixed = F)], links_perGO[!grepl("transcription factor",ontologyTerm.name, fixed = F)])
+bp2<-boxplot(gocount ~ grepl("transcription factor",ontologyTerm.name, fixed = F), data=links_perGO, outline=F, 
+             names = c("not transcription factor", "transcription factor"), 
+             xlab = "", ylab = "# links",  main="Number of arrows pointing from each GO category", 
+             ylim=c(-1,195))
+text(1:length(bp2$n), bp2$stats[5,]+1, paste("n=", bp2$n), pos = 3)
+ bp2<-boxplot(gocount ~ grepl("transcription factor",ontologyTerm.name, fixed = F), data=links_perGO, outline=T, names = c("not transcription factor", "transcription factor"), xlab = "", ylab = "# links", main="Number of arrows pointing from each GO category")
+text(1:length(bp2$n), bp2$stats[5,]+1, paste("n=", bp2$n), pos = 3)
+
+
+# GO term that include transcription and regulation
+links_perGO[grepl("transcription",ontologyTerm.name, fixed = F) & grepl("regulation",ontologyTerm.name, fixed = F)]
+
+bp3<-boxplot(gocount ~ (grepl("transcription",ontologyTerm.name, fixed = F) & grepl("regulation",ontologyTerm.name, fixed = F)), 
+             data=links_perGO, outline=T, 
+            names = c("not transcription factor", "transcription factor"),
+             xlab = "", ylab = "# links",  main="Number of arrows pointing from each GO category", 
+             ylim=c(-1,195))
+text(1:length(bp3$n), bp3$stats[5,]+1, paste("n=", bp3$n), pos = 3)
 
