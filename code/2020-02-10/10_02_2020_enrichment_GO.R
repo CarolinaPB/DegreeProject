@@ -23,13 +23,12 @@ goframeData <- unique(ympy.evidence[,.(GO, evidencecode, gene)])
 
 gs <- getgeneset(goframeData)
 
-
-
+#getclusterenrichment(numcluster = 1, geneset = gs, net.cluster = edges)
 
 cl = makeCluster(detectCores(), type="FORK")
 clustenrich <- parLapply(cl=cl, unique(edges$cluster), getclusterenrichment, edges, gs)
 stopCluster(cl)
 
 save(clustenrich, paste0(respath, "2020-02-10/enrichment_bycluster.Rdata"))
-print(done)
+print("done")
 
