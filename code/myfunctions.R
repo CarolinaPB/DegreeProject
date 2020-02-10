@@ -177,3 +177,41 @@ create_res_table <- function(tab){
   
   return(temp)
 }
+
+getgeneset <- function(df){
+  # create gene set to use for enrichment
+  # requires a dataframe with three columns
+  # first column is GO ids
+  # second column is evidence codes
+  # third column is gene ids that match those GO terms
+  
+  goFrame=GOFrame(goframeData,organism="Saccharomyces cerevisiae")
+  goAllFrame=GOAllFrame(goFrame)
+  
+  return(GeneSetCollection(goAllFrame, setType = GOCollection()))
+}
+
+getclusterenrichment <- function(numcluster, net.cluster, geneset){
+  # get enrichment for each cluster
+  # requires a table with three columns
+  # first column is the causal genes
+  # second column is the affected genes
+  # third column is the cluster number they belong to
+  # numcluster - number of the cluster to analyse
+  # geneset - a geneset created from the GO terms, genes and evidence code - result from getgeneset
+  
+  genes <- levels(droplevels(net.cluster[cluster==numcluster]$node1))
+  universe = unique(c(levels(droplevels(net.cluster$node1)), levels(droplevels(net.cluster$node2))))
+  params <- GSEAGOHyperGParams(name="first try",
+                               geneSetCollection=geneset,
+                               geneIds = genes,
+                               universeGeneIds = universe,
+                               ontology = "BP",
+                               pvalueCutoff = 0.05,
+                               conditional = FALSE,
+                               testDirection = "over")
+  Over <- hyperGTest(params)
+  res_over <- data.table(summary(Over))
+  return(res_over)
+}
+
