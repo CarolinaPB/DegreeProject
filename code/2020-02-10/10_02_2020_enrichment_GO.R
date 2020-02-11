@@ -25,7 +25,7 @@ gs <- getgeneset(goframeData)
 
 #getclusterenrichment(numcluster = 1, geneset = gs, net.cluster = edges)
 start_time <- Sys.time()
-cl = makeCluster(detectCores()-1, type="FORK")
+cl = makeCluster(detectCores(), type="FORK")
 clustenrich <- parLapply(cl=cl, unique(edges$cluster)[1:2], getclusterenrichment, edges, gs)
 stopCluster(cl)
 end_time <- Sys.time()
