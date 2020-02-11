@@ -3,6 +3,7 @@
 #SBATCH -p core #partition
 #SBATCH -n 4 #number of tasks
 #SBATCH -t 24:00:00 #total run time of the job allocation
+#SBATCH --qos=short
 #SBATCH --output="%A_%a.out"
 #SBATCH --error="%A_%a.error"
 #SBATCH --mail-type=ALL
