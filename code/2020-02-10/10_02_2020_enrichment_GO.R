@@ -29,6 +29,6 @@ cl = makeCluster(detectCores()-1, type="FORK")
 clustenrich <- parLapply(cl=cl, unique(edges$cluster)[1:2], getclusterenrichment, edges, gs)
 stopCluster(cl)
 
-save(clustenrich, paste0(respath, "2020-02-10/enrichment_bycluster.Rdata"))
+save(clustenrich, file=paste0(respath, "2020-02-10/enrichment_bycluster.Rdata"))
 print("done")
 
