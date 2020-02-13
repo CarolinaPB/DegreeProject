@@ -1,0 +1,118 @@
+---
+title: "R Notebook"
+output:
+  html_notebook:
+    toc: yes
+---
+Set up
+```{r Set up, include=FALSE}
+library(data.table)
+library(linkcomm) # for the plot
+
+path <- "/Users/Carolina/Documents/GitHub/DegreeProject/"
+respath <- "/Users/Carolina/Documents/GitHub/DegreeProject/results/"
+load(paste0(path,"results/2020-01-27/27_01_2020_linkedcommunities_TF.Rdata"))
+
+genelist <- fread(paste0(path,"genelist.txt"), header=F) # all genes in geneA and geneB
+cluster_table <- data.table(lc$nodeclusters)
+
+# im.yeast = initInterMine(listMines()["HumanMine"],token = Sys.getenv("yeastmine API"))
+
+find.effects_TF <- fread(paste0(respath, "2020-01-27/findeffects_TF.gz"))
+```
+
+to get API key, go to https://yeastmine.yeastgenome.org/yeastmine/begin.do and create an account
+go to account details and create a new key
+create a file "~/.Renviron" and write yeastmineAPI = <token you just created>
+to access it Sys.getenv("yeastmine API")
+```{python eval=FALSE, include=FALSE}
+## summary results table
+python /Users/Carolina/Documents/GitHub/DegreeProject/code/2020-02-05/yeastmineanalysis.py > /Users/Carolina/Documents/GitHub/DegreeProject/results/2020-02-05/yeastminepy/yeastmine_summary_py.txt
+
+## GO table
+python /Users/Carolina/Documents/GitHub/DegreeProject/code/2020-02-05/yeastmine_ontology.py > /Users/Carolina/Documents/GitHub/DegreeProject/results/2020-02-05/yeastminepy/yeastmine_ontology_py.txt
+
+## enrichment table
+python /Users/Carolina/Documents/GitHub/DegreeProject/code/2020-02-06/yeastminepy_goenrichment.py > /Users/Carolina/Documents/GitHub/DegreeProject/results/2020-02-06/enrichment.txt
+```
+
+
+```{r}
+#summary table
+ympy.summary <- fread("/Users/Carolina/Documents/GitHub/DegreeProject/results/2020-02-05/yeastminepy/yeastmine_summary_py.txt")
+# GO table
+ympy.GO <- fread("/Users/Carolina/Documents/GitHub/DegreeProject/results/2020-02-05/yeastminepy/yeastmine_ontology_py.txt")
+ympy.GO <-unique(ympy.GO[,.(gene, ontologyTerm.identifier, ontologyTerm.name)])
+# enrichment table
+ympy.enrichment <- fread("/Users/Carolina/Documents/GitHub/DegreeProject/results/2020-02-06/enrichment.txt")
+```
+
+```{r}
+ympy.summary.geneA <- ympy.summary[gene %in% find.effects_TF$geneA]
+ympy.GO.geneA <- ympy.GO[gene %in% find.effects_TF$geneA]
+ympy.summary.geneA
+ympy.GO.geneA 
+```
+
+### count number of times each ontology term appears
+```{r}
+GOterms.count.geneA <- ympy.GO.geneA[, .(description=unique(ontologyTerm.name), count = .N), by = ontologyTerm.identifier]
+GOterms.count.geneA[order(-count)]
+
+GOterms.count.allgenes <- ympy.GO[, .(description=unique(ontologyTerm.name), count = .N), by = ontologyTerm.identifier]
+GOterms.count.allgenes[order(-count)]
+```
+
+### number of times each geneA points to another gene
+```{r}
+numlinks_from_gene <- find.effects_TF[, .(count=.N), by=geneA]
+numlinks_from_gene[order(-count)]
+```
+
+### number of times geneA with a certain GO term points to another gene
+```{r}
+links_perGO_pergene <- merge(unique(ympy.GO.geneA), numlinks_from_gene, by.x="gene", by.y="geneA", all=T)
+links_perGO_pergene[order(-count)]
+```
+
+### num of links going out of each GO category (causal)
+```{r}
+links_perGO <- links_perGO_pergene[,.(gocount=sum(count, na.rm = T)), by=c("ontologyTerm.identifier", "ontologyTerm.name")]
+links_perGO[order(-gocount)]
+```
+
+### find the GOs that have transcription factor in the name
+```{r}
+links_perGO_transfactor <- links_perGO[(grepl(" transcription ",ontologyTerm.name, fixed = F) & grepl(" regulation ",ontologyTerm.name, fixed = F)) | grepl("transcription factor",ontologyTerm.name, fixed = F)]
+links_perGO_transfactor[order(-gocount)][,.(ontologyTerm.name, gocount)]
+```
+
+### # causal links GO is regulating transcription or a transcription factor
+```{r}
+bp <- barplot(links_perGO_transfactor[order(-gocount)]$gocount, names.arg = links_perGO_transfactor$ontologyTerm.identifier,
+        ylab = "# links", xlab ="GO" , ylim = c(0,300), main="# links going out of genes with GO term \n only GO terms including 'transcription factor'")
+
+text(bp,links_perGO_transfactor[order(-gocount)]$gocount,links_perGO_transfactor[order(-gocount)]$gocount,cex=0.8, pos=3)
+hist(links_perGO_transfactor[order(-gocount)]$gocount, main="# causal links \n GO is regulating transcription or a transcription factor")
+```
+
+### Num of links going out of genes with "transcription" "regulation" or "transcription factor" as its GO term and number of links going out of genes with other descriptions
+```{r}
+data.table(links_perGO[(grepl(" transcription ",ontologyTerm.name, fixed = F) & grepl(" regulation ",ontologyTerm.name, fixed = F)) | grepl("transcription factor",ontologyTerm.name, fixed = F) , .(sum_trans=sum(gocount, na.rm = T))], links_perGO[!((grepl(" transcription ",ontologyTerm.name, fixed = F) & grepl(" regulation ",ontologyTerm.name, fixed = F)) | grepl("transcription factor",ontologyTerm.name, fixed = F)) , .(sum_others=sum(gocount, na.rm = T))])
+```
+
+### Num of links having "transcription" and "regulation" or "transcription factor" in the description
+```{r}
+bp_tfactor<-boxplot(gocount ~ grepl("transcription factor",ontologyTerm.name, fixed = F), data=links_perGO, outline=T,
+             names = c("Other", "transcription factor"),
+             xlab = "", ylab = "# links",  main="Number of arrows pointing from each GO category",
+             ylim=c(-1,195))
+text(1:length(bp_tfactor$n), bp_tfactor$stats[5,]+5, paste("n=", bp_tfactor$n), pos = 4)
+
+bp_tfactor_reg<-boxplot(gocount ~ ((grepl(" transcription ",ontologyTerm.name, fixed = F) & grepl(" regulation ",ontologyTerm.name, fixed = F)) | grepl("transcription factor",ontologyTerm.name, fixed = F)), data=links_perGO, outline=T,
+             names = c("Other", "transcription factor or regulator"),
+             xlab = "", ylab = "# links",  main="Number of arrows pointing from each GO category",
+             ylim=c(-1,195))
+text(1:length(bp_tfactor_reg$n), bp_tfactor_reg$stats[5,]+5, paste("n=", bp_tfactor_reg$n), pos = 4)
+```
+would make sense for there to be an enrichment of transcription regulators/factors in the genes A
