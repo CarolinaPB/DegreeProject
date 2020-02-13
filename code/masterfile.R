@@ -43,3 +43,7 @@ eqtl_results <- fread("data/SI_Data_04_eQTL.csv")
 
   
   
+# GO enrichment with GOstats:
+# The "Size" column is the number of genes annotated at the given GO term 
+
+# interesting genes annotated at that node vs # of genes annotated at that node
