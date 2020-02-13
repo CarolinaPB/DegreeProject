@@ -179,6 +179,9 @@ create_res_table <- function(tab){
 }
 
 getgeneset <- function(df){
+  # library("GSEABase")
+  # library("GOstats")
+  
   # create gene set to use for enrichment
   # requires a dataframe with three columns
   # first column is GO ids
@@ -192,6 +195,9 @@ getgeneset <- function(df){
 }
 
 getclusterenrichment <- function(numcluster, net.cluster, geneset){
+  # library("GSEABase")
+  # library("GOstats")
+  
   # get enrichment for each cluster
   # requires a table with three columns
   # first column is the causal genes
@@ -214,4 +220,32 @@ getclusterenrichment <- function(numcluster, net.cluster, geneset){
   res_over <- data.table(summary(Over))
   return(res_over)
 }
+
+getenrichment <- function(geneset, universe, interestinggenes){
+  # need these libraries
+  
+  # library("GSEABase")
+  # library("GOstats")
+  
+  # get enrichment for a set of genes
+  # geneset - a geneset created from the GO terms, genes and evidence code - result from getgeneset
+  # geneAB can be "geneA" or "geneB"
+  # returns an object with the results of the enrichment analysis.
+  # summary table can be created with summary(results)
+  # info can be extracted with the functions found here ?geneCounts
+  
+  # genes <- unlist(unique(find.effects_TF[,..geneAB]))
+  # universe <- unique(c(find.effects_TF$geneA, find.effects_TF$geneB))
+  
+  params <- GSEAGOHyperGParams(name="first try",
+                               geneSetCollection=geneset,
+                               geneIds = interestinggenes,
+                               universeGeneIds = universe,
+                               ontology = "BP",
+                               pvalueCutoff = 0.05,
+                               conditional = FALSE,
+                               testDirection = "over")
+  Over <- hyperGTest(params)
+}
+
 
