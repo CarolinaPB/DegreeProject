@@ -4,8 +4,8 @@
 effect_eqtl_gene <- function(res, pheno=phenotype, geno=genotype){
   # function that calculates the effect of a qtl on a gene - using anova
   # outputs a string with anova.pval__anova.r2
-  # res - data.table with 2 columns; 
-  # first column: gene 
+  # res - data.table with 2 columns;
+  # first column: gene
   # second column: eqtl
   lmp <- function (modelobject) {
     # function to get the p-value out of a lm
@@ -15,13 +15,13 @@ effect_eqtl_gene <- function(res, pheno=phenotype, geno=genotype){
     attributes(p) <- NULL
     return(p)
   }
-  
+
   gene <- res[1]
   eqtl <- res[2]
-  
+
   anv <- lm(unlist(pheno[ , ..gene]) ~ unlist(geno[ ,..eqtl]))
   anv.res <- paste(lmp(anv), summary(anv)$adj.r.squared, sep="__")
-  
+
   return(anv.res)
 }
 
@@ -30,17 +30,17 @@ merge_after_anova <- function(res.effect_eqtl_gene, gene.AB, eqtl.AB, effects.ta
   # requires library(tidyr) for the separate
   gene.AB <- toupper(gene.AB)
   eqtl.AB <- toupper(eqtl.AB)
-  
+
   pval.name <- paste0("eqtl",eqtl.AB, "_", "gene", gene.AB, ".pval")
   r2.name <- paste0("eqtl",eqtl.AB, "_", "gene", gene.AB, ".r2")
-  
+
   res.sep <- res.effect_eqtl_gene %>% separate(anv.res, c(pval.name, r2.name), sep="__")
-  
+
   setnames(res.sep,"gene", paste0("gene", gene.AB))
   setnames(res.sep,"eqtl", paste0("eqtl.", eqtl.AB))
-  
+
   effects.eqtlB <- merge(effects.table, res.sep, by=c(paste0("gene", gene.AB),paste0("eqtl.", eqtl.AB)), all.x=T)
-  
+
   return(effects.eqtlB)
 }
 
@@ -48,10 +48,10 @@ get_num_genos <- function(res, genotype){
   # get the number of each geno per snp
   # res is a data.table with one row - the snp ids
   snp <- res[1]
-  
+
   geno_1 <- sum(ifelse(genotype[,..snp] == 1, 1,0))
   geno_neg1 <- sum(ifelse(genotype[,..snp] == -1, 1,0))
-  
+
   return(paste(geno_1, geno_neg1, sep="__"))
 }
 
@@ -62,7 +62,7 @@ flat_cor_mat <- function(cor_r, cor_p){
   # Column 2 : column names (variable 2 for the correlation test)
   # Column 3 : the correlation coefficients
   # Column 4 : the p-values of the correlations
-  
+
   library("dplyr")
   library(tidyr)
   library(tibble)
@@ -80,31 +80,31 @@ expand.grid.faster <- function(seq1,seq2) {
 
 create_ini_table <- function(eqtl.table, genesB, var.exp.lim){
   # requires data.table, tidyr
-  # takes a talbe with 4 columns: gene, eqtl, cis and var.exp and creates a table with all the possible combinations
+  # takes a table with 4 columns: gene, eqtl, cis and var.exp and creates a table with all the possible combinations
   # of geneA-eqtlA with geneB-eqtlB
   # cis is a True/false - if the eqtl is in cis with the gene
   # genesB is the genes we want to compare the gene-eqtl pairs with
   # var.exp.lim is chosen by the user
-  # For the first set of pairs, only the gene-eqtl that are in cis and where the variance explained is 
+  # For the first set of pairs, only the gene-eqtl that are in cis and where the variance explained is
   # above the set limit will be kept
-  
+
   # Keep only the gene-eqtl pairs where the eqtl is in cis with the gene and where the var.exp >0.1
   eqtl.tableA <- eqtl.table[cis==T & var.exp > var.exp.lim]
-  
+
   # unite columns so they act as one block of information
   eqtl.tableA.unite <- eqtl.tableA %>% unite(infoA, gene, pmarker, cis, var.exp, sep = "__")
-  
+
   # get table with all genes that are going to be tested with eqtlA (geneB migth have an eqtl or not)
   eqtl.tableB<- merge(data.table(genesB),eqtl.table, by.x="genesB", by.y="gene", all.x=T)
-  
+
   # unite columns so they act as one block of information
   eqtl.tableB.unite <- eqtl.tableB %>% unite(infoB, genesB, pmarker, cis, var.exp, sep = "__")
-  
+
   # get all combinations of geneA and geneB with corresponding eqtls
   eqtl.table.combineAB <- expand.grid.faster(eqtl.tableA.unite$infoA,eqtl.tableB.unite$infoB)
   eqtl.table.combineAB.dt <- data.table(eqtl.table.combineAB)
   setnames(eqtl.table.combineAB.dt, old=c("Var1", "Var2"), new=c("infoA", "infoB"))
-  
+
   # separate info blocks into normal columns again
   eqtl.table.sepA <- eqtl.table.combineAB.dt %>% separate(infoA, c("geneA", "eqtl.A", "cis.A", "var.exp.A"), sep="__")
   eqtl.table.sepAB <- eqtl.table.sepA %>% separate(infoB, c("geneB", "eqtl.B", "cis.B", "var.exp.B"), sep="__")
@@ -113,25 +113,25 @@ create_ini_table <- function(eqtl.table, genesB, var.exp.lim){
 find.effects_fun <- function(effects.table, snp.pval, snp.pval.nsign){
   # the input table must have two columns called "eqtlA_geneB.pval" and "eqtlB_geneA.pval", which contain the p-val of the anova of eqtlX on geneY
   # This function does not take into account if the eqtl is in cis with the gene, so the input table must have been subseted to only contain eqtl-gene pairs that are in cis
-  
-  # adds two columns to the input table: A->B and B->A. 
-  # These columns can have a value of 
+
+  # adds two columns to the input table: A->B and B->A.
+  # These columns can have a value of
   #   * NA- if with the chosen p-val cutoffs we can't say if X affects Y
   #   * TRUE - if X affects Y
   #   * FALSE - if X does not affect Y
-  
-  # if both genes have same eqtl, then it's the third case, C, where both are affected by the same. 
-  # we can't say anything about the relationship between A and B. 
+
+  # if both genes have same eqtl, then it's the third case, C, where both are affected by the same.
+  # we can't say anything about the relationship between A and B.
   # We just know that a third factor is affecting them
-  
+
   effects.table[, ("A->B") := NA]; effects.table[as.numeric(eqtlA_geneB.pval) < snp.pval, ("A->B") := T];
   #effects.table[(as.numeric(eqtlA_geneB.pval) > as.numeric(snp.pval.nsign) ), ("A->B") := F]
   effects.table[(as.numeric(eqtlA_geneB.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B))), ("A->B") := F]
-  
+
   effects.table[, ("B->A") := NA]; effects.table[as.numeric(eqtlB_geneA.pval) < snp.pval, ("B->A") := T];
   #effects.table[(as.numeric(eqtlB_geneA.pval) > as.numeric(snp.pval.nsign)), ("B->A") := F]
   effects.table[(as.numeric(eqtlB_geneA.pval) > as.numeric(snp.pval.nsign) & (as.character(eqtl.A) != as.character(eqtl.B))), ("B->A") := F]
-  
+
   return(effects.table)
 }
 
@@ -141,26 +141,26 @@ testparams <- function(params, tab){
   sign_p <- params[1]
   non_sign_p <- params[2]
   cor_p <- params[3]
-  
-  
+
+
   temp <- tab[cor.pval < cor_p & cis.A ==T & cis.B==T & geneA!=geneB]
   temp <- find.effects_fun(temp, sign_p, non_sign_p)
-  
+
   temp_TF.1 <- temp[temp$`A->B`==T & temp$`B->A`==F, .(geneA, geneB, eqtl.A, eqtl.B, `A->B`, `B->A`)]
   temp_TF.2 <- rbind(temp_TF.1, temp[temp$`A->B`==F & temp$`B->A`==T, .(geneA=geneB, geneB=geneA, eqtl.A=eqtl.B, eqtl.B=eqtl.A, `A->B`=`B->A`, `B->A`=`A->B`)])
   temp_TF <- unique(temp_TF.2)
-  
+
   temp_TF$sign.p <- sign_p
   temp_TF$non_sign.p <- non_sign_p
   temp_TF$cor.p <- cor_p
-  
+
   return(temp_TF)
 }
 
 create_res_table <- function(tab){
   temp <- data.table(matrix(ncol=10, nrow=1))
   names(temp) <- c("geneA", "geneB", "eqtl.A", "eqtl.B","unique.genepairs", "unique.geneeqtlpairs.A","unique.geneeqtlpairs.B","sign.p", "nonsign.p", "cor.p")
-  
+
   temp$geneA <- length(unique(tab$geneA))
   temp$geneB <- length(unique(tab$geneB))
   temp$eqtl.A <- length(unique(tab$eqtl.A))
@@ -174,30 +174,30 @@ create_res_table <- function(tab){
   un.geneeqtl.B <- tab[(tab$`A->B`==T & tab$`B->A`==F), .N, by= .(geneB, eqtl.B)]
   temp$unique.geneeqtlpairs.A <- nrow(un.geneeqtl.A)
   temp$unique.geneeqtlpairs.B <- nrow(un.geneeqtl.B)
-  
+
   return(temp)
 }
 
 getgeneset <- function(df){
   # library("GSEABase")
   # library("GOstats")
-  
+
   # create gene set to use for enrichment
   # requires a dataframe with three columns
   # first column is GO ids
   # second column is evidence codes
   # third column is gene ids that match those GO terms
-  
+
   goFrame=GOFrame(goframeData,organism="Saccharomyces cerevisiae")
   goAllFrame=GOAllFrame(goFrame)
-  
+
   return(GeneSetCollection(goAllFrame, setType = GOCollection()))
 }
 
 getclusterenrichment <- function(numcluster, net.cluster, geneset){
   # library("GSEABase")
   # library("GOstats")
-  
+
   # get enrichment for each cluster
   # requires a table with three columns
   # first column is the causal genes
@@ -205,7 +205,7 @@ getclusterenrichment <- function(numcluster, net.cluster, geneset){
   # third column is the cluster number they belong to
   # numcluster - number of the cluster to analyse
   # geneset - a geneset created from the GO terms, genes and evidence code - result from getgeneset
-  
+
   genes <- levels(droplevels(net.cluster[cluster==numcluster]$node1))
   universe = unique(c(levels(droplevels(net.cluster$node1)), levels(droplevels(net.cluster$node2))))
   params <- GSEAGOHyperGParams(name="first try",
@@ -223,20 +223,20 @@ getclusterenrichment <- function(numcluster, net.cluster, geneset){
 
 getenrichment <- function(geneset, universe, interestinggenes){
   # need these libraries
-  
+
   # library("GSEABase")
   # library("GOstats")
-  
+
   # get enrichment for a set of genes
   # geneset - a geneset created from the GO terms, genes and evidence code - result from getgeneset
   # geneAB can be "geneA" or "geneB"
   # returns an object with the results of the enrichment analysis.
   # summary table can be created with summary(results)
   # info can be extracted with the functions found here ?geneCounts
-  
+
   # genes <- unlist(unique(find.effects_TF[,..geneAB]))
   # universe <- unique(c(find.effects_TF$geneA, find.effects_TF$geneB))
-  
+
   params <- GSEAGOHyperGParams(name="first try",
                                geneSetCollection=geneset,
                                geneIds = interestinggenes,
@@ -247,5 +247,3 @@ getenrichment <- function(geneset, universe, interestinggenes){
                                testDirection = "over")
   Over <- hyperGTest(params)
 }
-
-
