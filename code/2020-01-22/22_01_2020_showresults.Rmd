@@ -12,11 +12,11 @@ library(igraph)
 library(dplyr)
 library(parallel)
 
-path <- "/home/carolpb/DegreeProject/" # to use on Uppmax
-respath <- "/proj/snic2019-8-367/private/carol/results/"
+# path <- "/home/carolpb/DegreeProject/" # to use on Uppmax
+# respath <- "/proj/snic2019-8-367/private/carol/results/"
 
-#respath <- "/Users/Carolina/Documents/GitHub/DegreeProject/results/"
-#path <- "/Users/Carolina/Documents/GitHub/DegreeProject/" to use on my computer
+respath <- "/Users/Carolina/Documents/GitHub/DegreeProject/results/"
+path <- "/Users/Carolina/Documents/GitHub/DegreeProject/" #to use on my computer
 
 source(paste0(path,"code/myfunctions.R"))
 
@@ -157,9 +157,9 @@ params0 <- data.table(expand.grid(sign_p=sign_p, non_sign_p=non_sign_p, cor_p=co
 Ran on diprotodon
 ```{r eval=FALSE, include=TRUE}
 # cl = makeCluster(detectCores()-2, type="FORK")
-cl = makeCluster(4, type="FORK")
-res <- parApply(cl=cl,params0,1, testparams, effects_table.cor)
-stopCluster(cl)
+# cl = makeCluster(4, type="FORK")
+# res <- parApply(cl=cl,params0,1, testparams, effects_table.cor)
+# stopCluster(cl)
 ```
 the result is stored in res (list of tables)
 
@@ -183,6 +183,7 @@ res_table
 one panel for each corr.pval   
 The line colors represent different values for the non-significant pval threshold
 x-axis represents the significant p-val treshold
+
 ```{r}
 par(mfrow=c(2,4))
 
@@ -201,6 +202,8 @@ for (p in cor.pvals){
   }
 }
 ```
+
+
 Plot without accounting for corr.pval  
 different line colors represent different non-sign pval threshold  
 x-axis represents the significant p-val treshold  
@@ -220,3 +223,125 @@ for (i in 1:length(unique(res_table$nonsign.p))){
 legend(x=20, yrange[2], unique(res_table$nonsign.p), col=colors, lty=linetype, cex=0.8)
 ```
 
+## get table with number of times each geneA appears  
+(number of times each geneA is the causal one)
+```{r}
+ngeneA <- find.effects_TF[find.effects_TF$`A->B`==T, .N, by=geneA]
+ngeneA[order(-N)]
+```
+(number of times each geneB is the affected)
+```{r}
+ngeneB <- find.effects_TF[find.effects_TF$`B->A`==F, .N, by=geneB]
+ngeneB[order(-N)]
+```
+
+## combine the two tables to create a table with num of times a gene is causal or is affected
+```{r}
+ngeneA_B <- merge(ngeneA, ngeneB, by.x = "geneA", by.y = "geneB", all=T)
+colnames(ngeneA_B) <- c("gene", "A","B")
+ngeneA_B[order(-A)]
+
+#fwrite(ngeneA_B, "/Users/Carolina/Documents/GitHub/DegreeProject/results/2020-01-22/numtimesgenecausal_ornot.gz")
+```
+### genes that have more connections going into it (that are mostly affected by another gene)
+```{r}
+ngeneA_B_affected <- ngeneA_B[B>A]
+ngeneA_B_affected [order(-B)]
+```
+
+### genes that are only causal
+```{r}
+ngeneA_B_onlycausal <- ngeneA_B[is.na(B)]
+ngeneA_B_onlycausal[order(-A)]
+```
+
+### genes that are only affected by another gene
+```{r}
+ngeneA_B_onlyaffected <- ngeneA_B[is.na(A)]
+ngeneA_B_onlyaffected[order(-B)]
+```
+
+
+```{r}
+plot_YAL003W <- graph_from_edgelist(as.matrix(find.effects_TF[geneA=="YAL003W" | geneB=="YAL003W",.(geneA, geneB)]),directed=TRUE)
+```
+
+
+
+```{r}
+V(plot_YAL003W)$size <- 5
+plot(plot_YAL003W, layout=layout_as_tree,edge.arrow.size=.5, vertex.label=NA)
+plot(plot_YAL003W, layout=layout_as_tree,edge.arrow.size=.5)
+```
+
+# NETWORK ENRICHMENT ANALYSIS
+```{r}
+library(neat)
+`%notin%` <- Negate(`%in%`)
+```
+
+  
+Some of my genes are not in the kegg or the goslimproc lists  
+(genes from both geneA and geneB)
+```{r}
+print("number of genes in my dataset not in goslimproc")
+length(unique(find.effects_TF[which(unique(c(find.effects_TF$geneA, find.effects_TF$geneB)) %notin% unlist(yeast$goslimproc))]$geneA))
+print("number of genes in my dataset not in kegg")
+length(unique(find.effects_TF[which(unique(c(find.effects_TF$geneA, find.effects_TF$geneB)) %notin% unlist(yeast$kegg))]$geneA))
+```
+
+NAB <- number of arrows going from genes in A to genes belonging to B
+
+nodes	-- Vector containing the (ordered) names of all nodes in the network ## what do they mean by ordered??
+
+```{r}
+alist <- list(geneA = find.effects_TF$geneA, geneB=find.effects_TF$geneB)
+blist <- yeast$kegg
+
+kegg_neat <- data.table(neat(alist = alist, blist = blist , network = as.matrix(find.effects_TF[,.(geneA, geneB)]),nettype = 'directed', nodes = unique(c(find.effects_TF$geneA, find.effects_TF$geneB)), alpha = 0.01, mtc.type = 'fdr', anames=c("genesA", "genesB")))
+kegg_neat[order(pvalue)]
+
+blist <- yeast$goslimproc # GOslim process ontology (Ashburner et al., 2000) for the buddying yeast Saccaromyces Cerevisiae
+goslimproc_neat <- data.table(neat(alist = alist, blist = blist , network = as.matrix(find.effects_TF[,.(geneA, geneB)]),nettype = 'directed', nodes = unique(c(find.effects_TF$geneA, find.effects_TF$geneB)), alpha = 0.01, mtc.type = 'fdr', anames=c("genesA", "genesB")))
+goslimproc_neat[order(pvalue)]
+```
+using kegg or goslimproc gives different results
+
+
+```{r}
+print("kegg")
+table(kegg_neat$conclusion)
+print("goslimproc")
+table(goslimproc_neat$conclusion)
+```
+
+```{r}
+over_kegg_neat.over <- data.table(kegg_neat[conclusion=='Overenrichment'])
+over_kegg_neat.over[order(pvalue)]
+
+goslimproc_neat.over <- data.table(goslimproc_neat[conclusion=='Overenrichment'])
+goslimproc_neat.over[order(pvalue)]
+```
+
+```{r}
+hist(kegg_neat$pvalue)
+hist(kegg_neat$adjusted_p)
+hist(goslimproc_neat$pvalue)
+hist(goslimproc_neat$adjusted_p)
+```
+
+
+```{r}
+over_kegg_neat.under <- data.table(kegg_neat[conclusion=='Underenrichment'])
+over_kegg_neat.under
+
+goslimproc_neat.under <- data.table(goslimproc_neat[conclusion=='Underenrichment'])
+goslimproc_neat.under
+```
+
+
+
+
+## Compare with yeastnet
+(data(yeast), yeast$yeastnet)
+YeastNet comprises 362512 edges connecting 5808 genes.

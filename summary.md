@@ -17,7 +17,7 @@ I started with :
 * **eqtl_results** - Genes with a local eQTL and significant Allele-specific expression (ASE), and discordant direction of effect. (1) Positive values indicate higher expression in RM compared to BY. (2) Shown is the less sig- nificant p-value from the two ASE datasets. (3) The table shows only genes where both ASE datasets agreed in the direction of effect. Shown is the average effect.
 
 
-##### **[File with my functions](https://github.com/CarolinaPB/DegreeProject/blob/master/code/myfunctions.R)**
+#### **[File with my functions](https://github.com/CarolinaPB/DegreeProject/blob/master/code/myfunctions.R)**
 
 ## 2020-01-07 -- 2020-01-09
 > [Summary script](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-01-07/07_01_2020_process.R)  
@@ -167,6 +167,8 @@ It seems like there's a large cluster of genes that are affecting each other, as
 
 
 ## 2020-01-20
+> [Script](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-01-20/20_01_2020_testparams.R)
+
 Test different parameter values combinations to see if I there is a certain combination that gives optimal results in the causality inference
 
 Groups of parameters to test:  
@@ -198,6 +200,8 @@ sign_p non_sign_p   cor_p
 | *Number of unique gene pairs found when using different cutoffs. X-axis is the -log(pvalue) (for the effect to be significant) and differenc colors represent different values for the non-significant p-value (for the effect to be considered non-significant)* |
 
 ## 2020-01-24
+> [Script](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-01-24/24_01_2020_changingparams.R)
+
 
 Changed parameters being used based on the previous plots
 
