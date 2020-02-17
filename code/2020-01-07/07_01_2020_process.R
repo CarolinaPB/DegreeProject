@@ -9,6 +9,7 @@ library(dplyr)
 
 # path <- "/home/carolpb/DegreeProject/" # use with UPPMAX
 path <- "/Users/Carolina/Documents/GitHub/DegreeProject/" # use with own computer
+respath <- "/Users/Carolina/Documents/GitHub/DegreeProject/results/"
 # path <- "/home/carolina/DegreeProject/" # use with diprotodon
 
 phenotype <- fread(paste0(path,"data/SI_Data_01_expressionValues.txt"))
@@ -47,7 +48,7 @@ effectsA_B.sepA_B <- create_ini_table(eqtl_results.sub, genesB, var.exp.lim)
 # Final table with geneA and geneB and their corresponding eqtls (geneB might not have an eqtl)
 effectsA_B.sepA_B
 
-fwrite(effectsA_B.sepA_B,"results/2020-01-01/infoA_B.gz")
+# fwrite(effectsA_B.sepA_B,"results/2020-01-01/infoA_B.gz")
 
 
 effectsA_B.sepA_B <- fread(paste0(path,"results/2020-01-07/infoA_B.gz"))
@@ -97,7 +98,7 @@ effects_table.eqtlA_geneB <- merge_after_anova(res.eqtlA_geneB, "B", "A", effect
 effects_table.anova <- merge_after_anova(res.eqtlB_geneA, gene.AB="A", eqtl.AB="B", effects_table.eqtlA_geneB )
 setcolorder(effects_table.anova, c("geneA", "geneB", "eqtl.A", "eqtl.B", "cis.A", "cis.B"))
 
-fwrite(effects_table.anova, paste0(path, "results/2020-01-09/09_01_2020_anovatable.gz"), na = NA)
+# fwrite(effects_table.anova, paste0(path, "results/2020-01-09/09_01_2020_anovatable.gz"), na = NA)
 effects_table.anova <- fread(paste0(path, "results/2020-01-09/09_01_2020_anovatable.gz"))
 
 
@@ -117,7 +118,7 @@ my_cor_matr_flat <- data.table(my_cor_matr_flat)
 
 cor_matr <- my_cor_matr_flat[!duplicated(t(apply(my_cor_matr_flat, 1, sort))), ]
 
-fwrite(cor_matr, paste0(path, "results/2020-01-10/cor_matr_unique.gz"))
+#fwrite(cor_matr, paste0(path, "results/2020-01-10/cor_matr_unique.gz"))
 
 cor_matr <- fread(paste0(path, "results/2020-01-10/cor_matr_unique.gz"))
 
@@ -127,7 +128,7 @@ setnames(cor_matr, old=c("row","column", "pval"), new=c("geneA","geneB", "cor.pv
 
 effects_table.cor <- merge(effects_table.anova, cor_matr, by=c("geneA","geneB"), all.x=T)
 
-fwrite(effects_table.cor, paste0(path, "results/2020-01-10/effectstable.gz"), na=NA)
+#fwrite(effects_table.cor, paste0(path, "results/2020-01-10/effectstable.gz"), na=NA)
 effects_table.cor <- fread(paste0(path, "results/2020-01-10/effectstable.gz"))
 
 ######
@@ -152,6 +153,9 @@ find.effects <- effects_table.cor[cor.pval < corr.pval & cis.A ==T & cis.B==T & 
 
 find.effects <- find.effects_fun(find.effects, snp.pval, snp.pval.nsign)
 
+#fwrite(find.effects, paste0(respath, "2020-01-27/findeffects_all.gz"), na=NA)
+find.effects <- fread(paste0(respath, "2020-01-27/findeffects_all.gz"))
+
 ####
 # find.effects[(find.effects$`A->B`==T & find.effects$`B->A`==F) | (find.effects$`A->B`==F & find.effects$`B->A`==T)]
 
@@ -160,6 +164,8 @@ find.effects_TF.1 <- find.effects[find.effects$`A->B`==T & find.effects$`B->A`==
 find.effects_TF.2 <- rbind(find.effects_TF.1, find.effects[find.effects$`A->B`==F & find.effects$`B->A`==T, .(geneA=geneB, geneB=geneA, eqtl.A=eqtl.B, eqtl.B=eqtl.A, `A->B`=`B->A`, `B->A`=`A->B`)])
 find.effects_TF <- unique(find.effects_TF.2)
 
+# fwrite(find.effects_TF, paste0(respath, "2020-01-27/findeffects_TF.gz"))
+find.effects_TF <- fread(paste0(respath, "2020-01-27/findeffects_TF.gz"))
 
 # when one direction is true and the other is false
 find.effects_TF.numpairs <- find.effects_TF[(`A->B`==T & `B->A`==F), .N, by=.(geneA, geneB)]
@@ -170,9 +176,9 @@ for (i in 1:nrow(numpairs.table)){
 }
 
 # plot the number of times a gene pair appears
-bp <- barplot(numpairs.table$numpairs, numpairs.table$N, names.arg=unique(find.effects_TF.numpairs$N), 
+bp <- barplot(numpairs.table$numpairs, numpairs.table$N, names.arg=unique(find.effects_TF.numpairs$N),
               width = 0.5, space=0.2, legend.text = F, ylim = c(0,max(numpairs.table$numpairs)+2000),
-              main = "Number of times gene pairs appear \n (A->B = T and B->A = F)", xlab = "# times a gene pair appears", 
+              main = "Number of times gene pairs appear \n (A->B = T and B->A = F)", xlab = "# times a gene pair appears",
               ylab = "# of gene pairs")
 text(bp,numpairs.table$numpairs, labels=numpairs.table$numpairs, cex=1, pos=3)
 
@@ -184,8 +190,8 @@ find.effects_TF.geneeqtl.B <- find.effects_TF[(`A->B`==T & `B->A`==F), .N, by=.(
 find.effects_TF.geneeqtl.A.plot <- find.effects_TF.geneeqtl.A %>% unite(gene_eqtlA, geneA, eqtl.A, sep = "__")
 #find.effects_TF.geneeqtl.B.plot <- find.effects_TF.geneeqtl.B %>% unite(gene_eqtlB, geneB, eqtl.B, sep = "__")
 
-plot(as.factor(find.effects_TF.geneeqtl.A.plot$gene_eqtlA), find.effects_TF.geneeqtl.A.plot$N, 
-     xlab="gene-eqtl pairs", ylab="# times each pair appears", axes=FALSE, 
+plot(as.factor(find.effects_TF.geneeqtl.A.plot$gene_eqtlA), find.effects_TF.geneeqtl.A.plot$N,
+     xlab="gene-eqtl pairs", ylab="# times each pair appears", axes=FALSE,
      main="Num times of times each gene-eqtl pair appears \n (A->B = T and B->A = F)")
 Axis(side=2, labels=T)
 
@@ -198,15 +204,14 @@ for (i in 1:nrow(numpairs.table2)){
 numpairs.table2 <- numpairs.table2[order(N)]
 
 # all values individually
-bp2 <- barplot(numpairs.table2$numpairs, numpairs.table2$N, names.arg=unique(numpairs.table2$N), 
+bp2 <- barplot(numpairs.table2$numpairs, numpairs.table2$N, names.arg=unique(numpairs.table2$N),
                width = 0.5, space=0.2, legend.text = F, ylim = c(0,max(numpairs.table2$numpairs)+100),
-               main = "Number of times gene-eqtl pairs appear \n (A->B = T and B->A = F)", xlab = "# times a gene-eqtl pair appears", 
+               main = "Number of times gene-eqtl pairs appear \n (A->B = T and B->A = F)", xlab = "# times a gene-eqtl pair appears",
                ylab = "# gene-eqtl pairs", cex.names=0.8)
 
-# by binning values 
+# by binning values
 hist(find.effects_TF.geneeqtl.A.plot$N, main = "# gene-eqtl pairs", xlab = "# times gene-eqtl pairs appear",labels = T)
 # the majority of gene-eqtl pairs appear between 0-50 times
-
 
 ##### network plotting ####
 plot_TF <- graph_from_edgelist(as.matrix(find.effects_TF[,.(geneA, geneB)]),directed=TRUE)
@@ -239,8 +244,7 @@ nodes <- nodes[order(nodes$id), ]
 nodes
 
 V(plot_TNA)$size <- 5
-plot(plot_TNA, layout=layout_with_gem,edge.arrow.size=.5, vertex.label=NA, edge.curved=.1)
-
+plot(plot_TNA, layout=layout_with_gem,edge.arrow.size=.5, vertex.label=NA, edge.curved=.1, layout="spencer.circle")
 
 ########
 find.effects
@@ -261,7 +265,7 @@ system.time({
 
 numgenos <- ngenos.dt %>% separate(nums, c("n1", "n-1"), sep="__")
 
-fwrite(numgenos, paste0(path, "results/2020-01-08/08_01_2020_numgenos.gz"))
+#fwrite(numgenos, paste0(path, "results/2020-01-08/08_01_2020_numgenos.gz"))
 
 numgenos <- fread(paste0(path, "results/2020-01-08/08_01_2020_numgenos.gz"))
 # all genos are represented by a large amount of samples ####
