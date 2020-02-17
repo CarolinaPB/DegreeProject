@@ -139,9 +139,11 @@ YAL003W YLL024C   chrI:133174_G/A   chrXII:86595_T/C    TRUE FALSE
 YAL032C YAL049C   chrI:84112_T/C    chrI:52951_G/T      TRUE FALSE
 ```
 #### Results using the parameters above
-| ![num gene pairs](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/TFgenes_blob_firstparams.png) |
+| ![initial blob](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/TFgenes_blob_firstparams.png) |
 |:--:|
 | *Causality network for the cases where A->B and not B->A* |
+
+There are no sub clusters, only one unique network where all genes are connected
 
 | ![num gene pairs](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numtimes_genepair_firstparams.png) |
 |:--:|
@@ -161,6 +163,7 @@ Three plots basically showing the same
 |:--:|
 | *Causality network for the cases where A->B and we can't say if B->A or not* |
 
+It seems like there's a large cluster of genes that are affecting each other, as well as smaller isolated clusters
 
 
 ## 2020-01-20
