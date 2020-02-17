@@ -191,3 +191,8 @@ sign_p non_sign_p   cor_p
 | ![numgenepairs diff params](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numgenepairs_bypval_testparams.png) |
 |:--:|
 | *Number of unique gene pairs found when using different cutoffs. Each pannel corresponds to a different correlation p-value cutff. X-axis is the -log(pvalue) (for the effect to be significant) and differenc colors represent different values for the non-significant p-value (for the effect to be considered non-significant)* |
+
+
+| ![numgenepairs diff params](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numgenepairs_bypval_testparams_nocorrpval.png) |
+|:--:|
+| *Number of unique gene pairs found when using different cutoffs. X-axis is the -log(pvalue) (for the effect to be significant) and differenc colors represent different values for the non-significant p-value (for the effect to be considered non-significant)* |
