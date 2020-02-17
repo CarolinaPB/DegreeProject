@@ -3,7 +3,7 @@
 Started by playing around with the data.  
 
 My starting dataset:
-```{r}
+```r
 phenotype <- fread(paste0(path,"data/SI_Data_01_expressionValues.txt"))
 genotype <- fread(paste0(path,"data/SI_Data_03_genotypes.txt"))
 eqtl_results <- fread(paste0(path,"data/SI_Data_04_eQTL.csv"))
@@ -38,7 +38,7 @@ Defined **genesA** as a set of genes that have an eqtl and where the eqtl is in 
 
 Created table with all the possible combinations of pairings of geneA-eqtlA and geneB-eqtlB
 
-```{r}
+```r
 effectsA_B.sepA_B <- fread(paste0(path,"results/2020-01-07/infoA_B.gz"))
 ```
 
@@ -62,12 +62,12 @@ Used ANOVA to find the effect of a gene's eqtl on the other gene - effect of eqt
 
 > [Summary script](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-01-07/07_01_2020_process.R) and [do anova directory](https://github.com/CarolinaPB/DegreeProject/tree/master/code/2020-01-09).
 
-```{r}
+```r
 effects_table.anova <- fread(paste0(path, "results/2020-01-09/09_01_2020_anovatable.gz"))
 ```
 
 Got correlation between all the genes and added it to the table with the anova results
-```{r}
+```r
 effects_table.cor <- fread(paste0(path, "results/2020-01-10/effectstable.gz"))
 ```
 
@@ -98,3 +98,44 @@ How it works:
 * **A->B = F** if the anova p-value of the effect of eqtlA on geneB is > snp.pval.nsign and geneA and geneB have different eqtls
 * **B->A = T** if anova p-value for the effect of eqtlB on geneA is < snp.pval
 * **B->A = F** if the anova p-value of the effect of eqtlB on geneA is > snp.pval.nsign and geneA and geneB have different eqtls
+
+Table with results for A->B and B->A for all cases
+```r
+find.effects <- fread(paste0(respath, "2020-01-27/findeffects_all.gz"))
+```
+
+```
+  geneA     geneB               eqtl.A            eqtl.B cis.A cis.B var.exp.A  var.exp.B
+YAL003W   YAL008W      chrI:133174_G/A   chrI:136961_T/C  TRUE  TRUE 0.1190554 0.04176901
+YAL003W   YAL009W      chrI:133174_G/A   chrI:132723_G/A  TRUE  TRUE 0.1190554 0.06344857
+YAL003W   YAL010C      chrI:133174_G/A   chrI:134219_C/T  TRUE  TRUE 0.1190554 0.03777914
+YAL003W   YAL013W      chrI:133174_G/A   chrI:131539_C/T  TRUE  TRUE 0.1190554 0.01516904
+YAL003W   YAL022C      chrI:133174_G/A   chrI:114628_G/T  TRUE  TRUE 0.1190554 0.04732674
+
+eqtlA_geneB.pval    eqtlA_geneB.r2  eqtlB_geneA.pval    eqtlB_geneA.r2         cor     cor.pval  A->B  B->A
+2.857498e-08        0.029090909         6.810904e-15    0.057379498     -0.5419907 0.000000e+00    NA  TRUE
+6.393194e-11        0.040463429         8.727858e-15    0.056923573     -0.4344359 0.000000e+00  TRUE  TRUE
+4.723889e-06        0.019565417         5.127615e-14    0.053663535     -0.4371749 0.000000e+00    NA  TRUE
+6.275525e-03        0.006389033         5.829682e-15    0.057665406     -0.4007383 0.000000e+00 FALSE  TRUE
+4.631097e-07        0.023892823         9.575469e-08    0.026833917     -0.2238410 5.864198e-13    NA    NA
+
+```
+
+
+Table with with the gene-eqtl pairs where A->B =T and B->A=F
+
+```r
+find.effects_TF <- fread(paste0(respath, "2020-01-27/findeffects_TF.gz"))
+```
+```
+geneA   geneB              eqtl.A             eqtl.B    A->B  B->A
+YAL003W YAL033W   chrI:133174_G/A   chrI:84112_T/C      TRUE FALSE
+YAL003W YAR050W   chrI:133174_G/A   chrI:202732_G/A     TRUE FALSE
+YAL003W YDR059C   chrI:133174_G/A   chrIV:567417_C/T    TRUE FALSE
+YAL003W YLL024C   chrI:133174_G/A   chrXII:86595_T/C    TRUE FALSE
+YAL032C YAL049C   chrI:84112_T/C    chrI:52951_G/T      TRUE FALSE
+```
+
+| ![num pairs](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/numtimes_genepair_firstparams.pdf) |
+|:--:|
+| *Number of unique gene pairs for the cases where A->B and not B->A* |
