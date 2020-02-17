@@ -213,3 +213,17 @@ nGenes| | 5720
 snp.pval| | 0.01
 snp.pval.sign| | 1e-5 |
 corr.pval | 0.05/choose(nGenes,2) | 3.056919e-09
+
+
+
+Number of times each gene is the causal one or is on the receiving end
+
+Subset:
+```
+   gene     causal  receiving
+YLR270W     897            18
+YLR264W     834            25
+YLR281C     752             6
+YNL088W     742            24
+YLR260W     739            34
+```

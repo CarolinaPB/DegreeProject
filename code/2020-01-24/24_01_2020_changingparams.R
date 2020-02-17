@@ -6,7 +6,8 @@ library(igraph)
 library(dplyr)
 
 # path <- "/home/carolpb/DegreeProject/" # use with UPPMAX
-path <- "/Users/Carolina/Documents/GitHub/DegreeProject/" # use with own computer
+path <- "/Users/Carolina/Documents/GitHub/DegreeProject/"
+respath <- "/Users/Carolina/Documents/GitHub/DegreeProject/results/"# use with own computer
 # path <- "/home/carolina/DegreeProject/" # use with diprotodon
 
 source("code/myfunctions.R")
@@ -38,6 +39,13 @@ find.effects_TF.1 <- find.effects[find.effects$`A->B`==T & find.effects$`B->A`==
 find.effects_TF.2 <- rbind(find.effects_TF.1, find.effects[find.effects$`A->B`==F & find.effects$`B->A`==T, .(geneA=geneB, geneB=geneA, eqtl.A=eqtl.B, eqtl.B=eqtl.A, `A->B`=`B->A`, `B->A`=`A->B`)])
 find.effects_TF <- unique(find.effects_TF.2)
 
+#Number of times each gene is the causal one or is on the receiving end
+ngeneA <- find.effects_TF[find.effects_TF$`A->B`==T, .N, by=geneA]
+ngeneB <- find.effects_TF[find.effects_TF$`B->A`==F, .N, by=geneB]
+ngeneA_B <- merge(ngeneA, ngeneB, by.x = "geneA", by.y = "geneB", all=T)
+colnames(ngeneA_B) <- c("gene", "A","B")
+ngeneA_B[order(-A)]
+
 
 # when one direction is true and the other is false
 find.effects_TF.numpairs <- find.effects_TF[(`A->B`==T & `B->A`==F), .N, by=.(geneA, geneB)]
@@ -48,11 +56,12 @@ for (i in 1:nrow(numpairs.table)){
 }
 
 # plot the number of times a gene pair appears
-bp <- barplot(numpairs.table$numpairs, numpairs.table$N, names.arg=unique(find.effects_TF.numpairs$N), 
-              width = 0.5, space=0.2, legend.text = F, ylim = c(0,max(numpairs.table$numpairs)+2000),
+bp <- barplot(numpairs.table[order(-numpairs)]$numpairs, numpairs.table[order(-numpairs)]$N, names.arg=unique(find.effects_TF.numpairs[order(N)]$N), 
+              width = 0.5, space=0.2, legend.text = F, ylim = c(0,max(numpairs.table$numpairs)+2500),
               main = "Number of times gene pairs appear \n (A->B = T and B->A = F)", xlab = "# times a gene pair appears", 
               ylab = "# of gene pairs")
-text(bp,numpairs.table$numpairs, labels=numpairs.table$numpairs, cex=1, pos=3)
+text(bp,numpairs.table[order(-numpairs)]$numpairs, labels=numpairs.table[order(-numpairs)]$numpairs, cex=1, pos=3)
+
 
 # most gene pairs appear 1 time
 

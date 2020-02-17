@@ -87,3 +87,9 @@ for (i in 1:length(unique(res_table$nonsign.p))){
 legend(x=20, yrange[2], unique(res_table$nonsign.p), col=colors, lty=linetype, cex=0.8)
 
 
+#Number of times each gene is the causal one or is on the receiving end
+ngeneA <- find.effects_TF[find.effects_TF$`A->B`==T, .N, by=geneA]
+ngeneB <- find.effects_TF[find.effects_TF$`B->A`==F, .N, by=geneB]
+ngeneA_B <- merge(ngeneA, ngeneB, by.x = "geneA", by.y = "geneB", all=T)
+colnames(ngeneA_B) <- c("gene", "A","B")
+ngeneA_B[order(-A)]
