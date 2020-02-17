@@ -9,7 +9,8 @@ genotype <- fread(paste0(path,"data/SI_Data_03_genotypes.txt"))
 eqtl_results <- fread(paste0(path,"data/SI_Data_04_eQTL.csv"))
 ```
 
-Data from **Albert FW, Bloom JS, Siegel J, Day L, Kruglyak L. 2018. Genetics of trans-regulatory variation in gene expression. eLife 7: 1–39.**  
+Data from **Albert FW, Bloom JS, Siegel J, Day L, Kruglyak L. 2018. Genetics of trans-regulatory variation in gene expression. eLife 7: 1–39.**  [Source data](https://elifesciences.org/articles/35471/figures#supp1)  
+
 I started with :
 * **phenotype matrix** - contains the gene expression data (expression levels in units of log2(TPM) for all genes and segregants)
 * **genotype matrix** - contains the genotype information (genotypes at 42,052 markers for all segregants. BY (i.e. reference) alleles are denoted by ‘−1’. RM alleles are denoted by ‘1’.)
@@ -37,6 +38,10 @@ Defined **genesA** as a set of genes that have an eqtl and where the eqtl is in 
 
 Created table with all the possible combinations of pairings of geneA-eqtlA and geneB-eqtlB
 
+```{r}
+effectsA_B.sepA_B <- fread(paste0(path,"results/2020-01-07/infoA_B.gz"))
+```
+
 ```
      geneA          eqtl.A cis.A   var.exp.A   geneB
 1: YAL062W  chrI:33293_A/T  TRUE   0.5747081   Q0140
@@ -56,3 +61,40 @@ chrIII:204897_G/C   FALSE   0.03919222
 Used ANOVA to find the effect of a gene's eqtl on the other gene - effect of eqtlA on geneB and eqtlB on geneA
 
 > [Summary script](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-01-07/07_01_2020_process.R) and [do anova directory](https://github.com/CarolinaPB/DegreeProject/tree/master/code/2020-01-09).
+
+```{r}
+effects_table.anova <- fread(paste0(path, "results/2020-01-09/09_01_2020_anovatable.gz"))
+```
+
+Got correlation between all the genes and added it to the table with the anova results
+```{r}
+effects_table.cor <- fread(paste0(path, "results/2020-01-10/effectstable.gz"))
+```
+
+## Inferring causality
+
+Assumptions:
+* geneA is in cis with eqtlA
+* geneB is in cis with eqtlB
+* var.explained for geneA must be > var.exp.lim
+* correlation pval is < corr.pval
+Inferred if gene A is affecting geneB or if geneB is affecting geneA.
+* geneA != geneB
+
+There are two categories and several end results:  
+Categories:
+* A affects B: A->B
+* B affects A: B->A
+
+End results:
+* **A->B = T and B->A = F** or **A->B = F and B->A = T** --> this is the case we are mostly interested in. It means we can say that a gene affects the other, but it's not affected by it.
+* **A->B = T and B->A = NA** or **A->B = NA and B->A = T** --> we can say that a gene affects the other, but we can't say if the second gene affects the first
+* **A->B = NA and B->A = NA** --> we can't say anything about causality
+* **A->B = F and B->A = T** or **A->B = F and B->A = T** --> neither gene affects the other
+* **A->B = T and B->A = T** or **A->B = T and B->A = T**
+
+How it works:  
+* **A->B = T** if anova p-value for the effect of eqtlA on geneB is < snp.pval
+* **A->B = F** if the anova p-value of the effect of eqtlA on geneB is > snp.pval.nsign and geneA and geneB have different eqtls
+* **B->A = T** if anova p-value for the effect of eqtlB on geneA is < snp.pval
+* **B->A = F** if the anova p-value of the effect of eqtlB on geneA is > snp.pval.nsign and geneA and geneB have different eqtls
