@@ -158,22 +158,25 @@ testparams <- function(params, tab){
 }
 
 create_res_table <- function(tab){
+  # create table with counts for several categories (see below)
+  # will need to be "collapsed with rbindlist()
+  
   temp <- data.table(matrix(ncol=10, nrow=1))
   names(temp) <- c("geneA", "geneB", "eqtl.A", "eqtl.B","unique.genepairs", "unique.geneeqtlpairs.A","unique.geneeqtlpairs.B","sign.p", "nonsign.p", "cor.p")
 
-  temp$geneA <- length(unique(tab$geneA))
-  temp$geneB <- length(unique(tab$geneB))
-  temp$eqtl.A <- length(unique(tab$eqtl.A))
-  temp$eqtl.B <- length(unique(tab$eqtl.B))
-  temp$sign.p <- tab$sign.p[1]
-  temp$nonsign.p <- tab$non_sign_p[1]
-  temp$cor.p <- tab$cis_p[1]
-  un.genepairs <- tab[(tab$`A->B`==T & tab$`B->A`==F), .N, by= .(geneA, geneB)]
-  temp$unique.genepairs <- nrow(un.genepairs[N==1])
-  un.geneeqtl.A <- tab[(tab$`A->B`==T & tab$`B->A`==F), .N, by= .(geneA, eqtl.A)]
-  un.geneeqtl.B <- tab[(tab$`A->B`==T & tab$`B->A`==F), .N, by= .(geneB, eqtl.B)]
-  temp$unique.geneeqtlpairs.A <- nrow(un.geneeqtl.A)
-  temp$unique.geneeqtlpairs.B <- nrow(un.geneeqtl.B)
+  temp$geneA <- length(unique(tab$geneA))   # number of unique genesA
+  temp$geneB <- length(unique(tab$geneB))   # number of unique genesB
+  temp$eqtl.A <- length(unique(tab$eqtl.A)) # number of unique eqtlsA
+  temp$eqtl.B <- length(unique(tab$eqtl.B)) # number of unique eqtlsB
+  temp$sign.p <- tab$sign.p[1]              # sign.pval cutoff
+  temp$nonsign.p <- tab$non_sign_p[1]       # non sign.pval cutoff
+  temp$cor.p <- tab$cis_p[1]                # corr.pval cutoff
+  un.genepairs <- tab[(tab$`A->B`==T & tab$`B->A`==F), .N, by= .(geneA, geneB)] 
+  temp$unique.genepairs <- nrow(un.genepairs[N==1])   # number of unique gene pairs
+  un.geneeqtl.A <- tab[(tab$`A->B`==T & tab$`B->A`==F), .N, by= .(geneA, eqtl.A)]   
+  un.geneeqtl.B <- tab[(tab$`A->B`==T & tab$`B->A`==F), .N, by= .(geneB, eqtl.B)]   
+  temp$unique.geneeqtlpairs.A <- nrow(un.geneeqtl.A)      # number of geneA-eqtlA pairs
+  temp$unique.geneeqtlpairs.B <- nrow(un.geneeqtl.B)      # number of geneB-eqtlB pairs
 
   return(temp)
 }

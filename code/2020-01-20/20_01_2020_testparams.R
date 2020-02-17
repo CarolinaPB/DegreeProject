@@ -37,53 +37,12 @@ stopCluster(cl)
 
 load(paste0(path,"results/2020-01-20/20_01_2020_resparams.Rdata"))
 
-tab <- data.table(matrix(ncol=9, nrow=length(res)))
-names(tab) <- c("res","geneA", "geneB", "eqtl.A", "eqtl.B","unique.genepairs","sign.p", "nonsign.p", "cor.p")
-
-cl = makeCluster(detectCores()-2, type="FORK")
-# each row corresponds to one set of parameters
-for (n in 1:length(res)){
-  tab$res[n] <- n
-  tab$geneA[n] <- length(unique(res[[n]]$geneA))
-  tab$geneB[n] <- length(unique(res[[n]]$geneB))
-  tab$eqtl.A[n] <- length(unique(res[[n]]$eqtl.A))
-  tab$eqtl.B[n] <- length(unique(res[[n]]$eqtl.B))
-  tab$sign.p[n] <- res[[n]]$sign.p[1]
-  tab$nonsign.p[n] <- res[[n]]$non_sign_p[1]
-  tab$cor.p[n] <- res[[n]]$cis_p[1]
-  tab$unique.genepairs[n] <- res[[n]][(`A->B`==T & `B->A`==F), .N, by=.(geneA, geneB)]
-  
-  
-}
-stopCluster(cl)
-
-
-res_sub <- res[1:2]
-
-
-create_res_table <- function(tab){
-  temp <- data.table(matrix(ncol=8, nrow=1))
-  names(temp) <- c("geneA", "geneB", "eqtl.A", "eqtl.B","unique.genepairs","sign.p", "nonsign.p", "cor.p")
-  
-  temp$geneA <- length(unique(tab$geneA))
-  temp$geneB <- length(unique(tab$geneB))
-  temp$eqtl.A <- length(unique(tab$eqtl.A))
-  temp$eqtl.B <- length(unique(tab$eqtl.B))
-  temp$sign.p <- tab$sign.p[1]
-  temp$nonsign.p <- tab$non_sign_p[1]
-  temp$cor.p <- tab$cis_p[1]
-  un.genepairs <- tab[(tab$`A->B`==T & tab$`B->A`==F), .N, by= .(geneA, geneB)]
-  temp$unique.genepairs <- nrow(un.genepairs[N==1])
-  
-  return(temp)
-}
-
 
 cl = makeCluster(detectCores()-2, type="FORK")
 res_table.temp <- parLapply(cl=cl, res, create_res_table)
 stopCluster(cl)
 
-res_table <- rbindlist(res_table)
+res_table <- rbindlist(res_table.temp)
 res_table <- res_table[order(sign.p, -nonsign.p, cor.p)]
 
 # plot(res_table$sign.p, res_table$unique.genepairs)
@@ -112,7 +71,7 @@ for (p in cor.pvals){
 
 
 
-
+# not taking the cor-pval into account
 par(mfrow=c(1,1))
 
 xrange <- range(-log(res_table$sign.p)) # set x-axis range
