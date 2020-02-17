@@ -2,7 +2,7 @@ library("GSEABase")
 library("GOstats")
 #library(parallel)
 library(data.table)
-# 
+#
 # path <- "/Users/Carolina/Documents/GitHub/DegreeProject/"
 # respath <- "/Users/Carolina/Documents/GitHub/DegreeProject/results/"
 
@@ -28,9 +28,8 @@ start_time <- Sys.time()
 cl = makeCluster(detectCores(), type="FORK")
 clustenrich <- parLapply(cl=cl, unique(edges$cluster), getclusterenrichment, edges, gs)
 stopCluster(cl)
-clustenrich <- lapply(unique(edges$cluster)[1:10], getclusterenrichment, edges, gs)
+clustenrich <- lapply(unique(edges$cluster), getclusterenrichment, edges, gs)
 end_time <- Sys.time()
 end_time - start_time
 save(clustenrich, file=paste0(respath, "2020-02-10/enrichment_bycluster.Rdata"))
 print("done")
-
