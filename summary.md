@@ -167,4 +167,27 @@ It seems like there's a large cluster of genes that are affecting each other, as
 
 
 ## 2020-01-20
-Test different parameter values to see if I get different results in the causality inference
+Test different parameter values combinations to see if I there is a certain combination that gives optimal results in the causality inference
+
+Groups of parameters to test:  
+```r
+sign_p <- c(1e-17, 1e-16, 1e-15, 1e-14, 1e-13, 1e-12, 1e-11, 1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2)
+non_sign_p <- c(1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2)
+cor_p <- c(1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2)
+```
+
+
+Subset:
+```
+sign_p non_sign_p   cor_p
+1e-17       1e-07   1e-09
+1e-16       1e-07   1e-09
+1e-15       1e-07   1e-09
+1e-14       1e-07   1e-09
+1e-13       1e-07   1e-09
+```
+
+
+| ![numgenepairs diff params](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numgenepairs_bypval_testparams.png) |
+|:--:|
+| *Number of unique gene pairs found when using different cutoffs. Each pannel corresponds to a different correlation p-value cutff. X-axis is the -log(pvalue) (for the effect to be significant) and differenc colors represent different values for the non-significant p-value (for the effect to be considered non-significant)* |
