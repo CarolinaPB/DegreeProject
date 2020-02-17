@@ -140,6 +140,17 @@ YAL032C YAL049C   chrI:84112_T/C    chrI:52951_G/T      TRUE FALSE
 |:--:|
 | *Number of unique gene pairs for the cases where A->B and not B->A* |
 
+Three plots basically showing the same
+
 | ![num gene-eqtl pairs](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numtimes_geneeqtl_pairs_firstparams.png) |
+|:--:|
+| *Number of unique gene-eqtl pairs for the cases where A->B and not B->A* |
+
+
+| ![num gene-eqtl pairs barplot](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numtimes_geneeqtl_pairs_firstparams_barplot.png) |
+|:--:|
+| *Number of unique gene-eqtl pairs for the cases where A->B and not B->A* |
+
+| ![num gene-eqtl pairs histogram](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numtimes_geneeqtl_pairs_firstparams_hist.png) |
 |:--:|
 | *Number of unique gene-eqtl pairs for the cases where A->B and not B->A* |
