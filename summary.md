@@ -136,6 +136,6 @@ YAL003W YLL024C   chrI:133174_G/A   chrXII:86595_T/C    TRUE FALSE
 YAL032C YAL049C   chrI:84112_T/C    chrI:52951_G/T      TRUE FALSE
 ```
 
-| ![num pairs](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/numtimes_genepair_firstparams.pdf) |
+| ![num pairs](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numtimes_genepair_firstparams.png) |
 |:--:|
 | *Number of unique gene pairs for the cases where A->B and not B->A* |
