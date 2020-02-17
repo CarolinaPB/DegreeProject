@@ -16,6 +16,9 @@ I started with :
 * **genotype matrix** - contains the genotype information (genotypes at 42,052 markers for all segregants. BY (i.e. reference) alleles are denoted by ‘−1’. RM alleles are denoted by ‘1’.)
 * **eqtl_results** - Genes with a local eQTL and significant Allele-specific expression (ASE), and discordant direction of effect. (1) Positive values indicate higher expression in RM compared to BY. (2) Shown is the less sig- nificant p-value from the two ASE datasets. (3) The table shows only genes where both ASE datasets agreed in the direction of effect. Shown is the average effect.
 
+
+##### **[File with my functions](https://github.com/CarolinaPB/DegreeProject/blob/master/code/myfunctions.R)**
+
 ## 2020-01-07 -- 2020-01-09
 > [Summary script](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-01-07/07_01_2020_process.R)  
 
@@ -136,6 +139,10 @@ YAL003W YLL024C   chrI:133174_G/A   chrXII:86595_T/C    TRUE FALSE
 YAL032C YAL049C   chrI:84112_T/C    chrI:52951_G/T      TRUE FALSE
 ```
 #### Results using the parameters above
+| ![num gene pairs](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/TFgenes_blob_firstparams.png) |
+|:--:|
+| *Causality network for the cases where A->B and not B->A* |
+
 | ![num gene pairs](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numtimes_genepair_firstparams.png) |
 |:--:|
 | *Number of unique gene pairs for the cases where A->B and not B->A* |
@@ -146,11 +153,15 @@ Three plots basically showing the same
 |:--:|
 | *Number of unique gene-eqtl pairs for the cases where A->B and not B->A* |
 
-
-| ![num gene-eqtl pairs barplot](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numtimes_geneeqtl_pairs_firstparams_barplot.png) |
-|:--:|
-| *Number of unique gene-eqtl pairs for the cases where A->B and not B->A* |
-
 | ![num gene-eqtl pairs histogram](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numtimes_geneeqtl_pairs_firstparams_hist.png) |
 |:--:|
 | *Number of unique gene-eqtl pairs for the cases where A->B and not B->A* |
+
+| ![num gene-eqtl pairs histogram](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/TNAgenes_blob_firstparams.png) |
+|:--:|
+| *Causality network for the cases where A->B and we can't say if B->A or not* |
+
+
+
+## 2020-01-20
+Test different parameter values to see if I get different results in the causality inference
