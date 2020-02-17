@@ -135,7 +135,11 @@ YAL003W YDR059C   chrI:133174_G/A   chrIV:567417_C/T    TRUE FALSE
 YAL003W YLL024C   chrI:133174_G/A   chrXII:86595_T/C    TRUE FALSE
 YAL032C YAL049C   chrI:84112_T/C    chrI:52951_G/T      TRUE FALSE
 ```
-
-| ![num pairs](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numtimes_genepair_firstparams.png) |
+#### Results using the parameters above
+| ![num gene pairs](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numtimes_genepair_firstparams.png) |
 |:--:|
 | *Number of unique gene pairs for the cases where A->B and not B->A* |
+
+| ![num gene-eqtl pairs](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numtimes_geneeqtl_pairs_firstparams.png) |
+|:--:|
+| *Number of unique gene-eqtl pairs for the cases where A->B and not B->A* |
