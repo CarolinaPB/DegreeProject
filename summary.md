@@ -249,3 +249,13 @@ Since all genes are connected in my network and there are no small causal cluste
 | ![community membership](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/communitymembership.png) |
 |:--:|
 | *community membership for nodes that belong to the most communities. Colours indicate community-specific membership. Numbers on top of the matrix are the number of the clusters; Numbers on the right are the number of clusters those genes belong to; numbers on the bottom are the number of genes in each cluster* |
+
+The next figure shows two clusters that share genes. The fraction of the total number of edges that a node has in each community is depicted using a pie chart
+
+| ![example cluster](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/examplecluster1and7.png) |
+|:--:|
+| *Cluster 1 and cluster 7 share 3 genes* |
+
+| ![example cluster](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/top10modularclusters.png) |
+|:--:|
+| *10 clusters that have the highest modularity - more connections within the cluster than outside the cluster* |
