@@ -256,19 +256,24 @@ The next figure shows two clusters that share genes. The fraction of the total n
 |:--:|
 | *Cluster 1 and cluster 7 share 3 genes* |
 
-| ![example cluster](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/top10modularity.png) |
+| ![top10modularity](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/top10modularity.png) |
 |:--:|
 | *clusters with top 10 modularity - more connections within the cluster than outside the cluster* |
 
 
-| ![example cluster](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/top10modularclusters.png) |
+| ![top10modularityclusters](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/top10modularclusters.png) |
 |:--:|
 | *10 clusters that have the highest modularity* |
 
-| ![example cluster](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/clustermodularity.png) |
+| ![modularity all clusters](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/clustermodularity.png) |
 |:--:|
 | *modularity for all clusters* |
 
-| ![example cluster](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/clustermodularity.png) |
+| ![top10connectivity](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/top10connectivity.png) |
 |:--:|
-| *modularity for all clusters* |
+| *clusters with top 10 connectivity (the inverse of modularity)* |
+
+
+| ![top10connectedclusters](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/top10connectedclusters.png) |
+|:--:|
+| *10 clusters that have the highest connectivity* |

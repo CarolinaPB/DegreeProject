@@ -23,6 +23,8 @@ corr.pval <- 0.05/choose(nGenes,2)
 
 
 ######
+library(data.table)
+path <- "/Users/Carolina/Documents/GitHub/DegreeProject/"
 effects_table.cor <- fread(paste0(path, "results/2020-01-10/effectstable.gz"))
 
 find.effects <- effects_table.cor[cor.pval < corr.pval & cis.A ==T & cis.B==T & geneA!=geneB]
