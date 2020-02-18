@@ -240,7 +240,7 @@ With these new parameters, many more gene pairs are found. The number of pairs t
 ## 2020-01-24 -- 2020-01-28
 Since all genes are connected in my network and there are no small causal clusters, I looked for ways to group the genes. I ended up using the link community method (Ahn et al., 2010) to find sets of genes that are more highly connected with each other than with the rest of the network. This method was applied throught the linkcomm R package (Kalinka & Tomancak 2011). Using this method, nodes (genes) may be present in more than one cluster.
 
-> [Get link communities](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-01-27/27_01_2020_netcomm.R)
+> [Get link communities](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-01-27/27_01_2020_netcomm.R) and [cluster analysis](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-01-29/29_01_2020_clusteranalysis.Rmd)
 
 | ![linkcomm summary](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/linkcommsummary.png) |
 |:--:|
@@ -274,6 +274,8 @@ Modularity is often used in optimization methods for detecting community structu
 |:--:|
 | *modularity for all clusters* |
 
+Only a few of the clusters have very high modularity
+
 | ![top10connectivity](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/top10connectivity.png) |
 |:--:|
 | *clusters with top 10 connectivity (the inverse of modularity)* |
@@ -284,3 +286,32 @@ Modularity is often used in optimization methods for detecting community structu
 | *10 clusters that have the highest connectivity* |
 
 Comparing with the previous network plot, we can see that the clusters with high connectivity are all interconnected and have a lot of links going out of them. The clusters in the highest modularity network plot are mostly unconnected.
+
+
+## 2020-02-05 --
+
+In order to find the GO terms associated with my genes I used YeastMine (Balakrishnan et al., 2012) (https://yeastmine.yeastgenome.org/yeastmine/begin.do). Since I was not being able to do it in R, using the YeastMine API, I used python to run my queries. To be able to run the queries with python, first I needed to create and account and request an API key. Since you can generate python code from the website, I used it as a guide and added/ removed parameters to get what I needed.
+From YeastMine I got the GO code and term for my genes, as well as evidence code.
+
+> [GO analysis](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-02-07/07_02_2020_GO_analysis.Rmd)
+
+
+
+| ![barplot top links GO](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numlinksGOterm_genesA_top10.png) |
+|:--:|
+| *Causal genes GO terms that have the most links going out from them"* |
+
+Before looking at enrichment, we hypothesised that many causal genes would be associaded with transcription/transcription factors.
+
+
+
+| ![boxplot transc factor](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/linkstranscriptionboxplot.png) | ![boxplot transc factor outliers](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/linkstranscriptionboxplot_outliers.png)
+|:--:|:--:
+
+
+How many links go from genes for with the GO term includes "transcription factor"
+
+| ![boxplot transc factor/regulator](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/linkstranscriptionregulationboxplot.png) | ![boxplot transc factor/regulator outliers](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/linkstranscriptionregulationboxplot_outliers.png)
+|:--:|:--:
+
+How many links go from genes for with the GO term includes "transcription factor" or "transcription" and "regulation"
