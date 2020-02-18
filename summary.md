@@ -237,6 +237,10 @@ YLR260W     739            34
 
 With these new parameters, many more gene pairs are found. The number of pairs that appear once increases to more than double of what we had before, the number of pairs that appear twice or three times also increases and now we have gene pairs that appear four times
 
+| ![new params blob](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/TFgenes_blob_newparams.png) |
+|:--:|
+| *Causality network for the cases where A->B and not B->A when using the new params* |
+
 ## 2020-01-24 -- 2020-01-28
 Since all genes are connected in my network and there are no small causal clusters, I looked for ways to group the genes. I ended up using the link community method (Ahn et al., 2010) to find sets of genes that are more highly connected with each other than with the rest of the network. This method was applied throught the linkcomm R package (Kalinka & Tomancak 2011). Using this method, nodes (genes) may be present in more than one cluster.
 
@@ -285,10 +289,12 @@ Only a few of the clusters have very high modularity
 |:--:|
 | *10 clusters that have the highest connectivity* |
 
+There's still only one bir cluster with no subclusters
+
 Comparing with the previous network plot, we can see that the clusters with high connectivity are all interconnected and have a lot of links going out of them. The clusters in the highest modularity network plot are mostly unconnected.
 
 
-## 2020-02-05 --
+## 2020-02-05 -- 2020-02-12
 
 In order to find the GO terms associated with my genes I used YeastMine (Balakrishnan et al., 2012) (https://yeastmine.yeastgenome.org/yeastmine/begin.do). Since I was not being able to do it in R, using the YeastMine API, I used python to run my queries. To be able to run the queries with python, first I needed to create and account and request an API key. Since you can generate python code from the website, I used it as a guide and added/ removed parameters to get what I needed.
 From YeastMine I got the GO code and term for my genes, as well as evidence code.
@@ -322,3 +328,34 @@ How many links go from genes for with the GO term includes "transcription factor
 How many links go from genes for with the GO term includes "transcription factor" or "transcription" and "regulation". Left - without outliers plotted
 
 We were expecting that the boxplot including transcription factors/regulators would have a higher mean value than the other
+
+# GO Enrichment
+## 2020-02-13 -- 2020-02-14   
+
+> [enrichment analysis](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-02-13/13_02_2020_enrichmentanalysis_hypergeo.R)
+
+I used GOstats, an R package (bioconductor), to test GO terms for over representation. I used both a classical hypergeometric test and a conditional hypergeometric test, which uses the relationships among GO terms to decorrelate the results
+
+First I needed to define a few parameters:
+* **universe** - all the genes in the dataset (can be involved in the causality or not)
+* **interesting genes** - causal genes or affected genes
+
+Falcon & Gentleman (2007) the universe can be reduced by not using the genes that are not being expressed (in this case I would say not involved in the causality). Taking this into account, it would be interesting to perform the hypergeometric test using only the genes involved in the causality (genes that affect the expression of other genes and genes that are affected) as universe. Falcon & Gentleman (2007) also suggest removing genes that do not map to any GO term
+I'm performing the hypergeometric test twice, once for the causal genes and once for the affected genes to see if there's a different enrichment in both groups. It would be expected that the causal group would be enriched for genes involved in regulation.
+
+From Falcon & Gentleman (2007)  
+"In the hypergeometric model, each term is treated as an independent classification. Each gene is classified according to whether or not it has been selected and whether or not it is annotated at a particular term. A hypergeometric probability is computed to assess whether the number of selected genes associated with the term is larger than expected."
+
+
+### Hypergeo results
+
+| ![hypergeo genesA summary](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/hypergeosummary_genesA.png) |
+|:--:|
+| *overview of hypergeometric test performed on the causal genes* |
+
+
+From the 4518 "biological process" GO terms tested, 117 were found to be overenriched (at p-value 0.05)
+
+| ![hypergeo genesA summary](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/hypergeosummary_genesB.png) |
+|:--:|
+| *overview of hypergeometric test performed on the affected genes* |
