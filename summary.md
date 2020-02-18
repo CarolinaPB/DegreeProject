@@ -248,4 +248,4 @@ Since all genes are connected in my network and there are no small causal cluste
 
 | ![community membership](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/communitymembership.png) |
 |:--:|
-| *community membership for nodes that belong to the most communities. Colours indicate community-specific membership* |
+| *community membership for nodes that belong to the most communities. Colours indicate community-specific membership. Numbers on top of the matrix are the number of the clusters; Numbers on the right are the number of clusters those genes belong to; numbers on the bottom are the number of genes in each cluster* |
