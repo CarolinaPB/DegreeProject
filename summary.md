@@ -230,7 +230,7 @@ YNL088W     742            24
 YLR260W     739            34
 ```
 
-| ![num gene pairs](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/numtimes_genepair_newparams.pdf) |
+| ![num gene pairs](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numtimes_genepair_newparams.png) |
 |:--:|
 | *Number of unique gene pairs for the cases where A->B and not B->A when using the new parameters* |
 
