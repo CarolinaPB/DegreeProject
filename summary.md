@@ -295,11 +295,16 @@ From YeastMine I got the GO code and term for my genes, as well as evidence code
 
 > [GO analysis](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-02-07/07_02_2020_GO_analysis.Rmd)
 
-
+One gene might be associated with more than one GO term
 
 | ![barplot top links GO](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numlinksGOterm_genesA_top10.png) |
 |:--:|
-| *Causal genes GO terms that have the most links going out from them"* |
+| *Causal genes GO terms that have the most links going out from them* |
+
+According to [EBI](https://www.ebi.ac.uk/QuickGO/term/GO:0050789), the GO term "biological process" is "any process that modulates the frequency, rate or extent of a biological process" it's usually used when the actual function of the gene is not known.  
+
+High values might be because there are many genes associated with a certain term of because the genes that are associated with that term have many "arrows" going out (they affect many other genes)
+
 
 Before looking at enrichment, we hypothesised that many causal genes would be associaded with transcription/transcription factors.
 
@@ -309,9 +314,11 @@ Before looking at enrichment, we hypothesised that many causal genes would be as
 |:--:|:--:
 
 
-How many links go from genes for with the GO term includes "transcription factor"
+How many links go from genes for with the GO term includes "transcription factor". Left - without outliers plotted
 
 | ![boxplot transc factor/regulator](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/linkstranscriptionregulationboxplot.png) | ![boxplot transc factor/regulator outliers](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/linkstranscriptionregulationboxplot_outliers.png)
 |:--:|:--:
 
-How many links go from genes for with the GO term includes "transcription factor" or "transcription" and "regulation"
+How many links go from genes for with the GO term includes "transcription factor" or "transcription" and "regulation". Left - without outliers plotted
+
+We were expecting that the boxplot including transcription factors/regulators would have a higher mean value than the other
