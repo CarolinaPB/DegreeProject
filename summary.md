@@ -200,6 +200,7 @@ sign_p non_sign_p   cor_p
 | *Number of unique gene pairs found when using different cutoffs. X-axis is the -log(pvalue) (for the effect to be significant) and differenc colors represent different values for the non-significant p-value (for the effect to be considered non-significant)* |
 
 ## 2020-01-24
+Defined new parameters that will be used from now in the analysis. Did the causal analysis again.
 > [Script](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-01-24/24_01_2020_changingparams.R)
 
 
@@ -235,3 +236,8 @@ YLR260W     739            34
 | *Number of unique gene pairs for the cases where A->B and not B->A when using the new parameters* |
 
 With these new parameters, many more gene pairs are found. The number of pairs that appear once increases to more than double of what we had before, the number of pairs that appear twice or three times also increases and now we have gene pairs that appear four times
+
+## 2020-01-24 -- 2020-01-28
+Since all genes are connected in my network and there are no small causal clusters, I looked for ways to group the genes. I ended up using the link community method (Ahn et al., 2010) to find sets of genes that are more highly connected with each other than with the rest of the network. This method was applied throught the linkcomm R package (Kalinka & Tomancak 2011). Using this method, nodes (genes) may be present in more than one cluster.
+
+> [Get link communities](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-01-27/27_01_2020_netcomm.R)
