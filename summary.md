@@ -359,3 +359,8 @@ From the 4518 "biological process" GO terms tested, 117 were found to be overenr
 | ![hypergeo genesA summary](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/hypergeosummary_genesB.png) |
 |:--:|
 | *overview of hypergeometric test performed on the affected genes* |
+
+From the 4440 "biological process" GO terms tested, 123 were found to be overenriched (at p-value 0.05)
+
+
+Figure showing the relationships among GO terms tested using the hypergeometric test:
