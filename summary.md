@@ -241,3 +241,11 @@ With these new parameters, many more gene pairs are found. The number of pairs t
 Since all genes are connected in my network and there are no small causal clusters, I looked for ways to group the genes. I ended up using the link community method (Ahn et al., 2010) to find sets of genes that are more highly connected with each other than with the rest of the network. This method was applied throught the linkcomm R package (Kalinka & Tomancak 2011). Using this method, nodes (genes) may be present in more than one cluster.
 
 > [Get link communities](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-01-27/27_01_2020_netcomm.R)
+
+| ![linkcomm summary](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/linkcommsummary.png) |
+|:--:|
+| *summary of the linkcomm analysis. 3040 communities were found* |
+
+| ![community membership](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/communitymembership.png) |
+|:--:|
+| *community membership for nodes that belong to the most communities. Colours indicate community-specific membership* |
