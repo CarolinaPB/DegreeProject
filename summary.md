@@ -256,6 +256,11 @@ The next figure shows two clusters that share genes. The fraction of the total n
 |:--:|
 | *Cluster 1 and cluster 7 share 3 genes* |
 
+There are several measures to describe the centrality of a cluster, such as modularity (high modular clusters have more links between the cluster's nodes than going out of the cluster) and connectivity (there are more links going out of the clusters than within)
+Networks with high modularity have dense connections between the nodes within modules but sparse connections between nodes in different modules.
+Modularity is often used in optimization methods for detecting community structure in networks. [wikipedia](https://en.wikipedia.org/wiki/Modularity_(networks))
+
+
 | ![top10modularity](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/top10modularity.png) |
 |:--:|
 | *clusters with top 10 modularity - more connections within the cluster than outside the cluster* |
@@ -277,3 +282,5 @@ The next figure shows two clusters that share genes. The fraction of the total n
 | ![top10connectedclusters](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/top10connectedclusters.png) |
 |:--:|
 | *10 clusters that have the highest connectivity* |
+
+Comparing with the previous network plot, we can see that the clusters with high connectivity are all interconnected and have a lot of links going out of them. The clusters in the highest modularity network plot are mostly unconnected.
