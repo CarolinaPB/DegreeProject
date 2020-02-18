@@ -256,6 +256,19 @@ The next figure shows two clusters that share genes. The fraction of the total n
 |:--:|
 | *Cluster 1 and cluster 7 share 3 genes* |
 
+| ![example cluster](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/top10modularity.png) |
+|:--:|
+| *clusters with top 10 modularity - more connections within the cluster than outside the cluster* |
+
+
 | ![example cluster](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/top10modularclusters.png) |
 |:--:|
-| *10 clusters that have the highest modularity - more connections within the cluster than outside the cluster* |
+| *10 clusters that have the highest modularity* |
+
+| ![example cluster](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/clustermodularity.png) |
+|:--:|
+| *modularity for all clusters* |
+
+| ![example cluster](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/clustermodularity.png) |
+|:--:|
+| *modularity for all clusters* |
