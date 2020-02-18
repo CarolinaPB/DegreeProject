@@ -210,9 +210,11 @@ parameter | exp | value |
 var.exp.lim| | 0.1
 nSNPs| | 42052
 nGenes| | 5720
-snp.pval| | 0.01
+snp.pval| | 0.01 *
 snp.pval.sign| | 1e-5 |
-corr.pval | 0.05/choose(nGenes,2) | 3.056919e-09
+corr.pval | 0.05/choose(nGenes,2) | 3.056919e-09 *  
+
+\* Values that are different than the original parameters
 
 
 
@@ -227,3 +229,9 @@ YLR281C     752             6
 YNL088W     742            24
 YLR260W     739            34
 ```
+
+| ![num gene pairs](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/numtimes_genepair_newparams.pdf) |
+|:--:|
+| *Number of unique gene pairs for the cases where A->B and not B->A when using the new parameters* |
+
+With these new parameters, many more gene pairs are found. The number of pairs that appear once increases to more than double of what we had before, the number of pairs that appear twice or three times also increases and now we have gene pairs that appear four times
