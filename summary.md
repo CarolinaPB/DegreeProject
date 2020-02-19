@@ -300,17 +300,18 @@ In order to find the GO terms associated with my genes I used YeastMine (Balakri
 From YeastMine I got the GO code and term for my genes, as well as if it belongs to a biological process or other, and the evidence code for the annotation.
 
 
-> [GO analysis](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-02-07/07_02_2020_GO_analysis.Rmd)
+> [GO analysis](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-02-07/19_02_2020_GO_analysis.Rmd)
 
 One gene might be associated with more than one GO term
 
-| ![barplot top links GO](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/piechart_top10_GOterms_genesA.png) |
-|:--:|
-| *The top 10 most represented GO term categories in the causal genes* |
 
 | ![barplot top links GO](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numlinksGOterm_genesA_top10.png) |
 |:--:|
 | *Causal genes GO terms that have the most links going out from them* |
+
+| ![barplot top links GO](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/piechart_top10_GOterms_genesA.png) |
+|:--:|
+| *The top 10 most represented GO term categories in the causal genes* |
 
 According to [EBI](https://www.ebi.ac.uk/QuickGO/term/GO:0050789), the GO term "biological process" is "any process that modulates the frequency, rate or extent of a biological process" it's usually used when the actual function of the gene is not known.  
 
