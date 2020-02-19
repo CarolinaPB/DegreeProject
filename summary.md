@@ -391,4 +391,7 @@ set of genes | Hypergeo | Conditional hypergeo
 causal | 114 | 51
 affected | 114 | 67
 
-To see the enrichment results for the causal genes (conditional hypergeo test) see this [table](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/hgCondA_htmlreport.md) (contains links to information on each GO term). For the affected genes enrichment check this [table](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/hgCondB_htmlreport.md)
+To see the enrichment results for the causal genes (conditional hypergeo test) see this [table](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/hgCondA_htmlreport.md) (contains links to information on each GO term). For the affected genes' enrichment check this [table](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/hgCondB_htmlreport.md)
+
+
+Files where you can see a all the subgraphs of the gene ontology directed acyclic graph for the enrichment of the [causal genes](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/termgraph_A_bioproc_cond.pdf) and for the [affected genes](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/termgraph_B_bioproc_cond.pdf). The subgraphs consist of nodes that are connected in the DAG, and where all nodes are significant (according to the hypergeo test)
