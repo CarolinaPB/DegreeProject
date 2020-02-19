@@ -1,0 +1,66 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+```{r include=FALSE}
+library("GSEABase")
+library("GOstats")
+library(parallel)
+library(data.table)
+# 
+path <- "/Users/Carolina/Documents/GitHub/DegreeProject/"
+respath <- "/Users/Carolina/Documents/GitHub/DegreeProject/results/"
+
+# path <- "/home/carolpb/DegreeProject/" # uppmax
+# respath <- "/proj/snic2019-8-367/private/carol/results/" # uppmax
+
+source(paste0(path, "code/myfunctions.R"))
+
+phenotype <- fread("/Users/Carolina/Documents/GitHub/DegreeProject/data/SI_Data_01_expressionValues.txt")
+
+find.effects_TF <- fread(paste0(respath, "2020-01-27/findeffects_TF.gz"))
+
+## table with GO terms + parent terms for each gene + gene evidence code
+genes_GO.table <- fread(paste0(path, "results/2020-02-19/genelistwithGOterm_allnamespaces.tsv"))
+genes_GO.table <- unique(genes_GO.table)
+genes_GO.bioprocess <- genes_GO.table[Gene.ontologyAnnotations.ontologyTerm.namespace=="biological_process"]
+genes_GO.bioprocess[,Gene.ontologyAnnotations.ontologyTerm.namespace:=NULL]
+
+# table with necessary columns for creating a geneset and calculating enrichment
+goframeData <- unique(genes_GO.bioprocess[,.(Gene.ontologyAnnotations.ontologyTerm.identifier, Gene.ontologyAnnotations.evidence.code.code, Gene.secondaryIdentifier)])
+
+# creating the sets of genes to use 
+# the "interesting genes" - either genesA (the causal ones) or genesB (on the receiving end)
+# the "universe" - in this case, only the genes that are involved in the causality
+genesA <- unlist(unique(find.effects_TF[,geneA]))
+genesB <- unlist(unique(find.effects_TF[,geneB]))
+
+universe <- unique(c(genesA, genesB))
+
+# create geneset
+gs <- getgeneset(goframeData)
+
+paramsCondB <- GSEAGOHyperGParams(name="first try",
+                                 geneSetCollection=gs,
+                                 geneIds = genesB,
+                                 universeGeneIds = universe,
+                                 ontology = "BP",
+                                 pvalueCutoff = 0.05,
+                                 conditional = T,
+                                 testDirection = "over")
+hgCondB = hyperGTest(paramsCondB)
+```
+
+
+```{r echo=FALSE}
+termgrB.cond <- termGraphs(hgCondB, use.terms = T, pvalue = 0.05)
+for (i in 1:length(termgrB.cond)){
+  dev.new()
+  plotGOTermGraph(termgrB.cond[[i]], r = hgCondB, add.counts = T, node.colors=c(sig="green", not="white"), max.nchar=100)
+  dev.off()
+}
+```
+
