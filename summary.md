@@ -390,3 +390,5 @@ set of genes | Hypergeo | Conditional hypergeo
 -|-|-
 causal | 114 | 51
 affected | 114 | 67
+
+To see the enrichment results for the causal genes (conditional hypergeo test) see this [table](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/hgCondA_htmlreport.md) (contains links to information on each GO term). For the affected genes enrichment check this [table](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/hgCondB_htmlreport.md)

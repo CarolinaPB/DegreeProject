@@ -110,14 +110,26 @@ paramsCondB <- GSEAGOHyperGParams(name="first try",
 hgCondB = hyperGTest(paramsCondB)
 hgCondB.dt <- data.table(summary(hgCondB))
 
-
+# to only keep GO terms with at least 100 gene annotations
+summary(hgCondB, categorySize=100)
 
 
 
 # GO terms that are marked significant by the standard hypergeo test, but not by the conditional test
-stdIds = sigCategories(res.geneA)
-condIds = sigCategories(hgCond)
-setdiff(stdIds, condIds)
+stdIdsA = sigCategories(res.geneA)
+condIdsA = sigCategories(hgCondA)
+# num of GO terms that were not significant with the conditional hypergeo test
+length(setdiff(stdIdsA, condIdsA))
+
+stdIdsB = sigCategories(res.geneB)
+condIdsB = sigCategories(hgCondB)
+# num of GO terms that were not significant with the conditional hypergeo test
+length(setdiff(stdIdsB, condIdsB)) 
+
+
+# create HTML reports (tables with enrichment)
+htmlReport(hgCondA, file="results/2020-02-19/hgCondA_htmlreport.md")
+htmlReport(hgCondB, file="results/2020-02-19/hgCondB_htmlreport.md")
 
 # for the causal genes:
 # num of enriched GO terms
