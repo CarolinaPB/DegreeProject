@@ -361,6 +361,7 @@ I will continue by using the results from the second test, where the universe wa
 
 ### Hypergeo results
 
+The following overviews show the number of significant terms found
 | ![hypergeo genesA summary](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/hypergeosummary_genesA.png) |
 |:--:|
 | *overview of hypergeometric test performed on the causal genes* |
@@ -374,5 +375,18 @@ From the 4425 "biological process" GO terms tested, 114 were found to be overenr
 
 From the 4356 "biological process" GO terms tested, 114 were found to be overenriched (at p-value 0.05)
 
-#TODO show graphs and then go to the conditional hypergeo
-Figure showing the relationships among GO terms tested using the hypergeometric test:
+### Conditional Hypergeo results
+
+| ![cond hypergeo genesA summary](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/condhypergeosummary_genesA.png) |
+|:--:|
+| *overview of conditional hypergeometric test performed on the causal genes* |
+
+
+| ![cond hypergeo genesB summary](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/condhypergeosummary_genesB.png) |
+|:--:|
+| *overview of conditional hypergeometric test performed on the affected genes* |
+
+set of genes | Hypergeo | Conditional hypergeo
+-|-|-
+causal | 114 | 51
+affected | 114 | 67

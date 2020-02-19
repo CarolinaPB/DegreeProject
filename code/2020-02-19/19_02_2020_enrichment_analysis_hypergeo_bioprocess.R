@@ -67,26 +67,26 @@ all.equal(res.geneB, res.geneB.uniall)
 termgrA <- termGraphs(res.geneA, use.terms = T, pvalue = 0.05)
 
 #save all the graphs to a pdf
-pdf(file = "results/2020-02-19/termgraph_A_bioproc.pdf", onefile = T)
-for (i in 1:length(termgrA)){
-  plotGOTermGraph(termgrA[[i]], r = res.geneA, add.counts = T, node.colors=c(sig="green", not="white"), max.nchar=30)
-}
-dev.off()
+# pdf(file = "results/2020-02-19/termgraph_A_bioproc.pdf", onefile = T)
+# for (i in 1:length(termgrA)){
+#   plotGOTermGraph(termgrA[[i]], r = res.geneA, add.counts = T, node.colors=c(sig="green", not="white"), max.nchar=30)
+# }
+# dev.off()
 
 
 # get list with different graphs that represent relations between GO terms
 termgrB <- termGraphs(res.geneB, use.terms = T, pvalue = 0.05)
-pdf(file = "results/2020-02-19/termgraph_B_bioproc.pdf", onefile = T)
-for (i in 1:length(termgrB)){
-  plotGOTermGraph(termgrB[[i]], r = res.geneB, add.counts = T, node.colors=c(sig="green", not="white"), max.nchar=30)
-}
-dev.off()
+# pdf(file = "results/2020-02-19/termgraph_B_bioproc.pdf", onefile = T)
+# for (i in 1:length(termgrB)){
+#   plotGOTermGraph(termgrB[[i]], r = res.geneB, add.counts = T, node.colors=c(sig="green", not="white"), max.nchar=30)
+# }
+# dev.off()
 
 
 #### CONDITIONAL HYPERGEO TEST ######
 
 # for genesA as the genes of interest
-paramsCond <- GSEAGOHyperGParams(name="first try",
+paramsCondA <- GSEAGOHyperGParams(name="first try",
                                  geneSetCollection=gs,
                                  geneIds = genesA,
                                  universeGeneIds = universe,
@@ -94,8 +94,24 @@ paramsCond <- GSEAGOHyperGParams(name="first try",
                                  pvalueCutoff = 0.05,
                                  conditional = T,
                                  testDirection = "over")
-hgCond = hyperGTest(paramsCond)
-hgCond.dt <- data.table(summary(hgCond))
+hgCondA = hyperGTest(paramsCondA)
+hgCondA.dt <- data.table(summary(hgCondA))
+
+
+# for genesB as the genes of interest
+paramsCondB <- GSEAGOHyperGParams(name="first try",
+                                 geneSetCollection=gs,
+                                 geneIds = genesB,
+                                 universeGeneIds = universe,
+                                 ontology = "BP",
+                                 pvalueCutoff = 0.05,
+                                 conditional = T,
+                                 testDirection = "over")
+hgCondB = hyperGTest(paramsCondB)
+hgCondB.dt <- data.table(summary(hgCondB))
+
+
+
 
 
 # GO terms that are marked significant by the standard hypergeo test, but not by the conditional test
@@ -152,4 +168,5 @@ termgrA_cond <- termGraphs(hgCond, use.terms = T, pvalue = 0.05)
 #   plotGOTermGraph(termgrA_cond[[i]], r = hgCond, add.counts = T, node.colors=c(sig="green", not="white"), max.nchar=200)
 # }
 # dev.off()
+
 
