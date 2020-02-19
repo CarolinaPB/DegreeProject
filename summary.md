@@ -390,18 +390,3 @@ set of genes | Hypergeo | Conditional hypergeo
 -|-|-
 causal | 114 | 51
 affected | 114 | 67
-
-<html>
-  <head>
-    <script src="jquery.js"></script>
-    <script>
-    $(function(){
-      $("#includedContent").load("/Users/Carolina/Documents/GitHub/DegreeProject/results/2020-02-19/hgCondB_htmlreport.html"); 
-    });
-    </script>
-  </head>
-
-  <body>
-     <div id="includedContent"></div>
-  </body>
-</html>
