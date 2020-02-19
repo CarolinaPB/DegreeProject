@@ -343,8 +343,8 @@ We were expecting that the boxplot including transcription factors/regulators wo
 I used GOstats, an R package (bioconductor), to test GO terms for over representation. I used both a classical hypergeometric test and a conditional hypergeometric test, which uses the relationships among GO terms to decorrelate the results
 
 First I needed to define a few parameters:
-* **universe** - all the genes in the dataset (can be involved in the causality or not)
-* **interesting genes** - causal genes or affected genes
+* **universe** - all the genes in the dataset (can be involved in the causality or not) (num genes = 5720)
+* **interesting genes** - causal genes (n=2658) or affected genes (n=2478)
 
 Falcon & Gentleman (2007) the universe can be reduced by not using the genes that are not being expressed (in this case I would say not involved in the causality). Taking this into account, it would be interesting to perform the hypergeometric test using only the genes involved in the causality (genes that affect the expression of other genes and genes that are affected) as universe. Falcon & Gentleman (2007) also suggest removing genes that do not map to any GO term
 I'm performing the hypergeometric test twice, once for the causal genes and once for the affected genes to see if there's a different enrichment in both groups. It would be expected that the causal group would be enriched for genes involved in regulation.
@@ -352,6 +352,12 @@ I'm performing the hypergeometric test twice, once for the causal genes and once
 From Falcon & Gentleman (2007)  
 "In the hypergeometric model, each term is treated as an independent classification. Each gene is classified according to whether or not it has been selected and whether or not it is annotated at a particular term. A hypergeometric probability is computed to assess whether the number of selected genes associated with the term is larger than expected."
 
+Performed new hypergeometric test with
+* **universe** - all the genes involved in the causality (num genes = 2861)
+* **interesting genes** - causal genes or affected genes
+
+I checked if the resulting enrichment table was the same for both universes tested and it was.
+I will continue by using the results from the second test, where the universe was comprised of genes involved in the causality.
 
 ### Hypergeo results
 
@@ -360,13 +366,13 @@ From Falcon & Gentleman (2007)
 | *overview of hypergeometric test performed on the causal genes* |
 
 
-From the 4518 "biological process" GO terms tested, 117 were found to be overenriched (at p-value 0.05)
+From the 4425 "biological process" GO terms tested, 114 were found to be overenriched (at p-value 0.05)
 
-| ![hypergeo genesA summary](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/hypergeosummary_genesB.png) |
+| ![hypergeo genesB summary](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/hypergeosummary_genesB.png) |
 |:--:|
 | *overview of hypergeometric test performed on the affected genes* |
 
-From the 4440 "biological process" GO terms tested, 123 were found to be overenriched (at p-value 0.05)
+From the 4356 "biological process" GO terms tested, 114 were found to be overenriched (at p-value 0.05)
 
 #TODO show graphs and then go to the conditional hypergeo
 Figure showing the relationships among GO terms tested using the hypergeometric test:

@@ -24,16 +24,16 @@ genes_GO.bioprocess[,Gene.ontologyAnnotations.ontologyTerm.namespace:=NULL]
 
 
 # table with necessary columns for creating a geneset and calculating enrichment
-# NOT USING PARENTS INFO - USING THE "NORMAL" INFO
 goframeData <- unique(genes_GO.bioprocess[,.(Gene.ontologyAnnotations.ontologyTerm.identifier, Gene.ontologyAnnotations.evidence.code.code, Gene.secondaryIdentifier)])
 
 # creating the sets of genes to use 
 # the "interesting genes" - either genesA (the causal ones) or genesB (on the receiving end)
-# the "universe" - in this case, all the genes in our dataset
+# the "universe" - in this case, only the genes that are involved in the causality
 genesA <- unlist(unique(find.effects_TF[,geneA]))
 genesB <- unlist(unique(find.effects_TF[,geneB]))
-# universe <- colnames(phenotype[,2:ncol(phenotype)])
+
 universe <- unique(c(genesA, genesB))
+
 # create geneset
 gs <- getgeneset(goframeData)
 # get enrichment for genesA
@@ -44,6 +44,24 @@ res.geneA.dt <- data.table(summary(res.geneA))
 # get enrichment for genesB
 res.geneB <- getenrichment(gs, universe = universe, interestinggenes = genesB)
 res.geneB.dt <- data.table(summary(res.geneB))
+
+
+# universe is all the genes
+universe.all <- names(phenotype[,2:ncol(phenotype)])
+
+res.geneA.uniall <- getenrichment(gs, universe = universe.all, interestinggenes = genesA)
+res.geneA.uniall.dt <- data.table(summary(res.geneA.uniall))
+#htmlReport(res.geneA.parents, file=paste0(respath, "2020-02-13/GOenrichmentreport_genesA.html"))
+
+# get enrichment for genesB
+res.geneB.uniall <- getenrichment(gs, universe = universe.all, interestinggenes = genesB)
+res.geneB.uniall.dt <- data.table(summary(res.geneB.uniall))
+
+
+# check if I got the same results using the universe = all genes and universe = genes involved in causality
+all.equal(res.geneA, res.geneA.uniall)
+all.equal(res.geneB, res.geneB.uniall)
+
 
 # get list with different graphs that represent relations between GO terms
 termgrA <- termGraphs(res.geneA, use.terms = T, pvalue = 0.05)
@@ -84,6 +102,15 @@ hgCond.dt <- data.table(summary(hgCond))
 stdIds = sigCategories(res.geneA)
 condIds = sigCategories(hgCond)
 setdiff(stdIds, condIds)
+
+# for the causal genes:
+# num of enriched GO terms
+nrow(res.geneA.dt)
+
+# categories not enriched after conditional hypergeo
+res.geneA.dt[GOBPID %in% setdiff(stdIds, condIds)]
+
+
 
 
 # check if the GO terms are still significant after the conditional hypergeo test
