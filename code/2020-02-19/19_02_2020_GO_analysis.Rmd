@@ -1,0 +1,137 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+Set up
+```{r Set up, include=FALSE}
+library(data.table)
+library(linkcomm) # for the plot
+
+path <- "/Users/Carolina/Documents/GitHub/DegreeProject/"
+respath <- "/Users/Carolina/Documents/GitHub/DegreeProject/results/"
+
+find.effects_TF <- fread(paste0(respath, "2020-01-27/findeffects_TF.gz"))
+```
+
+to get API key, go to https://yeastmine.yeastgenome.org/yeastmine/begin.do and create an account
+go to account details and create a new key
+create a file "~/.Renviron" and write yeastmineAPI = <token you just created>
+  to access it Sys.getenv("yeastmine API")
+```{python eval=FALSE, include=FALSE}
+python /Users/Carolina/Documents/GitHub/DegreeProject/code/2020-02-19/yeastmine_genelistwithGOterm_inbioprocess.py > /Users/Carolina/Documents/GitHub/DegreeProject/results/2020-02-19/genelistwithGOterm.gz
+```
+
+
+```{r}
+genes_GO.table <- fread(paste0(path, "results/2020-02-19/genelistwithGOterm_allnamespaces.tsv"))
+setnames(genes_GO.table, c("gene", "symbol", "gene.name", "GO.identifier", "GO.term", "GO.namespace", "evidence"))
+```
+
+```{r}
+genes_GO.bio <- unique(genes_GO.table[GO.namespace=="biological_process"])
+genes_GO.bio.noevidence <- data.table(genes_GO.bio)
+genes_GO.bio.noevidence[,evidence :=NULL]
+genes_GO.bio.noevidence[,GO.namespace :=NULL]
+genes_GO.bio.noevidence <- unique(genes_GO.bio.noevidence)
+genes_GO.bio.noevidence
+```
+
+### count number of times each ontology term appears (number of diferent genes that have this GO term)
+```{r}
+GOterms.count <- genes_GO.bio.noevidence[, .(description=unique(GO.term), count = .N), by = GO.identifier]
+GOterms.count[order(-count)]
+```
+
+# find genes that have "transcription factor" in the GO term
+```{r}
+GO_trans_factor <- unique(genes_GO.bio.noevidence[grepl("transcription factor",GO.term, fixed = F)])
+```
+
+```{r}
+GO_transc_reg <- unique(genes_GO.bio.noevidence[(grepl(" transcription ",GO.term, fixed = F) & grepl(" regulation ",GO.term, fixed = F)) | grepl("transcription factor",GO.term, fixed = F)])
+GO_transc_reg[,.(gene, GO.term, gene.name, GO.identifier)]
+```
+
+
+### number of times each geneA points to another gene
+```{r}
+numlinks_from_gene <- find.effects_TF[, .(count=.N), by=geneA]
+numlinks_from_gene[order(-count)]
+```
+
+### number of times each geneA points to another gene + GO term
+```{r}
+links_perGO_pergene <- merge(unique(genes_GO.bio.noevidence), numlinks_from_gene, by.x="gene", by.y="geneA", all=T)
+links_perGO_pergene[order(-count), .(gene, GO.identifier, GO.term, count)]
+```
+
+### num of times a gene with a certain GO is the causal one
+```{r}
+links_perGO <- links_perGO_pergene[,.(gocount=sum(count, na.rm = T)), by=c("GO.identifier", "GO.term")]
+links_perGO[order(-gocount)]
+```
+
+### find the GOs that have transcription factor or transcription regulation in the name
+```{r}
+links_perGO_transfactor <- links_perGO[(grepl(" transcription ",GO.term, fixed = F) & grepl(" regulation ",GO.term, fixed = F)) | grepl("transcription factor",GO.term, fixed = F)]
+links_perGO_transfactor[order(-gocount)][,.(GO.term, gocount)]
+```
+
+### # causal links GO is regulating transcription or a transcription factor
+```{r}
+bp <- barplot(links_perGO_transfactor[order(-gocount)]$gocount, names.arg = links_perGO_transfactor$GO.identifier,
+              ylab = "# links", xlab ="GO" , ylim = c(0,300), main="# links going out of genes with GO term \n only GO terms including 'transcription factor'")
+
+text(bp,links_perGO_transfactor[order(-gocount)]$gocount,links_perGO_transfactor[order(-gocount)]$gocount,cex=0.8, pos=3)
+hist(links_perGO_transfactor[order(-gocount)]$gocount, main="# causal links \n GO is regulating transcription or a transcription factor")
+```
+
+
+### Num of links going out of genes with "transcription" "regulation" or "transcription factor" as its GO term and number of links going out of genes with other descriptions
+```{r}
+data.table(links_perGO[(grepl(" transcription ",GO.term, fixed = F) & grepl(" regulation ",GO.term, fixed = F)) | grepl("transcription factor",GO.term, fixed = F) , .(sum_trans=sum(gocount, na.rm = T))], links_perGO[!((grepl(" transcription ",GO.term, fixed = F) & grepl(" regulation ",GO.term, fixed = F)) | grepl("transcription factor",GO.term, fixed = F)) , .(sum_others=sum(gocount, na.rm = T))])
+```
+
+### Num of links having "transcription" and "regulation" or "transcription factor" in the description
+```{r}
+bp_tfactor<-boxplot(gocount ~ grepl("transcription factor",GO.term, fixed = F), data=links_perGO, outline=T,
+                    names = c("Other", "transcription factor"),
+                    xlab = "", ylab = "# links",  main="Number of arrows pointing from each GO category",
+                    ylim=c(-1,195))
+text(1:length(bp_tfactor$n), bp_tfactor$stats[5,]+5, paste("n=", bp_tfactor$n), pos = 4)
+
+bp_tfactor_reg<-boxplot(gocount ~ ((grepl(" transcription ",GO.term, fixed = F) & grepl(" regulation ",GO.term, fixed = F)) | grepl("transcription factor",GO.term, fixed = F)), data=links_perGO, outline=T,
+                        names = c("Other", "transcription factor or regulator"),
+                        xlab = "", ylab = "# links",  main="Number of arrows pointing from each GO category",
+                        ylim=c(-1,195))
+text(1:length(bp_tfactor_reg$n), bp_tfactor_reg$stats[5,]+5, paste("n=", bp_tfactor_reg$n), pos = 4)
+```
+would make sense for there to be an enrichment of transcription regulators/factors in the genes A
+
+
+
+```{r}
+par(mar=c(15,4,1,0))
+# barplot(links_perGO[order(-gocount)]$gocount[2:11], names.arg=links_perGO[order(-gocount)]$ontologyTerm.identifier[2:11], las=2)
+# barplot(links_perGO[order(-gocount)]$gocount[2:11], names.arg=links_perGO[order(-gocount)]$ontologyTerm.name[2:11], las=2)
+nms <- c("biological process", "intracell. protein transport", "translation", "reg. of transcript., DNA-templated", "transmembrane transport", "proteolysis", "pos. reg. of transcript. by RNApolymII", "cytoplasmic translation", "fungal-type cell wall organization", "protein ubiquitination")
+barplot(links_perGO[order(-gocount)]$gocount[1:10], names.arg=nms, las=2, main="Num of links of each GO term")
+```
+
+```{r}
+links_perGO.nobioprocess <- links_perGO[!GO.term=="biological_process"]
+bp_tfactor_reg<-boxplot(gocount ~ ((grepl(" transcription ",GO.term, fixed = F) & grepl(" regulation ",GO.term, fixed = F)) | grepl("transcription factor",GO.term, fixed = F)), data=links_perGO.nobioprocess, outline=T,
+                        names = c("Other", "transcription factor or regulator"),
+                        xlab = "", ylab = "# links",  main="Number of arrows pointing from each GO category")
+text(1:length(bp_tfactor_reg$n), bp_tfactor_reg$stats[5,]+5, paste("n=", bp_tfactor_reg$n), pos = 4)
+```
+
+```{r}
+# Pie Chart from data frame with Appended Sample Sizes
+mytable <- links_perGO[order(-gocount)]$gocount[1:10]
+lbls <- paste( links_perGO[order(-gocount)]$GO.term[1:10], " -- ", mytable, sep="")
+pie(mytable, labels = nms, 
+   main="Top 10 most represented GO categories \n (in causal genes)")
+```
+
+
