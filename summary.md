@@ -289,7 +289,7 @@ Only a few of the clusters have very high modularity
 |:--:|
 | *10 clusters that have the highest connectivity* |
 
-There's still only one bir cluster with no subclusters
+There's still only one cluster with no subclusters
 
 Comparing with the previous network plot, we can see that the clusters with high connectivity are all interconnected and have a lot of links going out of them. The clusters in the highest modularity network plot are mostly unconnected.
 
@@ -297,7 +297,10 @@ Comparing with the previous network plot, we can see that the clusters with high
 ## 2020-02-05 -- 2020-02-12
 
 In order to find the GO terms associated with my genes I used YeastMine (Balakrishnan et al., 2012) (https://yeastmine.yeastgenome.org/yeastmine/begin.do). Since I was not being able to do it in R, using the YeastMine API, I used python to run my queries. To be able to run the queries with python, first I needed to create and account and request an API key. Since you can generate python code from the website, I used it as a guide and added/ removed parameters to get what I needed.
-From YeastMine I got the GO code and term for my genes, as well as evidence code.
+From YeastMine I got the GO code and term for my genes, as well as if it belongs to a biological process or other, and the evidence code for the annotation.
+
+-------
+USE THE NEW TABLE FROM YEASTMINE
 
 > [GO analysis](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-02-07/07_02_2020_GO_analysis.Rmd)
 
@@ -362,5 +365,7 @@ From the 4518 "biological process" GO terms tested, 117 were found to be overenr
 
 From the 4440 "biological process" GO terms tested, 123 were found to be overenriched (at p-value 0.05)
 
-
+#TODO show graphs and then go to the conditional hypergeo
 Figure showing the relationships among GO terms tested using the hypergeometric test:
+
+------
