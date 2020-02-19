@@ -299,12 +299,14 @@ Comparing with the previous network plot, we can see that the clusters with high
 In order to find the GO terms associated with my genes I used YeastMine (Balakrishnan et al., 2012) (https://yeastmine.yeastgenome.org/yeastmine/begin.do). Since I was not being able to do it in R, using the YeastMine API, I used python to run my queries. To be able to run the queries with python, first I needed to create and account and request an API key. Since you can generate python code from the website, I used it as a guide and added/ removed parameters to get what I needed.
 From YeastMine I got the GO code and term for my genes, as well as if it belongs to a biological process or other, and the evidence code for the annotation.
 
--------
-USE THE NEW TABLE FROM YEASTMINE
 
 > [GO analysis](https://github.com/CarolinaPB/DegreeProject/blob/master/code/2020-02-07/07_02_2020_GO_analysis.Rmd)
 
 One gene might be associated with more than one GO term
+
+| ![barplot top links GO](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/piechart_top10_GOterms_genesA.png) |
+|:--:|
+| *The top 10 most represented GO term categories in the causal genes* |
 
 | ![barplot top links GO](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numlinksGOterm_genesA_top10.png) |
 |:--:|
@@ -367,5 +369,3 @@ From the 4440 "biological process" GO terms tested, 123 were found to be overenr
 
 #TODO show graphs and then go to the conditional hypergeo
 Figure showing the relationships among GO terms tested using the hypergeometric test:
-
-------
