@@ -406,10 +406,14 @@ The arrows in the plots point from a more specific term (child) to a more genera
 The conditional hypergeo test is trying to answer the question "Is there additional evidence to mark the a certain parent term significant beyond that provided by its significant child?"
 As said before, the conditional hypergeo test uses the relationship between the GO terms to adjust the enrichment results. The method implemented by Hahne, Huber, Gentleman, & Falcon (2008) conditions on all child terms which are themselves significant at a specified p-value cutoff.
 
+See the high quality image at [heatmap](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/heatmap_enrichmentpvals.pdf)   
 
 | ![heatmap overview](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/pheatmap_overview_enrichmentpval_negativelog10.png) |
 |:--:|
 | *Heatmap of GO enrichment p-values (-log10)* |
+
+The left column represents the terms associated with the causal genes and the right column with the affected genes. There's a clear separation of terms between causal and affected genes. We can see that there's only one shared GO term between causal and affected genes.  
+In the next two figures we can see that 25 out of 51 terms associated with the causal genes are involved in regulation of some process. The fact that the causal genes are enriched for terms involved in regulation and that the affected genes are not makes it seem like our way to infer causality is working or is going in the right direction.  
 
 | ![heatmap sub1](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/pheatmap_enrichmentnegativelog10pval_sub1.png) |
 |:--:|
