@@ -393,8 +393,15 @@ affected | 114 | 67
 
 To see the enrichment results for the causal genes (conditional hypergeo test) see this [table](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/hgCondA_htmlreport.md) (contains links to information on each GO term). For the affected genes' enrichment check this [table](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/hgCondB_htmlreport.md)
 
-(analysis inspired by (Hahne, Huber, Gentleman, & Falcon, 2008))
+| ![graphA.1 overview](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/termgraphA_graph1_overview.png) | ![graphA.1 sub](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/termgraphA_graph1_subsection.png) | ![graphcondA.1](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/termgraphcondA_graph1.png)
+|:--:|:--:|:--:|
+
+Two first figures: one of the GO term graphs from the hypergeometric test for the causal genes.
+Figure on the right: one of the graphs resulting from the conditional hypergeometric test.
+
+
+(analysis inspired by (Hahne, Huber, Gentleman, & Falcon, 2008))  
 Files where you can see a all the subgraphs of the gene ontology directed acyclic graph for the enrichment of the [causal genes](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/termgraph_A_bioproc_cond.pdf) and for the [affected genes](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/termgraph_B_bioproc_cond.pdf). The subgraphs consist of nodes that are connected in the DAG, and where all nodes are significant (according to the hypergeo test).   
 The arrows in the plots point from a more specific term (child) to a more general term (parent).  
 The conditional hypergeo test is trying to answer the question "Is there additional evidence to mark the a certain parent term significant beyond that provided by its significant child?"
-As said before, the conditional hypergeo test uses the relationship between the GO terms to adjust the enrichment results. The method implemented by Hahne, Huber, Gentleman, & Falcon (2008)conditions on all child terms which are themselves significant at a specified p-value cutoff.  
+As said before, the conditional hypergeo test uses the relationship between the GO terms to adjust the enrichment results. The method implemented by Hahne, Huber, Gentleman, & Falcon (2008) conditions on all child terms which are themselves significant at a specified p-value cutoff.
