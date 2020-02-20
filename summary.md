@@ -405,3 +405,16 @@ Files where you can see a all the subgraphs of the gene ontology directed acycli
 The arrows in the plots point from a more specific term (child) to a more general term (parent).  
 The conditional hypergeo test is trying to answer the question "Is there additional evidence to mark the a certain parent term significant beyond that provided by its significant child?"
 As said before, the conditional hypergeo test uses the relationship between the GO terms to adjust the enrichment results. The method implemented by Hahne, Huber, Gentleman, & Falcon (2008) conditions on all child terms which are themselves significant at a specified p-value cutoff.
+
+
+| ![heatmap overview](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/pheatmap_overview_enrichmentpval_negativelog10.png) |
+|:--:|
+| *Heatmap of GO enrichment p-values (-log10)* |
+
+| ![heatmap sub1](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/pheatmap_enrichmentnegativelog10pval_sub1.png) |
+|:--:|
+| *First section of the heatmap of GO enrichment p-values (-log10)* |
+
+| ![heatmap sub2](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/pheatmap_enrichmentnegativelog10pval_sub2.png) |
+|:--:|
+| *Second section of the heatmap of GO enrichment p-values (-log10)* |
