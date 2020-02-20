@@ -398,7 +398,7 @@ To see the enrichment results for the causal genes (conditional hypergeo test) s
 
 Two first figures: one of the GO term graphs from the hypergeometric test for the causal genes.
 Figure on the right: one of the graphs resulting from the conditional hypergeometric test.
-
+The area delimited in blue is amplified on the center figure. These are terms that have as a parent term "RNA metabolic process". On the right, the "simplified" DAG where the parent term is "RNA metabolic process" after the conditional hypergeometric test.
 
 (analysis inspired by (Hahne, Huber, Gentleman, & Falcon, 2008))  
 Files where you can see a all the subgraphs of the gene ontology directed acyclic graph for the enrichment of the [causal genes](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/termgraph_A_bioproc_cond.pdf) and for the [affected genes](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/termgraph_B_bioproc_cond.pdf). The subgraphs consist of nodes that are connected in the DAG, and where all nodes are significant (according to the hypergeo test).   
