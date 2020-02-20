@@ -406,6 +406,8 @@ The arrows in the plots point from a more specific term (child) to a more genera
 The conditional hypergeo test is trying to answer the question "Is there additional evidence to mark the a certain parent term significant beyond that provided by its significant child?"
 As said before, the conditional hypergeo test uses the relationship between the GO terms to adjust the enrichment results. The method implemented by Hahne, Huber, Gentleman, & Falcon (2008) conditions on all child terms which are themselves significant at a specified p-value cutoff.
 
+
+#### GO enrichment comparison for causal and affected genes
 See the high quality image at [heatmap](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/heatmap_enrichmentpvals.pdf)   
 
 | ![heatmap overview](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/pheatmap_overview_enrichmentpval_negativelog10.png) |
