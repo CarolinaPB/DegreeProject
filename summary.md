@@ -408,7 +408,7 @@ As said before, the conditional hypergeo test uses the relationship between the 
 
 
 #### GO enrichment comparison for causal and affected genes
-See the high quality image at [heatmap](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/heatmap_enrichmentpvals.pdf)   
+See the high quality image at [heatmap](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/heatmap_enrichmentpvals.pdf) (download to be able to zoom in and read the name of the GO terms better)
 
 | ![heatmap overview](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/pheatmap_overview_enrichmentpval_negativelog10.png) |
 |:--:|
