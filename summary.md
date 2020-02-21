@@ -424,3 +424,16 @@ In the next two figures we can see that 25 out of 51 terms associated with the c
 | ![heatmap sub2](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/pheatmap_enrichmentnegativelog10pval_sub2.png) |
 |:--:|
 | *Second section of the heatmap of GO enrichment p-values (-log10)* |
+
+
+
+### Enrichment with different genes of interest
+Counted the genes going in or out of a gene and plotted the distribution:
+
+| ![scatter linknum](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/scatter_linknum.png) |
+|:--:|
+
+| ![scatter linknum zoom](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/scatter_linknum_zoom.png) |
+|:--:|
+
+We can see that if the genes have a high number of "links" going out, they don't have many going "in" and that if they have less than around 40 links out, they have a high number of links going in. This shows that a clear separation between genes that affect other genes and genes that are being affected.
