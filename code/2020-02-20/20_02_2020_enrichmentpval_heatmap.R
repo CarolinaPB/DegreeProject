@@ -93,5 +93,8 @@ pheatmap(ttest, display_numbers = matrix(ifelse(ttest == 0, "*******", ""), nrow
          fontsize_row=3, cellwidth=70, cluster_col=F, cluster_rows=T, number_color="White", 
          fontsize = 5, treeheight_row = 0, color=myColor, breaks=myBreaks, border_color="white", 
          main="Heatmap enrichment p-value")
-dev.off()
-# 
+# dev.off()
+
+
+hgCondA.dt[!grepl("regulation", Term)]
+hgCondB.dt[grepl("regulation", Term)]
