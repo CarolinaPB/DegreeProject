@@ -224,7 +224,7 @@ getclusterenrichment <- function(numcluster, net.cluster, geneset){
   return(res_over)
 }
 
-getenrichment <- function(geneset, universe, interestinggenes){
+getenrichment <- function(geneset, universe, interestinggenes, pval=0.05, cond = FALSE){
   # need these libraries
 
   # library("GSEABase")
@@ -240,13 +240,30 @@ getenrichment <- function(geneset, universe, interestinggenes){
   # genes <- unlist(unique(find.effects_TF[,..geneAB]))
   # universe <- unique(c(find.effects_TF$geneA, find.effects_TF$geneB))
 
-  params <- GSEAGOHyperGParams(name="first try",
+  params <- GSEAGOHyperGParams(name="GO enrichment",
                                geneSetCollection=geneset,
                                geneIds = interestinggenes,
                                universeGeneIds = universe,
                                ontology = "BP",
-                               pvalueCutoff = 0.05,
-                               conditional = FALSE,
+                               pvalueCutoff = pval,
+                               conditional = cond,
                                testDirection = "over")
   Over <- hyperGTest(params)
+}
+
+plot_enrichment_heatmap <- function(dt, ...){
+  # accepts data.table where the first column is the GO term, the second is the causal genes and the third is the affected genes
+  # plots a heatmap with custom color in a log10 scale
+  
+  paletteLength <- 50
+  myColor <- colorRampPalette(c("white", "yellow", "red"))(paletteLength)
+  setnames(dt, c("term", "Causal", "Affected"))
+  myBreaks <- c(seq(min(dt[,c(2,3)]), max(dt[,c(2, 3)])/paletteLength-0.000001, length.out=ceiling(paletteLength/2) + 1), 
+                seq(max(dt[,c(2,3)])/paletteLength, max(dt[,c(2, 3)]), length.out=floor(paletteLength/2)))
+  
+  pheatmap(as.matrix(dt, rownames = 1), 
+           fontsize_row=3, cellwidth=70, cluster_col=F, cluster_rows=T, 
+           fontsize = 5, treeheight_row = 0, color=myColor, breaks=myBreaks, border_color="white", 
+           main="Heatmap enrichment p-value (-log10)", ...)
+  
 }
