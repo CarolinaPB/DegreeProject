@@ -140,19 +140,40 @@ res.geneA.dt[GOBPID %in% setdiff(stdIds, condIds)]
 
 
 
+# get list with different graphs that represent relations between GO terms
+termgrA.cond <- termGraphs(hgCondA, use.terms = T, pvalue = 0.05)
+# save all the graphs to a pdf
+pdf(file = "results/2020-02-19/termgraph_A_bioproc_cond.pdf", onefile = T)
+# for (i in 1:length(termgrA.cond)){
+#   plotGOTermGraph(termgrA.cond[[i]], r = hgCondA, add.counts = T, node.colors=c(sig="green", not="white"), max.nchar=30)
+# }
+# dev.off()
+
+
+# get list with different graphs that represent relations between GO terms
+termgrB.cond <- termGraphs(hgCondB, use.terms = T, pvalue = 0.05)
+# pdf(file = "results/2020-02-19/termgraph_B_bioproc_cond.pdf", onefile = T)
+# for (i in 1:length(termgrB.cond)){
+#   plotGOTermGraph(termgrB.cond[[i]], r = hgCondB, add.counts = T, node.colors=c(sig="green", not="white"), max.nchar=30)
+# }
+# dev.off()
+
 
 # check if the GO terms are still significant after the conditional hypergeo test
 terms <- nodes(termgrA[[2]])
-hgCond.dt.sub <- data.table(summary(hgCond, pvalue=0.5)[,c("GOBPID","Term", "Pvalue")])
+hgCondA.dt.sub <- data.table(summary(hgCondA, pval=0.5))#hgCondA.dt[,.(GOBPID,Term, Pvalue)]
 
-hypergeo_compare <- merge(res.geneA.dt[GOBPID %in% terms, .(GOBPID, Term, Pvalue)], hgCond.dt.sub[GOBPID %in% terms][order(GOBPID)], by=c("GOBPID", "Term"), all=T)
+hypergeo_compare <- merge(res.geneA.dt[, .(GOBPID, Term, Pvalue)], hgCondA.dt.sub[order(GOBPID)], by=c("GOBPID", "Term"), all.y=T)
 setnames(hypergeo_compare, old=c("Pvalue.x", "Pvalue.y"), new=c("pval", "cond.pval"))
 # Adds new column - if true, it means that that GO term's p-value changed
 hypergeo_compare[, changed:=pval != cond.pval]
 
-hypergeo_compare
+# these show that a term was removed with the conditional hypergeo
+hypergeo_compare[GOBPID %in% terms]
+res.geneA.dt[GOBPID %in% terms]
 
-# "cellular response to DNA damage stimulus" is no longer significant -  does it mean that we can only say that only the general term DNA repair is significant?
+
+
 
 # check if the GO terms are still significant after the conditional hypergeo test
 # first node group
