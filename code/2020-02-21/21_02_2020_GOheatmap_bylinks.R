@@ -34,12 +34,11 @@ numlinks_from_geneB <- unique(find.effects_TF[, .(geneA, geneB)])[, .(l_in = .N)
 
 # table with how many links go in and out of a gene
 genes <-data.table(genes = unique(c(find.effects_TF$geneA, find.effects_TF$geneB)))
-merge_lin <-
-  merge( genes, numlinks_from_geneA, by. = "genes", by.y = "geneA", all.x = T)
+merge_lin <-merge( genes, numlinks_from_geneA, by. = "genes", by.y = "geneA", all.x = T)
 genes_nlinks <-merge( merge_lin, numlinks_from_geneB, by.x = "genes", by.y = "geneB", all.x = T)
 
 # scatterplot of link distribution
-# plot(genes_nlinks[, .(l_out, l_in)], main = "How many link each gene has going in or out", pch =".")
+#plot(genes_nlinks[, .(l_out, l_in)], main = "How many link each gene has going in or out", pch =".")
 # plot(genes_nlinks[, .(l_out, l_in)], xlim = c(0, 200), pch = ".")
 
 causalgenes <- genes_nlinks[l_out > 40]
@@ -83,10 +82,8 @@ hgCondB.dt <- data.table(summary(hgCondB))
 
 
 # table with all enriched GO terms found for both the causal and the affected genes with the corresponding enrichment p-val
-tocombine.A <-
-  data.table(-log10(hgCondA.dt$Pvalue), hgCondA.dt$Term)
-tocombine.B <-
-  data.table(-log10(hgCondB.dt$Pvalue), hgCondB.dt$Term)
+tocombine.A <- data.table(-log10(hgCondA.dt$Pvalue), hgCondA.dt$Term)
+tocombine.B <- data.table(-log10(hgCondB.dt$Pvalue), hgCondB.dt$Term)
 combined <- merge(tocombine.A, tocombine.B, by = "V2", all = T)
 colnames(combined) <- c("term", "genesA", "genesB")
 combined[is.na(genesA)]$genesA <- 0
@@ -95,3 +92,4 @@ combined[is.na(genesB)]$genesB <- 0
 
 # plot GO enrichment heatmap
 plot_enrichment_heatmap(combined)
+

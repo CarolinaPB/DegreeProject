@@ -256,7 +256,7 @@ plot_enrichment_heatmap <- function(dt, ...){
   # plots a heatmap with custom color in a log10 scale
   
   paletteLength <- 50
-  myColor <- colorRampPalette(c("white", "yellow", "red"))(paletteLength)
+  myColor <- colorRampPalette(c("white", "darkblue","blue","lightblue","green","lightyellow", "yellow","orange", "red", "darkred"))(paletteLength)
   setnames(dt, c("term", "Causal", "Affected"))
   myBreaks <- c(seq(min(dt[,c(2,3)]), max(dt[,c(2, 3)])/paletteLength-0.000001, length.out=ceiling(paletteLength/2) + 1), 
                 seq(max(dt[,c(2,3)])/paletteLength, max(dt[,c(2, 3)]), length.out=floor(paletteLength/2)))
