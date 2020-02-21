@@ -437,3 +437,18 @@ Counted the genes going in or out of a gene and plotted the distribution:
 |:--:|
 
 We can see that if the genes have a high number of "links" going out, they don't have many going "in" and that if they have less than around 40 links out, they have a high number of links going in. This shows that a clear separation between genes that affect other genes and genes that are being affected.
+
+
+| ![heatmap >40 links causal](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/heatmap_enrichmentpvals_geneslinks_c40.png) |
+|:--:|
+| *Heatmap of GO enrichment p-values (-log10) for the causal genes that affect at least 40 other genes and for the affected gnes that don't affect any other gene* |
+
+Click [here](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/heatmap_enrichmentpvals_geneslinks_c40.pdf) for the pdf - download to be able to zoom.
+
+| ![heatmap >40 links causal](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/heatmap_enrichment_geneslinks_c40_subcausal.png) |
+|:--:|
+| *Section corresponding to the causal genes* |
+
+| ![heatmap >40 links causal](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/heatmap_enrichment_geneslinks_c40_subaffected.png) |
+|:--:|
+| *Section corresponding to the affected genes* |
