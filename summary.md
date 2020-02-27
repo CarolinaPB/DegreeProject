@@ -80,7 +80,7 @@ Assumptions:
 * geneA is in cis with eqtlA
 * geneB is in cis with eqtlB
 * var.explained for geneA must be > var.exp.lim
-* correlation pval is < corr.pval
+* correlation pval is < corr.pval  
 Inferred if gene A is affecting geneB or if geneB is affecting geneA.
 * geneA != geneB
 
@@ -452,3 +452,13 @@ Click [here](https://github.com/CarolinaPB/DegreeProject/blob/master/results/res
 | ![heatmap >40 links causal](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/heatmap_enrichment_geneslinks_c40_subaffected.png) |
 |:--:|
 | *Section corresponding to the affected genes* |
+
+
+### Plot with positions of affected gene vs positions of causal genes
+| ![genepos vs genepos](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/affectedgenes_vs_causalgenes_position.png) |
+|:--:|
+| *Affected gene position vs causal gene position* |
+
+Several of the vertical "bands" match with the ones reported in Albert et al (2018) - Figure 3.  
+In my figure I'm calling "bands" to cases where the same gene (x axis) is affecting several genes (y axis).  
+I seem to have bands in the same chromosomes where Albert et al (2018) report eQTL hotspots - for example, the "bands" on chr VII, XII, XIV
