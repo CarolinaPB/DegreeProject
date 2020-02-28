@@ -267,3 +267,55 @@ plot_enrichment_heatmap <- function(dt, ...){
            main="Heatmap enrichment p-value (-log10)", ...)
   
 }
+
+sort_by_chr <- function(vchr, genepairs_pos, separator){
+  # Sorts genes' chromosome positions to be plotted
+  # takes a numeric vector of chromosome numbers (should be ordered by the order you want to plot by)
+  # takes a table where there must be the following columns:
+  # geneA  - to be plotted on the x axis
+  # geneB  - to be plotted on the y axis
+  # start.A - position of geneA
+  # start.B - position of geneB
+  # chr.A - chromosome of geneA
+  # chr.B - chromosome of geneB
+  # interval between genes (for plotting purposes)
+  
+  res <- data.table(genepairs_pos)
+  
+  for (i in 1:length(vchr)){
+    if (vchr[i] != 1) {
+      previous <- vchr[i-1]
+      res[chr.A == vchr[i]]$start.A <- max(res[chr.A==previous]$start.A) + res[chr.A == vchr[i]]$start.A + separator
+      res[chr.B == vchr[i]]$start.B <- max(res[chr.B==previous]$start.B) + res[chr.B == vchr[i]]$start.B + separator
+    }
+  }
+  return(res)
+}
+
+plot_sorted_coordinates <- function(coordinates_plot, separator, ...){
+  # plots the gene position coordinates by chromosome using the result table from sort_by_chr()
+  # accepts extra parameters for the plot function
+  
+  # takes a table where there must be the following columns:
+  # geneA  - to be plotted on the x axis
+  # geneB  - to be plotted on the y axis
+  # start.A - position of geneA
+  # start.B - position of geneB
+  # chr.A - chromosome of geneA
+  # chr.B - chromosome of geneB
+  # interval between genes (for plotting purposes)
+  
+  # the separator should be the same as the one used for the sort_by_chr() function
+  
+  plot(coordinates_plot$start.A, coordinates_plot$start.B, pch=".", axes=F, xlab = "Causal gene position (chr)", ylab = "Affected gene position (chr)", ...)
+  
+  # add chromosome separators
+  for (ch in 1:nchr){
+    abline(v= max(coordinates_plot[chr.A==ch]$start.A)+separator/2, col="lightblue", lty=2) 
+    abline(h= max(coordinates_plot[chr.B==ch]$start.B)+separator/2, col="lightblue", lty=2) 
+  }
+  
+  # add x and y axis chromosomes
+  axis(1, at=sapply(1:16, function(i){min(coordinates_plot[chr.A==i]$start.A) + (max(coordinates_plot[chr.A==i]$start.A) - min(coordinates_plot[chr.A==i]$start.A))/2}), labels=as.roman(1:16), tick=FALSE)
+  axis(2, at=sapply(1:16, function(i){min(coordinates_plot[chr.B==i]$start.B) + (max(coordinates_plot[chr.B==i]$start.B) - min(coordinates_plot[chr.B==i]$start.B))/2}), labels=as.roman(1:16), tick=FALSE)
+}
