@@ -40,7 +40,7 @@ for (chr in 1:nchr){
   } else if (chr != 1) {
     previous <- chr-1
     # coordinates for the causal genes
-    coord.A <- data.table(chr, pos=max(final.coord.A[chr==previous]$pos) + causal.pos.B.2.order[chr.A == chr]$start.A + separator)
+    coord.A <- data.table(genechr, pos=max(final.coord.A[chr==previous]$pos) + causal.pos.B.2.order[chr.A == chr]$start.A + separator)
     # coordinates for the affected genes
     coord.B <- data.table(chr, pos=max(final.coord.B[chr==previous]$pos) + causal.pos.B.2.order[chr.B == chr]$start.B + separator)
     
@@ -50,16 +50,31 @@ for (chr in 1:nchr){
   }
 }
 
+test <- data.table(causal.pos.B.2.order)
+
+for (chr in 1:nchr){
+  if (chr != 1) {
+    previous <- chr-1
+    test[chr.A == chr]$start.A <- max(test[chr.A==previous]$start.A) + test[chr.A == chr]$start.A + separator
+    test[chr.B == chr]$start.B <- max(test[chr.B==previous]$start.B) + test[chr.B == chr]$start.B + separator
+  }
+}
+
+
+
+
+
+
 # pdf("results/results_figures/affectedgenes_vs_causalgenes_position.pdf")
-plot(final.coord.A$pos, final.coord.B$pos, pch=".", axes=F, xlab = "Causal gene position (chr)", ylab = "Affected gene position (chr)")
+plot(test$start.A, test$start.B, pch=".", axes=F, xlab = "Causal gene position (chr)", ylab = "Affected gene position (chr)")
 
 # add chromosome separators
 for (ch in 1:nchr){
-  abline(v= max(final.coord.A[chr==ch]$pos)+separator/2, col="lightblue", lty=2) 
-  abline(h= max(final.coord.B[chr==ch]$pos)+separator/2, col="lightblue", lty=2) 
+  abline(v= max(test[chr.A==ch]$start.A)+separator/2, col="lightblue", lty=2) 
+  abline(h= max(test[chr.B==ch]$start.B)+separator/2, col="lightblue", lty=2) 
 }
 
 # add x and y axis chromosomes
-axis(1, at=sapply(1:16, function(i){min(final.coord.A[chr==i]$pos) + (max(final.coord.A[chr==i]$pos) - min(final.coord.A[chr==i]$pos))/2}), labels=as.roman(1:16), tick=FALSE)
-axis(2, at=sapply(1:16, function(i){min(final.coord.B[chr==i]$pos) + (max(final.coord.B[chr==i]$pos) - min(final.coord.B[chr==i]$pos))/2}), labels=as.roman(1:16), tick=FALSE)
+axis(1, at=sapply(1:16, function(i){min(test[chr.A==i]$start.A) + (max(test[chr.A==i]$start.A) - min(test[chr.A==i]$start.A))/2}), labels=as.roman(1:16), tick=FALSE)
+axis(2, at=sapply(1:16, function(i){min(test[chr.B==i]$start.B) + (max(test[chr.B==i]$start.B) - min(test[chr.B==i]$start.B))/2}), labels=as.roman(1:16), tick=FALSE)
 # dev.off()
