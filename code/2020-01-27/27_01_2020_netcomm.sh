@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH -A g2019026
+#SBATCH -A snic2019-8-367
 #SBATCH -p core #partition
 #SBATCH -n 3 #number of tasks
 #SBATCH -t 01:00:00 #total run time of the job allocation
