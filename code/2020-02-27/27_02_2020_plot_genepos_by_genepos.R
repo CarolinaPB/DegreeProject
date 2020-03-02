@@ -1,6 +1,6 @@
 library(data.table)
 respath <- "/Users/Carolina/Documents/GitHub/DegreeProject/results/"
-find.effects_TF <- fread(paste0(respath, "2020-01-27/findeffects_TF.gz"))
+find.effects_TF <- fread("/Users/Carolina/Documents/GitHub/DegreeProject/results/2020-03-02/findeffects_TF_newparams.gz")
 genepos <- fread("/Users/Carolina/Documents/GitHub/DegreeProject/results/2020-02-20/gene_pos.gz")
 
 source(file = "code/myfunctions.R")

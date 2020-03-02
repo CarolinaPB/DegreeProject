@@ -11,6 +11,8 @@ path <- "/Users/Carolina/Documents/GitHub/DegreeProject/"
 respath <- "/Users/Carolina/Documents/GitHub/DegreeProject/results/"
 
 find.effects_TF <- fread(paste0(respath, "2020-01-27/findeffects_TF.gz"))
+find.effects_TF <- fread("/Users/Carolina/Documents/GitHub/DegreeProject/results/2020-03-02/findeffects_TF_newparams.gz")
+
 ```
 
 to get API key, go to https://yeastmine.yeastgenome.org/yeastmine/begin.do and create an account
@@ -114,7 +116,8 @@ would make sense for there to be an enrichment of transcription regulators/facto
 par(mar=c(15,4,1,0))
 # barplot(links_perGO[order(-gocount)]$gocount[2:11], names.arg=links_perGO[order(-gocount)]$ontologyTerm.identifier[2:11], las=2)
 # barplot(links_perGO[order(-gocount)]$gocount[2:11], names.arg=links_perGO[order(-gocount)]$ontologyTerm.name[2:11], las=2)
-nms <- c("biological process", "intracell. protein transport", "translation", "reg. of transcript., DNA-templated", "transmembrane transport", "proteolysis", "pos. reg. of transcript. by RNApolymII", "cytoplasmic translation", "fungal-type cell wall organization", "protein ubiquitination")
+# nms <- c("biological process", "intracell. protein transport", "translation", "reg. of transcript., DNA-templated", "transmembrane transport", "proteolysis", "pos. reg. of transcript. by RNApolymII", "cytoplasmic translation", "fungal-type cell wall organization", "protein ubiquitination")
+nms <- links_perGO[order(-gocount)]$GO.term[1:10]
 barplot(links_perGO[order(-gocount)]$gocount[1:10], names.arg=nms, las=2, main="Num of links of each GO term")
 ```
 
