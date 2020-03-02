@@ -28,16 +28,7 @@ corr.pval <- 0.05/choose(nGenes,2)
 
 
 ######
-effects_table.cor <- fread(paste0(path, "results/2020-01-10/effectstable.gz"))
-
-find.effects <- effects_table.cor[cor.pval < corr.pval & cis.A ==T & cis.B==T & geneA!=geneB]
-
-find.effects <- find.effects_fun(find.effects, snp.pval, snp.pval.nsign)
-
-####
-find.effects_TF.1 <- find.effects[find.effects$`A->B`==T & find.effects$`B->A`==F, .(geneA, geneB, eqtl.A, eqtl.B, `A->B`, `B->A`)]
-find.effects_TF.2 <- rbind(find.effects_TF.1, find.effects[find.effects$`A->B`==F & find.effects$`B->A`==T, .(geneA=geneB, geneB=geneA, eqtl.A=eqtl.B, eqtl.B=eqtl.A, `A->B`=`B->A`, `B->A`=`A->B`)])
-find.effects_TF <- unique(find.effects_TF.2)
+find.effects_TF <- fread("/Users/Carolina/Documents/GitHub/DegreeProject/results/2020-03-02/findeffects_TF_newparams.gz")
 
 #Number of times each gene is the causal one or is on the receiving end
 ngeneA <- find.effects_TF[find.effects_TF$`A->B`==T, .N, by=geneA]
@@ -55,13 +46,14 @@ for (i in 1:nrow(numpairs.table)){
   numpairs.table$numpairs[i] <- nrow(find.effects_TF.numpairs[N==numpairs.table$N[i]])
 }
 
+# pdf("results/results_figures/numtimes_genepair_newparams.pdf")
 # plot the number of times a gene pair appears
 bp <- barplot(numpairs.table[order(-numpairs)]$numpairs, numpairs.table[order(-numpairs)]$N, names.arg=unique(find.effects_TF.numpairs[order(N)]$N), 
               width = 0.5, space=0.2, legend.text = F, ylim = c(0,max(numpairs.table$numpairs)+2500),
               main = "Number of times gene pairs appear \n (A->B = T and B->A = F)", xlab = "# times a gene pair appears", 
               ylab = "# of gene pairs")
 text(bp,numpairs.table[order(-numpairs)]$numpairs, labels=numpairs.table[order(-numpairs)]$numpairs, cex=1, pos=3)
-
+# dev.off()
 
 # most gene pairs appear 1 time
 

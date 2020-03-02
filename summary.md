@@ -224,11 +224,11 @@ Number of times each gene is the causal one or is on the receiving end
 Subset:
 ```
    gene     causal  receiving
-YLR270W     897            18
-YLR264W     834            25
-YLR281C     752             6
-YNL088W     742            24
-YLR260W     739            34
+YLR270W     897             5
+YLR264W     834             6
+YLR281C     752             0
+YNL088W     742             3
+YLR260W     739            10
 ```
 
 | ![num gene pairs](https://github.com/CarolinaPB/DegreeProject/blob/master/results/results_figures/images/numtimes_genepair_newparams.png) |
