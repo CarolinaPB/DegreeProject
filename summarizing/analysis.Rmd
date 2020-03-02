@@ -1,0 +1,42 @@
+---
+title: "Causality in Coexpression"
+author: "Carolina Pita Barros"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(data.table)
+library(tidyr)
+library(parallel)
+library(igraph)
+library(Hmisc)
+library(corrplot)
+library(dplyr)
+```
+
+```{r}
+sysname <- Sys.info()["sysname"]
+
+if(sysname == "Darwin") {
+    setwd("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/") # on my computer
+} else if(sysname == "Linux") {
+    setwd("") # on uppmax
+} else if(sysname == "Windows") {
+    setwd("") # example on win machine
+}
+```
+
+
+```{r}
+phenotype <- fread(paste0(path,"data/SI_Data_01_expressionValues.txt"))
+genotype <- fread(paste0(path,"data/SI_Data_03_genotypes.txt"))
+eqtl_results <- fread(paste0(path,"data/SI_Data_04_eQTL.csv"))
+eqtl_results[cis=="VERDADEIRO"]$cis <- T
+eqtl_results[cis=="FALSO"]$cis <- F
+```
+
