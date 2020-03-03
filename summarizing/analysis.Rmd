@@ -45,6 +45,12 @@ eqtl_results[cis=="FALSO"]$cis <- F
 source("myfunctions.R")
 ```
 
+Data from **Albert FW, Bloom JS, Siegel J, Day L, Kruglyak L. 2018. Genetics of trans-regulatory variation in gene expression. eLife 7: 1–39.**  [Source data](https://elifesciences.org/articles/35471/figures#supp1)  
+
+I started with :
+* **phenotype matrix** - contains the gene expression data (expression levels in units of log2(TPM) for all genes and segregants)
+* **genotype matrix** - contains the genotype information (genotypes at 42,052 markers for all segregants. BY (i.e. reference) alleles are denoted by ‘−1’. RM alleles are denoted by ‘1’.)
+* **eqtl_results** - Genes with a local eQTL and significant Allele-specific expression (ASE), and discordant direction of effect. (1) Positive values indicate higher expression in RM compared to BY. (2) Shown is the less sig- nificant p-value from the two ASE datasets. (3) The table shows only genes where both ASE datasets agreed in the direction of effect. Shown is the average effect.
 # for the actual analysis jump to "Do analysis with new parameters"
 
 Original parameters used
@@ -134,6 +140,7 @@ if (!file.exists("results/effects_table.Rdata")){
 ```
 
 ## Test different parameters and create summary table with results from testing the different parameters
+Test different parameter values combinations to see if I there is a certain combination that gives optimal results in the causality inference.  
 Takes a while, probably better to use uppmax
 
 ```{r test different parameters, include=FALSE}
@@ -180,42 +187,46 @@ if (!file.exists("results/res_table_params.Rdata")){
 
 
 ### Plot number of times geneA -> geneB with the different parameters tested 
-<!-- Only the cases where A->B=T and B->A=F -->
-<!-- ```{r plot_number_of_times_A->B_with_different_parameters} -->
-<!-- par(mfrow=c(2,4)) -->
+Only the cases where A->B=T and B->A=F
+```{r plot_number_of_times_A->B_with_different_parameters}
+par(mfrow=c(2,4))
 
-<!-- cor.pvals <- unique(res_table$cor.p) -->
-<!-- linetype <- c(1:length(unique(res_table$nonsign.p))) -->
+cor.pvals <- unique(res_table$cor.p)
+linetype <- c(1:length(unique(res_table$nonsign.p)))
 
-<!-- for (p in cor.pvals){ -->
-<!--   xrange <- range(-log(res_table$sign.p)) # set x-axis range -->
-<!--   yrange <- range(res_table$unique.genepairs) # set y-axis range -->
-<!--   plot(xrange, yrange, type = "n", main=paste("corr pval = ", p), xlab = "-log(sign.p)", ylab = " #unique gene pairs") # empty plot -->
-<!--   colors <- rainbow(length(unique(res_table$nonsign.p))) -->
-<!--   for (i in 1:length(unique(res_table$nonsign.p))){ -->
-<!--     x <- -log(res_table[nonsign.p==nonsign.p[i] & cor.p==p]$sign.p) -->
-<!--     y <- res_table[nonsign.p==nonsign.p[i] & cor.p==p]$unique.genepairs -->
-<!--     lines(x,y,  type="l", lwd=1.5,lty=linetype[i], col=colors[i]) -->
-<!--   } -->
-<!--   #legend(x=20, yrange[2], unique(res_table$nonsign.p), col=colors, lty=linetype, cex=0.8) -->
-<!-- } -->
+for (p in cor.pvals){
+  xrange <- range(-log(res_table$sign.p)) # set x-axis range
+  yrange <- range(res_table$unique.genepairs) # set y-axis range
+  plot(xrange, yrange, type = "n", main=paste("corr pval = ", p), xlab = "-log(sign.p)", ylab = " #unique gene pairs") # empty plot
+  colors <- rainbow(length(unique(res_table$nonsign.p)))
+  for (i in 1:length(unique(res_table$nonsign.p))){
+    x <- -log(res_table[nonsign.p==nonsign.p[i] & cor.p==p]$sign.p)
+    y <- res_table[nonsign.p==nonsign.p[i] & cor.p==p]$unique.genepairs
+    lines(x,y,  type="l", lwd=1.5,lty=linetype[i], col=colors[i])
+  }
+  #legend(x=20, yrange[2], unique(res_table$nonsign.p), col=colors, lty=linetype, cex=0.8)
+}
+```
+Number of unique gene pairs found when using different cutoffs. Each pannel corresponds to a different correlation p-value cutff. X-axis is the -log(pvalue) (for the effect to be significant) and differenc colors represent different values for the non-significant p-value (for the effect to be considered non-significant)
 
-<!-- par(mfrow=c(1,1)) -->
+```{r}
+par(mfrow=c(1,1))
 
-<!-- xrange <- range(-log(res_table$sign.p)) # set x-axis range -->
-<!-- yrange <- range(res_table$unique.genepairs) # set y-axis range -->
-<!-- plot(xrange, yrange, type = "n", xlab = "-log(p)", ylab = "#unique gene pairs",  main="#gene pairs where A->B") # empty plot -->
-<!-- colors <- rainbow(length(unique(res_table$nonsign.p))) -->
-<!-- linetype <- c(1:length(unique(res_table$nonsign.p))) -->
-<!-- for (i in 1:length(unique(res_table$nonsign.p))){ -->
-<!--   x <- -log(res_table$sign.p[res_table$nonsign.p==unique(res_table$nonsign.p)[i]]) -->
-<!--   y <- res_table$unique.genepairs[res_table$nonsign.p==unique(res_table$nonsign.p)[i]] -->
-<!--   lines(x,y,  type="l", lwd=1.5,lty=linetype[i], col=colors[i]) -->
-<!-- } -->
-<!-- legend(x=20, yrange[2], unique(res_table$nonsign.p), col=colors, lty=linetype, cex=0.8) -->
-<!-- ``` -->
+xrange <- range(-log(res_table$sign.p)) # set x-axis range
+yrange <- range(res_table$unique.genepairs) # set y-axis range
+plot(xrange, yrange, type = "n", xlab = "-log(p)", ylab = "#unique gene pairs",  main="#gene pairs where A->B") # empty plot
+colors <- rainbow(length(unique(res_table$nonsign.p)))
+linetype <- c(1:length(unique(res_table$nonsign.p)))
+for (i in 1:length(unique(res_table$nonsign.p))){
+  x <- -log(res_table$sign.p[res_table$nonsign.p==unique(res_table$nonsign.p)[i]])
+  y <- res_table$unique.genepairs[res_table$nonsign.p==unique(res_table$nonsign.p)[i]]
+  lines(x,y,  type="l", lwd=1.5,lty=linetype[i], col=colors[i])
+}
+legend(x=20, yrange[2], unique(res_table$nonsign.p), col=colors, lty=linetype, cex=0.8)
+```
+Number of unique gene pairs found when using different cutoffs. X-axis is the -log(pvalue) (for the effect to be significant) and differenc colors represent different values for the non-significant p-value (for the effect to be considered non-significant)
 
-# Do analysis with new parameters
+# Inferring causality with new parameters
 ```{r new parameters}
 var.exp.lim <- 0.1
 
@@ -230,6 +241,33 @@ snp.pval.nsign <- as.numeric(1e-5)
 
 corr.pval <- 0.05/choose(nGenes,2)
 ```
+
+Assumptions:
+* geneA is in cis with eqtlA
+* geneB is in cis with eqtlB
+* var.explained for geneA must be > var.exp.lim
+* correlation pval is < corr.pval  
+Inferred if gene A is affecting geneB or if geneB is affecting geneA.
+* geneA != geneB
+
+There are two categories and several end results:  
+Categories:
+* A affects B: A->B
+* B affects A: B->A
+
+End results:
+* **A->B = T and B->A = F** or **A->B = F and B->A = T** --> this is the case we are mostly interested in. It means we can say that a gene affects the other, but it's not affected by it.
+* **A->B = T and B->A = NA** or **A->B = NA and B->A = T** --> we can say that a gene affects the other, but we can't say if the second gene affects the first
+* **A->B = NA and B->A = NA** --> we can't say anything about causality
+* **A->B = F and B->A = T** or **A->B = F and B->A = T** --> neither gene affects the other
+* **A->B = T and B->A = T** or **A->B = T and B->A = T**
+
+How it works:  
+* **A->B = T** if anova p-value for the effect of eqtlA on geneB is < snp.pval
+* **A->B = F** if the anova p-value of the effect of eqtlA on geneB is > snp.pval.nsign and geneA and geneB have different eqtls
+* **B->A = T** if anova p-value for the effect of eqtlB on geneA is < snp.pval
+* **B->A = F** if the anova p-value of the effect of eqtlB on geneA is > snp.pval.nsign and geneA and geneB have different eqtls
+
 
 ## Get the effect of each gene on the other and the cases where A->B = T and B->A = F
 ```{r include=FALSE}
@@ -307,20 +345,21 @@ hist(find.effects_TF.geneeqtl.A.plot$N, main = "# gene-eqtl pairs", xlab = "# ti
 # the majority of gene-eqtl pairs appear between 0-50 times
 ```
 ### Plot the network
-Takes a very long time and you can't really see anything so it's not very worth it
+Takes a very long time and you can't really see anything so it's not very worth it.  
+There are no subclusters, it's just one bit network
 
-<!-- ```{r} -->
-<!-- plot_TF <- graph_from_edgelist(as.matrix(find.effects_TF[,.(geneA, geneB)]),directed=TRUE) -->
-<!-- # components(plot_TF) -->
+```{r eval=FALSE}
+plot_TF <- graph_from_edgelist(as.matrix(find.effects_TF[,.(geneA, geneB)]),directed=TRUE)
+# components(plot_TF)
 
-<!-- memb <- components(plot_TF)$membership -->
-<!-- nodes <- data.table(id = names(memb), -->
-<!--                     group_id = memb) -->
-<!-- nodes <- nodes[order(nodes$id), ] -->
-<!-- nodes -->
+memb <- components(plot_TF)$membership
+nodes <- data.table(id = names(memb),
+                    group_id = memb)
+nodes <- nodes[order(nodes$id), ]
+nodes
 
-<!-- plot(plot_TF, layout=layout_with_gem,edge.arrow.size=.5, vertex.label=NA) -->
-<!-- ``` -->
+plot(plot_TF, layout=layout_with_gem,edge.arrow.size=.5, vertex.label=NA)
+```
 
 # GO analysis
 In order to find the GO terms associated with my genes I used YeastMine (Balakrishnan et al., 2012) (https://yeastmine.yeastgenome.org/yeastmine/begin.do). Since I was not being able to do it in R, using the YeastMine API, I used python to run my queries. To be able to run the queries with python, first I needed to create and account and request an API key. Since you can generate python code from the website, I used it as a guide and added/ removed parameters to get what I needed. 
