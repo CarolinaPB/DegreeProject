@@ -7,9 +7,24 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+# knitr::knit_engines$set(python = reticulate::eng_python)
+knitr::opts_chunk$set('python',engine.path = '/usr/local/bin/python3')
+
+require("knitr")
+sysname <- Sys.info()["sysname"]
+
+if(sysname == "Darwin") {
+  # on my computer
+  opts_knit$set(root.dir = '/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/')
+} else if(sysname == "Linux") {
+  # on uppmax
+  opts_knit$set(root.dir = '/home/carolpb/DegreeProject/summarizing')
+}
+options(tinytex.verbose = TRUE)
 ```
 
-```{r}
+
+```{r load libraries, include=FALSE}
 library(data.table)
 library(tidyr)
 library(parallel)
@@ -17,26 +32,456 @@ library(igraph)
 library(Hmisc)
 library(corrplot)
 library(dplyr)
+library(reticulate) # for python
 ```
 
-```{r}
-sysname <- Sys.info()["sysname"]
+```{r load initial data files, include=FALSE}
+phenotype <- fread("data/SI_Data_01_expressionValues.txt")
+genotype <- fread("data/SI_Data_03_genotypes.txt")
+eqtl_results <- fread("data/SI_Data_04_eQTL.csv")
+eqtl_results[cis=="VERDADEIRO"]$cis <- T
+eqtl_results[cis=="FALSO"]$cis <- F
 
-if(sysname == "Darwin") {
-    setwd("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/") # on my computer
-} else if(sysname == "Linux") {
-    setwd("") # on uppmax
-} else if(sysname == "Windows") {
-    setwd("") # example on win machine
+source("myfunctions.R")
+```
+
+# for the actual analysis jump to "Do analysis with new parameters"
+
+Original parameters used
+```{r original parameters}
+var.exp.lim <- 0.1
+
+nSNPs <- length(colnames(genotype))-1
+nGenes <- length(colnames(phenotype))-1
+# nSNPs <- 42052
+# nGenes <- 5720
+
+snp.pval <- 0.05/(as.numeric(nGenes) * as.numeric(nSNPs))
+snp.pval.nsign <- as.numeric(1e-5)
+
+corr.pval <-  0.05/(nGenes*nGenes)
+```
+
+
+# Get effects table
+Probably best to run in uppmax
+```{r get effects table, message=TRUE, include=FALSE}
+library(data.table)
+if (!file.exists("results/effects_table.Rdata")){
+  
+  eqtl_results.sub <- eqtl_results[,.(gene, pmarker, cis, var.exp)]
+  
+  genesB <- colnames(phenotype[,2:ncol(phenotype)])
+  effectsA_B.sepA_B <- create_ini_table(eqtl_results.sub, genesB, var.exp.lim)
+  
+  ### Find effect of eqtls from geneA in expression of geneB ####
+  eqtls.A <- unique(effectsA_B.sepA_B$eqtl.A)
+  genes.B <- unique(effectsA_B.sepA_B$geneB)
+  res.tot.eqtlA_geneB <- data.table(expand.grid(gene=genes.B, eqtl=eqtls.A))#, anv.res=NA))
+  res.eqtlA_geneB <- res.tot.eqtlA_geneB
+  
+  # run anova in parallel -- effect of eqtlA on geneB
+  message("running anova for the effect of eqtlA on geneB")
+  cl = makeCluster(detectCores() - 1, type="FORK")
+  res.eqtlA_geneB$anv.res <- parApply(cl=cl,res.eqtlA_geneB,1,effect_eqtl_gene, phenotype, genotype)
+  stopCluster(cl)
+
+  
+  ### Find effect of eqtls from geneB in expression of geneA
+  message("running anova for the effect of eqtlB on geneA")
+  eqtls.B <- na.omit(unique(effectsA_B.sepA_B$eqtl.B))
+  genes.A <- unique(effectsA_B.sepA_B$geneA)
+  res.tot.eqtlB_geneA <- data.table(expand.grid(gene=genes.A, eqtl=eqtls.B))#, anv.res=NA))
+  res.eqtlB_geneA <- res.tot.eqtlB_geneA
+  
+  # run the anova function in parallel -- effect of eqtlB on geneA
+  cl = makeCluster(detectCores() - 1, type="FORK")
+  res.eqtlB_geneA$anv.res <- parApply(cl=cl,res.eqtlB_geneA,1,effect_eqtl_gene, phenotype, genotype)
+  stopCluster(cl)
+  
+  ## merge anova results with the information table to create an effects table
+  # read in the anova results files
+  
+  # results from effect of eqtlA on geneB
+  effects_table.eqtlA_geneB <- merge_after_anova(res.eqtlA_geneB, "B", "A", effectsA_B.sepA_B)
+  
+  # results from effect of eqtlB on geneA
+  effects_table.anova <- merge_after_anova(res.eqtlB_geneA, gene.AB="A", eqtl.AB="B", effects_table.eqtlA_geneB )
+  setcolorder(effects_table.anova, c("geneA", "geneB", "eqtl.A", "eqtl.B", "cis.A", "cis.B"))
+  
+  ### correlation ####
+  message("getting correlation between genes")
+  cor_traits <- rcorr(as.matrix(phenotype[,2:ncol(phenotype)])) # to remove the sample names
+  
+  cor_traits.cor <- cor_traits$r
+  cor_traits.p <- cor_traits$P
+  
+  my_cor_matr_flat <- flat_cor_mat(cor_traits.cor,cor_traits.p)
+  my_cor_matr_flat <- data.table(my_cor_matr_flat)
+  
+  cor_matr <- my_cor_matr_flat[!duplicated(t(apply(my_cor_matr_flat, 1, sort))), ]
+  
+  # merge the correlation values with the table that has the anova results
+  setnames(cor_matr, old=c("row","column", "pval"), new=c("geneA","geneB", "cor.pval"))
+  
+  message("combining anova results with correlation")
+  effects_table.cor <- merge(effects_table.anova, cor_matr, by=c("geneA","geneB"), all.x=T)
+  
+  message("saving effects table with correlation between genes")
+  save(effects_table, file="results/effects_table.Rdata")
+  
+}
+```
+
+## Test different parameters and create summary table with results from testing the different parameters
+Takes a while, probably better to use uppmax
+
+```{r test different parameters, include=FALSE}
+if (!file.exists("results/resparams.Rdata")){
+  
+  message("loading effects_table")
+  load("results/effects_table.Rdata")
+  
+  sign_p <- c(1e-17, 1e-16, 1e-15, 1e-14, 1e-13, 1e-12, 1e-11, 1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2)
+  non_sign_p <- c(1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2)
+  cor_p <- c(1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2)
+  params0 <- data.table(expand.grid(sign_p=sign_p, non_sign_p=non_sign_p, cor_p=cor_p))
+  
+  message("testing parameters")
+  
+  cl = makeCluster(detectCores() - 1, type="FORK")
+  res <- parApply(cl=cl,params0,1, testparams, effects_table, var.exp.lim)
+  stopCluster(cl)
+
+  save(res, file="results/resparams.Rdata")
+  
+}
+
+if (!file.exists("results/res_table_params.Rdata")){
+  message("loading resparams")
+  load(file = "results/resparams.Rdata")
+  
+  # create summary table with results from testing the different parameters
+  message("creating summary table")
+  cl = makeCluster(detectCores()-1, type="FORK")
+  res_table.temp <- parLapply(cl=cl, res, create_res_table)
+  stopCluster(cl)
+  
+  res_table <- rbindlist(res_table.temp)
+  res_table <- res_table[order(sign.p, -nonsign.p, cor.p)]
+  
+  save(res_table, file="results/res_table_params.Rdata")
+  
+} else if (file.exists("results/res_table_params.Rdata")){
+  message("loading res_table with the results of testing the several parameters")
+  load("results/res_table_params.Rdata")
 }
 ```
 
 
-```{r}
-phenotype <- fread(paste0(path,"data/SI_Data_01_expressionValues.txt"))
-genotype <- fread(paste0(path,"data/SI_Data_03_genotypes.txt"))
-eqtl_results <- fread(paste0(path,"data/SI_Data_04_eQTL.csv"))
-eqtl_results[cis=="VERDADEIRO"]$cis <- T
-eqtl_results[cis=="FALSO"]$cis <- F
+### Plot number of times geneA -> geneB with the different parameters tested 
+<!-- Only the cases where A->B=T and B->A=F -->
+<!-- ```{r plot_number_of_times_A->B_with_different_parameters} -->
+<!-- par(mfrow=c(2,4)) -->
+
+<!-- cor.pvals <- unique(res_table$cor.p) -->
+<!-- linetype <- c(1:length(unique(res_table$nonsign.p))) -->
+
+<!-- for (p in cor.pvals){ -->
+<!--   xrange <- range(-log(res_table$sign.p)) # set x-axis range -->
+<!--   yrange <- range(res_table$unique.genepairs) # set y-axis range -->
+<!--   plot(xrange, yrange, type = "n", main=paste("corr pval = ", p), xlab = "-log(sign.p)", ylab = " #unique gene pairs") # empty plot -->
+<!--   colors <- rainbow(length(unique(res_table$nonsign.p))) -->
+<!--   for (i in 1:length(unique(res_table$nonsign.p))){ -->
+<!--     x <- -log(res_table[nonsign.p==nonsign.p[i] & cor.p==p]$sign.p) -->
+<!--     y <- res_table[nonsign.p==nonsign.p[i] & cor.p==p]$unique.genepairs -->
+<!--     lines(x,y,  type="l", lwd=1.5,lty=linetype[i], col=colors[i]) -->
+<!--   } -->
+<!--   #legend(x=20, yrange[2], unique(res_table$nonsign.p), col=colors, lty=linetype, cex=0.8) -->
+<!-- } -->
+
+<!-- par(mfrow=c(1,1)) -->
+
+<!-- xrange <- range(-log(res_table$sign.p)) # set x-axis range -->
+<!-- yrange <- range(res_table$unique.genepairs) # set y-axis range -->
+<!-- plot(xrange, yrange, type = "n", xlab = "-log(p)", ylab = "#unique gene pairs",  main="#gene pairs where A->B") # empty plot -->
+<!-- colors <- rainbow(length(unique(res_table$nonsign.p))) -->
+<!-- linetype <- c(1:length(unique(res_table$nonsign.p))) -->
+<!-- for (i in 1:length(unique(res_table$nonsign.p))){ -->
+<!--   x <- -log(res_table$sign.p[res_table$nonsign.p==unique(res_table$nonsign.p)[i]]) -->
+<!--   y <- res_table$unique.genepairs[res_table$nonsign.p==unique(res_table$nonsign.p)[i]] -->
+<!--   lines(x,y,  type="l", lwd=1.5,lty=linetype[i], col=colors[i]) -->
+<!-- } -->
+<!-- legend(x=20, yrange[2], unique(res_table$nonsign.p), col=colors, lty=linetype, cex=0.8) -->
+<!-- ``` -->
+
+# Do analysis with new parameters
+```{r new parameters}
+var.exp.lim <- 0.1
+
+# nSNPs <- length(colnames(genotype))-1
+# nGenes <- length(colnames(phenotype))-1
+
+nSNPs <- 42052
+nGenes <- 5720
+
+snp.pval <- 0.01
+snp.pval.nsign <- as.numeric(1e-5)
+
+corr.pval <- 0.05/choose(nGenes,2)
 ```
 
+## Get the effect of each gene on the other and the cases where A->B = T and B->A = F
+```{r include=FALSE}
+if (!file.exists("results/findeffects_all_newparams.gz")){
+  message("loading effects_table")
+  load("results/effects_table.Rdata")
+  
+  message("finding causality")
+
+  find.effects <- effects_table[cor.pval < corr.pval & cis.A ==T & cis.B==T & geneA!=geneB]
+  find.effects <- find.effects_fun(find.effects, snp.pval, snp.pval.nsign)
+  
+  message("saving to file")
+  fwrite(find.effects, "results/findeffects_all_newparams.gz")
+}
+
+if (!file.exists("results/findeffects_TF_newparams.gz")){
+  message("loading find.effects")
+  find.effects <- fread("results/findeffects_all_newparams.gz")
+  
+  message("getting cases where A->B = T and B->A = F")
+  find.effects_TF.1 <- find.effects[find.effects$`A->B`==T & find.effects$`B->A`==F, .(geneA, geneB, eqtl.A, eqtl.B, `A->B`, `B->A`)]
+  find.effects_TF.2 <- rbind(find.effects_TF.1, find.effects[find.effects$`A->B`==F & find.effects$`B->A`==T & var.exp.B > var.exp.lim, .(geneA=geneB, geneB=geneA, eqtl.A=eqtl.B, eqtl.B=eqtl.A, `A->B`=`B->A`, `B->A`=`A->B`)])
+  find.effects_TF <- unique(find.effects_TF.2)
+  
+  message("saving to file")
+  fwrite(find.effects_TF, "results/findeffects_TF_newparams.gz")
+
+} else if (file.exists("results/findeffects_TF_newparams.gz")){
+  message("loading find.effects_TF")
+  find.effects_TF <- fread("results/findeffects_TF_newparams.gz")
+}
+```
+
+### Plot number of times a gene pair appears
+```{r plot the number of times a gene pair appears}
+find.effects_TF.numpairs <- find.effects_TF[(`A->B`==T & `B->A`==F), .N, by=.(geneA, geneB)]
+
+numpairs.table <- data.table(N = unique(find.effects_TF.numpairs$N), numpairs =NA)
+for (i in 1:nrow(numpairs.table)){
+  numpairs.table$numpairs[i] <- nrow(find.effects_TF.numpairs[N==numpairs.table$N[i]])
+}
+
+# plot the number of times a gene pair appears
+bp <- barplot(numpairs.table[order(-numpairs)]$numpairs, numpairs.table[order(-numpairs)]$N, names.arg=unique(find.effects_TF.numpairs[order(N)]$N), 
+              width = 0.5, space=0.2, legend.text = F, ylim = c(0,max(numpairs.table$numpairs)+2500),
+              main = "Number of times gene pairs appear \n (A->B = T and B->A = F)", xlab = "# times a gene pair appears", 
+              ylab = "# of gene pairs")
+text(bp,numpairs.table[order(-numpairs)]$numpairs, labels=numpairs.table[order(-numpairs)]$numpairs, cex=1, pos=3)
+```
+
+### Plot the number of times a gene-eqtl pair appears
+```{r plot number of times gene-eqtl pair appears}
+find.effects_TF.geneeqtl.A <- find.effects_TF[(`A->B`==T & `B->A`==F), .N, by=.(geneA, eqtl.A)]
+find.effects_TF.geneeqtl.B <- find.effects_TF[(`A->B`==T & `B->A`==F), .N, by=.(geneB, eqtl.B)]
+
+find.effects_TF.geneeqtl.A.plot <- find.effects_TF.geneeqtl.A %>% unite(gene_eqtlA, geneA, eqtl.A, sep = "__")
+#find.effects_TF.geneeqtl.B.plot <- find.effects_TF.geneeqtl.B %>% unite(gene_eqtlB, geneB, eqtl.B, sep = "__")
+
+plot(as.factor(find.effects_TF.geneeqtl.A.plot$gene_eqtlA), find.effects_TF.geneeqtl.A.plot$N, 
+     xlab="gene-eqtl pairs", ylab="# times each pair appears", axes=FALSE, 
+     main="Num times of times each gene-eqtl pair appears \n (A->B = T and B->A = F)")
+Axis(side=2, labels=T)
+```
+
+### Frequency of gene-eqtl pairs
+```{r histogram gene-eqtl pairs}
+numpairs.table2 <- data.table(N = unique(find.effects_TF.geneeqtl.A.plot$N), numpairs =NA)
+for (i in 1:nrow(numpairs.table2)){
+  numpairs.table2$numpairs[i] <- nrow(find.effects_TF.geneeqtl.A[N==numpairs.table2$N[i]])
+}
+numpairs.table2 <- numpairs.table2[order(N)]
+
+hist(find.effects_TF.geneeqtl.A.plot$N, main = "# gene-eqtl pairs", xlab = "# times gene-eqtl pairs appear",labels = T, ylim = c(0,780))
+# the majority of gene-eqtl pairs appear between 0-50 times
+```
+### Plot the network
+Takes a very long time and you can't really see anything so it's not very worth it
+
+<!-- ```{r} -->
+<!-- plot_TF <- graph_from_edgelist(as.matrix(find.effects_TF[,.(geneA, geneB)]),directed=TRUE) -->
+<!-- # components(plot_TF) -->
+
+<!-- memb <- components(plot_TF)$membership -->
+<!-- nodes <- data.table(id = names(memb), -->
+<!--                     group_id = memb) -->
+<!-- nodes <- nodes[order(nodes$id), ] -->
+<!-- nodes -->
+
+<!-- plot(plot_TF, layout=layout_with_gem,edge.arrow.size=.5, vertex.label=NA) -->
+<!-- ``` -->
+
+# GO analysis
+In order to find the GO terms associated with my genes I used YeastMine (Balakrishnan et al., 2012) (https://yeastmine.yeastgenome.org/yeastmine/begin.do). Since I was not being able to do it in R, using the YeastMine API, I used python to run my queries. To be able to run the queries with python, first I needed to create and account and request an API key. Since you can generate python code from the website, I used it as a guide and added/ removed parameters to get what I needed. 
+
+To get an API key, go to https://yeastmine.yeastgenome.org/yeastmine/begin.do and create an account. Go to account details and create a new key. 
+Save the key in a file called yeastmineAPI.txt
+
+"genelist" is a list of the genes involved in the causality - Uploaded into yeastmine and saved in my area
+
+```{python}
+import os.path
+from os import path
+
+if not path.isfile("results/genelistwithGOterm.txt"):
+  # The following lines will be needed in every python script:
+  from intermine.webservice import Service
+  yeastmineAPItoken_file = open('data/yeastmineAPI.txt', 'r')
+  yeastmineAPItoken = yeastmineAPItoken_file.readline().rstrip()
+  service = Service("https://yeastmine.yeastgenome.org/yeastmine/service", token = yeastmineAPItoken)
+  
+  # Get a new query on the class (table) you will be querying:
+  query = service.new_query("Gene")
+  
+  # The view specifies the output columns
+  query.add_view(
+      "secondaryIdentifier", "symbol", "name",
+      "ontologyAnnotations.ontologyTerm.identifier",
+      "ontologyAnnotations.ontologyTerm.name",
+      "ontologyAnnotations.ontologyTerm.namespace",
+      "ontologyAnnotations.evidence.code.code"
+  )
+  
+  # You can edit the constraint values below
+  query.add_constraint("Gene", "IN", "genelist", code = "A")
+  
+  terms = "gene", "symbol", "gene.name", "GO.identifier", "GO.term", "GO.namespace", "evidence"
+  
+  terms_query = ["secondaryIdentifier", "symbol", "name", "ontologyAnnotations.ontologyTerm.identifier", "ontologyAnnotations.ontologyTerm.name", "ontologyAnnotations.ontologyTerm.namespace", "ontologyAnnotations.evidence.code.code"]
+  
+  with open("results/genelistwithGOterm.txt", "w") as file:
+    # write headers
+    for term in terms[:-1]:
+      file.write(term)
+      file.write("\t")
+    else:
+      file.write(terms[-1])
+    file.write("\n")
+    
+    #write content
+    for row in query.rows():
+      for t in terms_query[:-1]:
+        if row[t] != None:
+          file.write(row[t])
+          file.write("\t")
+        else:
+          file.write("NA")
+          file.write("\t")
+      if row[terms_query[-1]] != None:
+        file.write(row[terms_query[-1]])
+      else:
+        file.write("NA")
+      file.write("\n")
+```
+
+Load file generated with python - contains gene, gene symbol, gene name, GO code, GO term, GO namespace and evidence code
+```{r}
+genes_GO.table <- fread("results/genelistwithGOterm.txt")
+```
+
+```{r}
+genes_GO.bio <- unique(genes_GO.table[GO.namespace=="biological_process"])
+genes_GO.bio.noevidence <- data.table(genes_GO.bio)
+genes_GO.bio.noevidence[,evidence :=NULL]
+genes_GO.bio.noevidence[,GO.namespace :=NULL]
+genes_GO.bio.noevidence <- unique(genes_GO.bio.noevidence)
+genes_GO.bio.noevidence
+```
+
+### count number of times each ontology term appears (number of diferent genes that have this GO term)
+```{r}
+GOterms.count <- genes_GO.bio.noevidence[, .(description=unique(GO.term), count = .N), by = GO.identifier]
+GOterms.count[order(-count)]
+```
+
+# find genes that have "transcription factor" in the GO term
+```{r}
+GO_trans_factor <- unique(genes_GO.bio.noevidence[grepl("transcription factor",GO.term, fixed = F)])
+```
+
+```{r}
+GO_transc_reg <- unique(genes_GO.bio.noevidence[(grepl(" transcription ",GO.term, fixed = F) & grepl(" regulation ",GO.term, fixed = F)) | grepl("transcription factor",GO.term, fixed = F)])
+GO_transc_reg[,.(gene, GO.term, gene.name, GO.identifier)]
+```
+
+
+### number of times each geneA points to another gene
+```{r}
+numlinks_from_gene <- find.effects_TF[, .(count=.N), by=geneA]
+numlinks_from_gene[order(-count)]
+```
+
+### number of times each geneA points to another gene + GO term
+```{r}
+links_perGO_pergene <- merge(unique(genes_GO.bio.noevidence), numlinks_from_gene, by.x="gene", by.y="geneA", all=T)
+links_perGO_pergene[order(-count), .(gene, GO.identifier, GO.term, count)]
+```
+
+### num of times a gene with a certain GO is the causal one
+```{r}
+links_perGO <- links_perGO_pergene[,.(gocount=sum(count, na.rm = T)), by=c("GO.identifier", "GO.term")]
+links_perGO[order(-gocount)]
+```
+
+### find the GOs that have transcription factor or transcription regulation in the name
+```{r}
+links_perGO_transfactor <- links_perGO[(grepl(" transcription ",GO.term, fixed = F) & grepl(" regulation ",GO.term, fixed = F)) | grepl("transcription factor",GO.term, fixed = F)]
+links_perGO_transfactor[order(-gocount)][,.(GO.term, gocount)]
+```
+
+### # causal links GO is regulating transcription or a transcription factor
+```{r}
+bp <- barplot(links_perGO_transfactor[order(-gocount)]$gocount, names.arg = links_perGO_transfactor$GO.identifier,
+              ylab = "# links", xlab ="GO" , ylim = c(0,300), main="# links going out of genes with GO term \n only GO terms including 'transcription factor'")
+text(bp,links_perGO_transfactor[order(-gocount)]$gocount,links_perGO_transfactor[order(-gocount)]$gocount,cex=0.8, pos=3)
+hist(links_perGO_transfactor[order(-gocount)]$gocount, main="# causal links \n GO is regulating transcription or a transcription factor")
+```
+
+
+### Num of links going out of genes with "transcription" "regulation" or "transcription factor" as its GO term and number of links going out of genes with other descriptions
+```{r}
+data.table(links_perGO[(grepl(" transcription ",GO.term, fixed = F) & grepl(" regulation ",GO.term, fixed = F)) | grepl("transcription factor",GO.term, fixed = F) , .(sum_trans=sum(gocount, na.rm = T))], links_perGO[!((grepl(" transcription ",GO.term, fixed = F) & grepl(" regulation ",GO.term, fixed = F)) | grepl("transcription factor",GO.term, fixed = F)) , .(sum_others=sum(gocount, na.rm = T))])
+```
+
+### Num of links having "transcription" and "regulation" or "transcription factor" in the description
+```{r}
+bp_tfactor<-boxplot(gocount ~ grepl("transcription factor",GO.term, fixed = F), data=links_perGO, outline=T,
+                    names = c("Other", "transcription factor"),
+                    xlab = "", ylab = "# links",  main="Number of arrows pointing from each GO category",
+                    ylim=c(-1,195))
+text(1:length(bp_tfactor$n), bp_tfactor$stats[5,]+5, paste("n=", bp_tfactor$n), pos = 4)
+bp_tfactor_reg<-boxplot(gocount ~ ((grepl(" transcription ",GO.term, fixed = F) & grepl(" regulation ",GO.term, fixed = F)) | grepl("transcription factor",GO.term, fixed = F)), data=links_perGO, outline=T,
+                        names = c("Other", "transcription factor or regulator"),
+                        xlab = "", ylab = "# links",  main="Number of arrows pointing from each GO category",
+                        ylim=c(-1,195))
+text(1:length(bp_tfactor_reg$n), bp_tfactor_reg$stats[5,]+5, paste("n=", bp_tfactor_reg$n), pos = 4)
+```
+would make sense for there to be an enrichment of transcription regulators/factors in the genes A
+
+```{r}
+links_perGO.nobioprocess <- links_perGO[!GO.term=="biological_process"]
+bp_tfactor_reg<-boxplot(gocount ~ ((grepl(" transcription ",GO.term, fixed = F) & grepl(" regulation ",GO.term, fixed = F)) | grepl("transcription factor",GO.term, fixed = F)), data=links_perGO.nobioprocess, outline=T,
+                        names = c("Other", "transcription factor or regulator"),
+                        xlab = "", ylab = "# links",  main="Number of arrows pointing from each GO category")
+text(1:length(bp_tfactor_reg$n), bp_tfactor_reg$stats[5,]+5, paste("n=", bp_tfactor_reg$n), pos = 4)
+```
+
+```{r}
+# Pie Chart from data frame with Appended Sample Sizes
+nms <- links_perGO[order(-gocount)]$GO.term[1:10]
+mytable <- links_perGO[order(-gocount)]$gocount[1:10]
+lbls <- paste( links_perGO[order(-gocount)]$GO.term[1:10], " -- ", mytable, sep="")
+pie(mytable, labels = nms, 
+   main="Top 10 most represented GO categories \n (in causal genes)")
+```
