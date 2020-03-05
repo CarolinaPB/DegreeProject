@@ -181,7 +181,7 @@ create_res_table <- function(tab){
   return(temp)
 }
 
-getgeneset <- function(df){
+getgeneset <- function(goframeData){
   # library("GSEABase")
   # library("GOstats")
 

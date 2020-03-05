@@ -54,6 +54,7 @@ library(dplyr)
 library(reticulate) # for python
 library("GSEABase")
 library("GOstats")
+library(pheatmap)
 ```
 
 ```{r load initial data files, include=FALSE}
@@ -649,38 +650,190 @@ I checked if the resulting enrichment table was the same for both universes test
 I will continue by using the results from the second test, where the universe was comprised of genes involved in the causality.  
 
 ## Get enrichment for the "causal" genes and for the affected genes 
+### Hypergeometric test
 Causal - genesA   
 Affected - genesB  
-```{r}
-# table with necessary columns for creating a geneset and calculating enrichment
-goframeData <- unique(genes_GO.table[,.(GO.identifier, evidence, gene)])
 
-# creating the sets of genes to use 
-# the "interesting genes" - either genesA (the causal ones) or genesB (on the receiving end)
-# the "universe" - in this case, all the genes in our dataset
-genesA <- unlist(unique(find.effects_TF[,geneA])) # causal
-genesB <- unlist(unique(find.effects_TF[,geneB])) # affected
-universe <- colnames(phenotype[,2:ncol(phenotype)])
+Test universe as all the genes in the dataset and universe as all the genes involved in the causality
+```{r warning=FALSE}
+if (!exists("genes_GO.bio")){
+  genes_GO.table <- fread("results/genelistwithGOterm.txt")
+  genes_GO.table <- unique(genes_GO.table)
+  genes_GO.bio   <- unique(genes_GO.table[GO.namespace=="biological_process"])
+}
 
 # create geneset
+goframeData <- unique(genes_GO.bio[,.(GO.identifier, evidence, gene)])
 gs <- getgeneset(goframeData)
+
+
+genesA <- unlist(unique(find.effects_TF[,geneA]))
+genesB <- unlist(unique(find.effects_TF[,geneB]))
+
+# universe is genes involved in causality
+universe <- unique(c(genesA, genesB))
+
+
 # get enrichment for genesA
 res.geneA <- getenrichment(gs, universe = universe, interestinggenes = genesA)
 res.geneA.dt <- data.table(summary(res.geneA))
-#htmlReport(res.geneA.parents, file=paste0(respath, "2020-02-13/GOenrichmentreport_genesA.html"))
 
 # get enrichment for genesB
 res.geneB <- getenrichment(gs, universe = universe, interestinggenes = genesB)
 res.geneB.dt <- data.table(summary(res.geneB))
 
-# get list with different graphs that represent relations between GO terms
-termgrA <- termGraphs(res.geneA, use.terms = T, pvalue = 0.05)
 
-# save all the graphs to a pdf
-# pdf(file = "results/2020-02-13/termgraph_A.pdf", onefile = T)
-# for (i in 1:length(termgrA)){
-#   plotGOTermGraph(termgrA[[i]], r = res.geneA, add.counts = T, node.colors=c(sig="green", not="white"), max.nchar=30)
-# }
-# dev.off()
+# universe is all the genes
+universe.all <- names(phenotype[,2:ncol(phenotype)])
+
+res.geneA.uniall <- getenrichment(gs, universe = universe.all, interestinggenes = genesA)
+res.geneA.uniall.dt <- data.table(summary(res.geneA.uniall))
+
+# get enrichment for genesB
+res.geneB.uniall <- getenrichment(gs, universe = universe.all, interestinggenes = genesB)
+res.geneB.uniall.dt <- data.table(summary(res.geneB.uniall))
+
+
+# check if I got the same results using the universe = all genes and universe = genes involved in causality
+if (!isTRUE(all.equal(res.geneA, res.geneA.uniall)) | isTRUE(all.equal(res.geneB, res.geneB.uniall))) {
+  message("the hypergeometric test with the different universes didn't give the same results")
+} else {
+  message("The hypergeometric test for the different universes gave the same results")
+}
+```
+
+#### To get the GO term graph for the geneA or geneB enrichment 
+(where universe is all the genes involved in the causality)
+```{r}
+#save all the graphs to a pdf
+if (!file.exists("results/figures/termgraph_A.pdf")){
+  
+  termgrA <- termGraphs(res.geneA, use.terms = T, pvalue = 0.05)
+  
+  pdf(file = "results/figures/termgraph_A.pdf", onefile = T)
+  for (i in 1:length(termgrA)){
+    plotGOTermGraph(termgrA[[i]], r = res.geneA, add.counts = T, 
+                    node.colors=c(sig="green", not="white"), max.nchar=30)
+  }
+  dev.off()
+  message("saved the pdf with GO term graphs for the causal genes")
+  
+} else {
+  message("pdf with graphs for the causal genes already exists")
+}
+
+if (!file.exists("results/figures/termgraph_B.pdf")){
+  
+  termgrB <- termGraphs(res.geneB, use.terms = T, pvalue = 0.05)
+  
+  pdf(file = "results/figures/termgraph_B.pdf", onefile = T)
+  for (i in 1:length(termgrB)){
+    plotGOTermGraph(termgrB[[i]], r = res.geneB, add.counts = T, 
+                    node.colors=c(sig="green", not="white"), max.nchar=30)
+  }
+  dev.off()
+  message("saved the pdf with GO term graphs for the affected genes")
+  
+} else {
+  message("pdf with graphs for the affected genes already exists")
+}
+
+# to plot in the rmd, include dev.off() inside the loop, after the plotGOTermGraph
+```
+
+
+### Conditional Hypergeometric test
+
+```{r warning=FALSE}
+if (!exists("genes_GO.bio")){
+  genes_GO.table <- fread("results/genelistwithGOterm.txt")
+  genes_GO.table <- unique(genes_GO.table)
+  genes_GO.bio   <- unique(genes_GO.table[GO.namespace=="biological_process"])
+}
+
+# create geneset
+goframeData <- unique(genes_GO.bio[,.(GO.identifier, evidence, gene)])
+gs <- getgeneset(goframeData)
+
+
+genesA <- unlist(unique(find.effects_TF[,geneA]))
+genesB <- unlist(unique(find.effects_TF[,geneB]))
+
+# universe is genes involved in causality
+universe <- unique(c(genesA, genesB))
+
+# get enrichment
+hgCondA <- getenrichment(gs, universe = universe, interestinggenes = genesA, cond = T)
+hgCondA.dt <- data.table(summary(hgCondA))
+
+hgCondB <- getenrichment(gs, universe = universe, interestinggenes = genesB, cond = T)
+hgCondB.dt <- data.table(summary(hgCondB))
+
+hgCondA.dt
+hgCondB.dt
+```
+
+> to filter the results, the following parameters can be added to the "summary()" call:  
+Optional arguments pvalue and categorySize allow specification of maximum p-value and minimum categorySize
+
+
+#### Other analysis
+```{r}
+if (exists("res.geneA") & exists("hgCondA") & exists("res.geneB") & exists("hgCondB")){
+  # GO terms that are marked significant by the standard hypergeo test, but not by the conditional test
+  stdIdsA = sigCategories(res.geneA)
+  condIdsA = sigCategories(hgCondA)
+  # num of GO terms that were not significant with the conditional hypergeo test
+  # print(length(setdiff(stdIdsA, condIdsA)))
+  
+  stdIdsB = sigCategories(res.geneB)
+  condIdsB = sigCategories(hgCondB)
+  # num of GO terms that were not significant with the conditional hypergeo test
+  # print(length(setdiff(stdIdsB, condIdsB)))
+  
+  # terms that are enriched in the hypergeo test but not on the conditional
+  goterms_notin_condA <- res.geneA.dt[GOBPID %in% setdiff(stdIdsA, condIdsA)]
+  goterms_notin_condB <- res.geneB.dt[GOBPID %in% setdiff(stdIdsB, condIdsB)]
+  
+  # create HTML reports (tables with enrichment) where the GO terms have links that
+  # take you to a page where you can learn more about them
+  htmlReport(hgCondA, file="results/hgCondA_htmlreport.html")
+  htmlReport(hgCondB, file="results/hgCondB_htmlreport.html")
+} else {
+  message("Please perform the conditional and the 'normal' hypergeometric test")
+}
+```
+Number of GO terms that were not significant with the conditional hypergeo test:  
+* for the causal genes - `r length(setdiff(stdIdsA, condIdsA))`  
+* for the affected genes - `r length(setdiff(stdIdsB, condIdsB))`  
+
+
+#### GO Enrichment Heatmap (-log10(pval)
+```{r}
+if (exists("hgCondA.dt") & exists("hgCondB.dt")){
+  tocombine.A <- data.table(-log10(hgCondA.dt$Pvalue), hgCondA.dt$Term)
+  tocombine.B <- data.table(-log(hgCondB.dt$Pvalue), hgCondB.dt$Term)
+  combined <- merge(tocombine.A, tocombine.B, by="V2", all=T)
+  colnames(combined) <- c("term", "Causal", "Affected")
+  
+  # Causal <- combined$Causal
+  # Affected <- combined$Affected
+
+  if (!file.exists("results/figures/heatmap_enrichmentpvals.pdf")){
+    
+    pdf("results/figures/heatmap_enrichmentpvals.pdf")
+    combined[is.na(Causal)]$Causal <- 0
+    combined[is.na(Affected)]$Affected <- 0
+    plot_enrichment_heatmap(combined)
+    dev.off()
+    plot_enrichment_heatmap(combined)
+  } else {
+    combined[is.na(Causal)]$Causal <- 0
+    combined[is.na(Affected)]$Affected <- 0
+    plot_enrichment_heatmap(combined)
+  }
+} else {
+  message("Please perform the conditional hypergeometric test")
+}
 ```
 
