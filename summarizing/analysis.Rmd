@@ -808,7 +808,7 @@ Number of GO terms that were not significant with the conditional hypergeo test:
 * for the affected genes - `r length(setdiff(stdIdsB, condIdsB))`  
 
 
-#### GO Enrichment Heatmap (-log10(pval)
+#### GO Enrichment Heatmap (-log10(pval))
 ```{r}
 if (exists("hgCondA.dt") & exists("hgCondB.dt")){
   tocombine.A <- data.table(-log10(hgCondA.dt$Pvalue), hgCondA.dt$Term)
@@ -837,3 +837,84 @@ if (exists("hgCondA.dt") & exists("hgCondB.dt")){
 }
 ```
 
+
+## Using a subset of the causal and the affected genes
+```{r, fig.keep='all'}
+if (!exists("find.effects_TF")){
+  find.effects_TF <- fread("results/findeffects_TF_newparams.gz")
+}
+numlinks_from_geneA <- unique(find.effects_TF[, .(geneA, geneB)])[, .(l_out = .N), by = geneA]
+numlinks_from_geneB <- unique(find.effects_TF[, .(geneA, geneB)])[, .(l_in = .N), by = geneB]
+
+# table with how many links go in and out of a gene
+genes <-data.table(genes = unique(c(find.effects_TF$geneA, find.effects_TF$geneB)))
+merge_lin <-merge( genes, numlinks_from_geneA, by. = "genes", by.y = "geneA", all.x = T)
+genes_nlinks <-merge( merge_lin, numlinks_from_geneB, by.x = "genes", by.y = "geneB", all.x = T)
+# genes_nlinks[order(-l_out, l_in)]
+
+# scatterplot of link distribution
+plot(genes_nlinks[, .(l_out, l_in)], main = "How many links each gene has going in or out", pch =".")
+plot(genes_nlinks[, .(l_out, l_in)], xlim = c(0, 200), pch = ".")
+abline(v = 20)
+```
+
+There are `r nrow(genes_nlinks[l_out > 20 & l_out < l_in])` genes that have more links going in than out in the causal genes.  
+
+### Conditional hypergeometric test with new subset of causal and affected genes
+```{r warning=FALSE}
+# creating the sets of genes to use
+# defined causalgenes as the genes that have more than 20 links going out
+causalgenes <- genes_nlinks[l_out > 20]
+# defined affectedgenes as the genes that have no links going out
+affectedgenes <- genes_nlinks[is.na(l_out) & !is.na(l_in)]
+
+# the "interesting genes" - either genesA (the causal ones) or genesB (on the receiving end)
+# the "universe" - in this case, only the genes that are involved in the causality
+genesA <- causalgenes$genes
+genesB <- affectedgenes$genes
+
+universe <- unlist(unique(c(find.effects_TF[, geneA], find.effects_TF[, geneB])))
+
+# create geneset
+gs <- getgeneset(goframeData)
+
+# get enrichment for genesA
+hgCondA.sub <- getenrichment(gs, universe = universe, interestinggenes = genesA, cond = T)
+hgCondA.sub.dt <- data.table(summary(hgCondA.sub))
+
+hgCondB.sub <- getenrichment(gs, universe = universe, interestinggenes = genesB, cond = T)
+hgCondB.sub.dt <- data.table(summary(hgCondB.sub))
+
+
+# table with all enriched GO terms found for both the causal and the affected genes with the corresponding enrichment p-val
+tocombine.A <- data.table(-log10(hgCondA.dt$Pvalue), hgCondA.dt$Term)
+tocombine.B <- data.table(-log10(hgCondB.dt$Pvalue), hgCondB.dt$Term)
+combined <- merge(tocombine.A, tocombine.B, by = "V2", all = T)
+colnames(combined) <- c("term", "Causal", "Affected")
+combined[is.na(Causal)]$Causal <- 0
+combined[is.na(Affected)]$Affected <- 0
+
+if (!file.exists("results/figures/heatmap_enrichmentpvals_geneslinks_c20.pdf")){
+  # plot GO enrichment heatmap
+  pdf("results/figures/heatmap_enrichmentpvals_geneslinks_c20.pdf")
+  plot_enrichment_heatmap(combined)
+  dev.off()
+  plot_enrichment_heatmap(combined)
+} else {
+  plot_enrichment_heatmap(combined)
+}
+```
+
+
+#### Plot of the p-values of enrichment of all terms for all genes 
+(subset of causal and affected genes)
+```{r}
+hgCondA.nopvallim <- getenrichment(gs, universe = universe, interestinggenes = genesA, cond = T, pval = 1)
+hgCondA.nopvallim.dt <- data.table(summary(hgCondA.nopvallim))
+
+hgCondB.nopvallim <- getenrichment(gs, universe = universe, interestinggenes = genesB, cond = T, pval = 1)
+hgCondB.nopvallim.dt <- data.table(summary(hgCondB.nopvallim))
+
+pvalsmerge <- merge(hgCondA.nopvallim.dt[,.(GOBPID, Term, Pvalue)], hgCondB.nopvallim.dt[,.(GOBPID, Term, Pvalue)], by=c("GOBPID", "Term"), all=T)
+plot(-log10(pvalsmerge$Pvalue.x), -log10(pvalsmerge$Pvalue.y), pch=".")
+```
