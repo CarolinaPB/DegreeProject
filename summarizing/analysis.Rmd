@@ -16,9 +16,8 @@ output:
 
 # document name is today's date + _analysis.pdf
 knit: (function(inputFile, encoding) { 
-          rmarkdown::render(inputFile,
-                        encoding=encoding, 
-                        output_file=paste0(Sys.Date(),'_analysis.pdf')) })
+          rmarkdown::render(inputFile,encoding=encoding, 
+                            output_file=paste0(Sys.Date(),'_analysis.pdf')) })
 ---
 
 
@@ -407,9 +406,10 @@ Save the key in a file called yeastmineAPI.txt
 "genelist" is a list of the genes involved in the causality - Uploaded into yeastmine and saved in my area  
 
 ```{python}
+# Sometimes breaks Rstudio, might be better to run it in a script/python console
 import os.path
 from os import path
-
+os.chdir("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/")
 if not path.isfile("results/genelistwithGOterm.txt"):
   # The following lines will be needed in every python script:
   from intermine.webservice import Service
@@ -435,7 +435,7 @@ if not path.isfile("results/genelistwithGOterm.txt"):
   terms = "gene", "symbol", "gene.name", "GO.identifier", "GO.term", "GO.namespace", "evidence"
   
   terms_query = ["secondaryIdentifier", "symbol", "name", "ontologyAnnotations.ontologyTerm.identifier", "ontologyAnnotations.ontologyTerm.name", "ontologyAnnotations.ontologyTerm.namespace", "ontologyAnnotations.evidence.code.code"]
-  
+  print("saving file")
   with open("results/genelistwithGOterm.txt", "w") as file:
     # write headers
     for term in terms[:-1]:
@@ -444,12 +444,11 @@ if not path.isfile("results/genelistwithGOterm.txt"):
     else:
       file.write(terms[-1])
     file.write("\n")
-    
     #write content
     for row in query.rows():
       for t in terms_query[:-1]:
         if row[t] != None:
-          file.write(row[t])
+          file.write(str(row[t]))
           file.write("\t")
         else:
           file.write("NA")
@@ -459,6 +458,8 @@ if not path.isfile("results/genelistwithGOterm.txt"):
       else:
         file.write("NA")
       file.write("\n")
+else:
+  print("file exists")
 ```
 
 Load file generated with python - contains gene, gene symbol, gene name, GO code, GO term, GO namespace and evidence code
@@ -918,3 +919,95 @@ hgCondB.nopvallim.dt <- data.table(summary(hgCondB.nopvallim))
 pvalsmerge <- merge(hgCondA.nopvallim.dt[,.(GOBPID, Term, Pvalue)], hgCondB.nopvallim.dt[,.(GOBPID, Term, Pvalue)], by=c("GOBPID", "Term"), all=T)
 plot(-log10(pvalsmerge$Pvalue.x), -log10(pvalsmerge$Pvalue.y), pch=".")
 ```
+
+# Plot similar to the one from the paper
+Albert FW, Bloom JS, Siegel J, Day L, Kruglyak L. 2018. Genetics of trans-regulatory variation in gene expression. eLife 7: 1–39.
+
+## get gene position
+```{python include=FALSE}
+# Sometimes breaks Rstudio, might be better to run it in a script/python console
+import os.path
+from os import path
+os.chdir("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/")
+
+if not path.isfile("results/gene_pos.gz"):
+  # The line below will be needed if you are running this script with python 2.
+  #from __future__ import print_function
+  # The following two lines will be needed in every python script:
+  from intermine.webservice import Service
+  yeastmineAPItoken_file = open('/Users/Carolina/Documents/GitHub/DegreeProject/code/2020-02-05/yeastmineAPI.txt', 'r')
+  yeastmineAPItoken = yeastmineAPItoken_file.readline().rstrip()
+  service = Service("https://yeastmine.yeastgenome.org/yeastmine/service", token = yeastmineAPItoken)
+  # Get a new query on the class (table) you will be querying:
+  query = service.new_query("Gene")
+  # The view specifies the output columns
+  query.add_view(
+      "secondaryIdentifier", "chromosomeLocation.strand",
+      "chromosomeLocation.start", "chromosomeLocation.end", "chromosome.primaryIdentifier"
+  )
+  # You can edit the constraint values below
+  query.add_constraint("Gene", "IN", "allgenes", code = "A")
+  terms = "gene", "chr.strand", "chr.start", "chr.end", "chr.id"
+  terms_query = ["secondaryIdentifier", "chromosomeLocation.strand", "chromosomeLocation.start", "chromosomeLocation.end", "chromosome.primaryIdentifier"]
+  with open("results/gene_pos.gz", "w") as file:
+    for term in terms[:-1]:
+      file.write(term)
+      file.write ("\t")
+    else:
+      file.write(terms[-1])
+    file.write('\n')
+    for row in query.rows():
+      for t in terms_query[:-1]:
+        if row[t] != None:
+          file.write(str(row[t]))
+          file.write("\t")
+        else:
+          file.write("NA")
+          file.write("\t")
+      if row[terms_query[-1]] != None:
+        file.write(row[terms_query[-1]])
+      else:
+        file.write("NA")
+      file.write("\n")
+```
+
+```{r}
+genepos <- fread("results/gene_pos.gz")
+if (!exists("find.effects_TF")){
+  find.effects_TF <- fread("results/findeffects_TF_newparams.gz")
+}
+# Add chomosome and start position to each gene
+causal.pos.A <- merge(find.effects_TF, genepos, by.x="geneA", by.y="gene", all.x=T)
+colnames(causal.pos.A) <- c("geneA", "geneB", "eqtl.A", "eqtl.B", "A->B", "B->A", "strand.A", "start.A","end.A", "chr.A")
+causal.pos.B <- merge(causal.pos.A, genepos, by.x="geneB", by.y="gene", all.x=T)
+
+
+# Keep olnly columns with genes, start positions and chromosomes 
+causal.pos.B.2 <- unique(causal.pos.B[,.(geneA, geneB, start.A, chr.A, chr.start, chr.id)])
+colnames(causal.pos.B.2) <- c("geneA", "geneB", "start.A", "chr.A", "start.B", "chr.B")
+
+## transform chromosome ids into numbers
+# remove "chr" part of the chromosome name
+causal.pos.B.2$chr.A <-gsub('chr', '', causal.pos.B.2$chr.A)
+causal.pos.B.2$chr.B <-gsub('chr', '', causal.pos.B.2$chr.B)
+colnames(causal.pos.B.2) <- c("geneA", "geneB", "start.A", "chr.A", "start.B", "chr.B")
+
+# convert roman chromosome numbers to numbers
+causal.pos.B.2$chr.A <- as.numeric(as.roman(causal.pos.B.2$chr.A))
+causal.pos.B.2$chr.B <- as.numeric(as.roman(causal.pos.B.2$chr.B))
+
+# order values
+causal.pos.B.2.order <- causal.pos.B.2[order(chr.A, start.A, chr.B, start.B)]
+
+
+# organize coordinates so that they are ordered by chromosome
+# vector of chromosomes
+vchr <- 1:16
+# how much space will be separating chromosomes
+separator <- 1e5
+
+coordinates_plot <- sort_by_chr(vchr = vchr, causal.pos.B.2.order, separator = separator)
+
+plot_sorted_coordinates(coordinates_plot, separator = separator)
+```
+
