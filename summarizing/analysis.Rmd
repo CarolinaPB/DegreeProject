@@ -24,20 +24,21 @@ knit: (function(inputFile, encoding) {
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-# knitr::knit_engines$set(python = reticulate::eng_python)
 knitr::opts_chunk$set('python', engine.path = '/usr/local/bin/python3')
-#knitr::opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE) #doesn't seem to work
 
-require("knitr")
-sysname <- Sys.info()["sysname"]
 
-if (sysname == "Darwin") {
-  # on my computer
-  opts_knit$set(root.dir = '/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/')
-} else if (sysname == "Linux") {
-  # on uppmax
-  opts_knit$set(root.dir = '/home/carolpb/DegreeProject/summarizing')
-}
+# require("knitr")
+# sysname <- Sys.info()["sysname"]
+# 
+# if (sysname == "Darwin") {
+#   # on my computer
+#   opts_knit$set(root.dir = '/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/')
+# } else if (sysname == "Linux") {
+#   # on uppmax
+#   opts_knit$set(root.dir = '/home/carolpb/DegreeProject/summarizing')
+# }
+# knitr::opts_knit$set(root.dir = getwd())
+knitr::opts_knit$set(root.dir = normalizePath("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/")) 
 options(tinytex.verbose = TRUE)
 ```
 
@@ -623,7 +624,9 @@ lbls <- paste( links_perGO[order(-gocount)]$GO.term[1:10], " -- ", mytable, sep=
 pie(mytable, labels = nms,
     main = "Top 10 most represented GO categories \n (in causal genes)")
 ```
+According to [EBI](https://www.ebi.ac.uk/QuickGO/term/GO:0050789), the GO term "biological process" is "any process that modulates the frequency, rate or extent of a biological process" it's usually used when the actual function of the gene is not known.  
 
+High values might be because there are many genes associated with a certain term or because the genes that are associated with that term have many "arrows" going out (they affect many other genes)
 \newpage
 
 
@@ -840,7 +843,7 @@ if (exists("hgCondA.dt") & exists("hgCondB.dt")){
 
 
 ## Using a subset of the causal and the affected genes
-```{r, fig.keep='all'}
+```{r, fig.keep='high'}
 if (!exists("find.effects_TF")){
   find.effects_TF <- fread("results/findeffects_TF_newparams.gz")
 }
@@ -971,11 +974,13 @@ if not path.isfile("results/gene_pos.gz"):
       file.write("\n")
 ```
 
+### Plot affected genes x causal genes
 ```{r}
 genepos <- fread("results/gene_pos.gz")
 if (!exists("find.effects_TF")){
   find.effects_TF <- fread("results/findeffects_TF_newparams.gz")
 }
+
 # Add chomosome and start position to each gene
 causal.pos.A <- merge(find.effects_TF, genepos, by.x="geneA", by.y="gene", all.x=T)
 colnames(causal.pos.A) <- c("geneA", "geneB", "eqtl.A", "eqtl.B", "A->B", "B->A", "strand.A", "start.A","end.A", "chr.A")
