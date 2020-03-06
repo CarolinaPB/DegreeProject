@@ -173,15 +173,49 @@ if (!file.exists("results/effects_table.Rdata")){
 Test different parameter values combinations to see if I there is a certain combination that gives optimal results in the causality inference.    
 Takes a while, probably better to use uppmax    
 
+Assumptions:  
+* geneA is in cis with eqtlA  
+* geneB is in cis with eqtlB  
+* var.explained for geneA must be > var.exp.lim  
+* correlation pval is < corr.pval    
+Inferred if gene A is affecting geneB or if geneB is affecting geneA.  
+* geneA != geneB  
+
+There are two categories and several end results:    
+Categories:  
+* A affects B: A->B  
+* B affects A: B->A  
+
+End results:  
+* **A->B = T and B->A = F** or **A->B = F and B->A = T** --> this is the case we are mostly interested in. It means we can say that a gene affects the other, but it's not affected by it.  
+* **A->B = T and B->A = NA** or **A->B = NA and B->A = T** --> we can say that a gene affects the other, but we can't say if the second gene affects the first  
+* **A->B = NA and B->A = NA** --> we can't say anything about causality  
+* **A->B = F and B->A = T** or **A->B = F and B->A = T** --> neither gene affects the other  
+* **A->B = T and B->A = T** or **A->B = T and B->A = T**  
+
+How it works:    
+* **A->B = T** if anova p-value for the effect of eqtlA on geneB is < snp.pval  
+* **A->B = F** if the anova p-value of the effect of eqtlA on geneB is > snp.pval.nsign and geneA and geneB have different eqtls  
+* **B->A = T** if anova p-value for the effect of eqtlB on geneA is < snp.pval  
+* **B->A = F** if the anova p-value of the effect of eqtlB on geneA is > snp.pval.nsign and geneA and geneB have different eqtls  
+
+
+
+
+
 What's happening here:  
 - set different values for an effect or a correlation to be significant or non-significant  
 - find causality (A->B and B->A) using the diferent parameters 
   - the object "res" is a list of tables where each table corresponds to the causality inference done with different parameters (specified in each table)  
+  
+geneA <- causal genes  
+geneB <- affected genes  
+
 - create table with a summary of the results:  
   - number of different geneA and geneB found    
   - number of different eqtlA and eqtlB found  
   - number of unique gene pairs  
-  - number of unique gene-eqtl pairs for geneA-eqtlA and geneB-eqtlB  
+  - number of different gene-eqtl pairs for geneA-eqtlA and geneB-eqtlB  
   - the parameter cutoffs  
 ```{r test different parameters}
 if (!file.exists("results/resparams.Rdata")){
