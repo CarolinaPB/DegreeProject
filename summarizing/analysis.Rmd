@@ -93,8 +93,16 @@ corr.pval <-  0.05 / (nGenes * nGenes)
 
 
 # Get effects table
-Probably best to run in uppmax
-```{r get effects table, message=TRUE, include=FALSE}
+Probably best to run in uppmax  
+
+What's happening here:  
+- create a table with all the possible combinations of geneA-eqtlA with geneB-eqtlB  
+- ANOVA to test the effect of an eQTL on a gene  
+- combines the anova results with the table with the geneA-eqtlA and geneB-eqtlB combinations  
+- get correlation between genes  
+- adds the correlation between genes to the previous table  
+Output is a table with all combinations of gene-eqtl pairs (all geneA must have a cis-eqtl but not all of geneB have to have an eqtl (in cis or not)), if their eqtl is in cis or not, the variance explained by each gene-eqtl pair, the anova p-value and r2 of the effect of an eqtl on a gene and the correlation value and p-value between genes.
+```{r get effects table, message=TRUE}
 library(data.table)
 if (!file.exists("results/effects_table.Rdata")){
   
@@ -129,7 +137,6 @@ if (!file.exists("results/effects_table.Rdata")){
   stopCluster(cl)
   
   ## merge anova results with the information table to create an effects table
-  # read in the anova results files
   
   # results from effect of eqtlA on geneB
   effects_table.eqtlA_geneB <- merge_after_anova(res.eqtlA_geneB, "B", "A", effectsA_B.sepA_B)
@@ -164,9 +171,19 @@ if (!file.exists("results/effects_table.Rdata")){
 
 ## Test different parameters and create summary table with results from testing the different parameters
 Test different parameter values combinations to see if I there is a certain combination that gives optimal results in the causality inference.    
-Takes a while, probably better to use uppmax  
+Takes a while, probably better to use uppmax    
 
-```{r test different parameters, include=FALSE}
+What's happening here:  
+- set different values for an effect or a correlation to be significant or non-significant  
+- find causality (A->B and B->A) using the diferent parameters 
+  - the object "res" is a list of tables where each table corresponds to the causality inference done with different parameters (specified in each table)  
+- create table with a summary of the results:  
+  - number of different geneA and geneB found    
+  - number of different eqtlA and eqtlB found  
+  - number of unique gene pairs  
+  - number of unique gene-eqtl pairs for geneA-eqtlA and geneB-eqtlB  
+  - the parameter cutoffs  
+```{r test different parameters}
 if (!file.exists("results/resparams.Rdata")){
   
   message("loading effects_table")
@@ -773,6 +790,10 @@ hgCondA.dt <- data.table(summary(hgCondA))
 hgCondB <- getenrichment(gs, universe = universe, interestinggenes = genesB, cond = T)
 hgCondB.dt <- data.table(summary(hgCondB))
 
+# causal genes
+hgCondA
+# affected genes
+hgCondB
 hgCondA.dt
 hgCondB.dt
 ```
@@ -810,6 +831,11 @@ if (exists("res.geneA") & exists("hgCondA") & exists("res.geneB") & exists("hgCo
 Number of GO terms that were not significant with the conditional hypergeo test:  
 * for the causal genes - `r length(setdiff(stdIdsA, condIdsA))`  
 * for the affected genes - `r length(setdiff(stdIdsB, condIdsB))`  
+
+set of genes | Hypergeo | Conditional hypergeo
+-|-|-
+causal | `r nrow(res.geneA)` | `r nrow(hgCondA)`
+affected | `r nrow(res.geneB)` | `r nrow(hgCondB)`
 
 
 #### GO Enrichment Heatmap (-log10(pval))
