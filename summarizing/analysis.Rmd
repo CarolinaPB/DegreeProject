@@ -25,19 +25,8 @@ knit: (function(inputFile, encoding) {
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set('python', engine.path = '/usr/local/bin/python3')
+knitr::opts_chunk$set(python.reticulate=T)
 
-
-# require("knitr")
-# sysname <- Sys.info()["sysname"]
-# 
-# if (sysname == "Darwin") {
-#   # on my computer
-#   opts_knit$set(root.dir = '/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/')
-# } else if (sysname == "Linux") {
-#   # on uppmax
-#   opts_knit$set(root.dir = '/home/carolpb/DegreeProject/summarizing')
-# }
-# knitr::opts_knit$set(root.dir = getwd())
 knitr::opts_knit$set(root.dir = normalizePath("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/")) 
 options(tinytex.verbose = TRUE)
 ```
@@ -51,10 +40,10 @@ library("igraph")
 library("Hmisc")
 library("corrplot")
 library("dplyr")
-# library(reticulate) # for python
 library("GSEABase")
 library("GOstats")
 library("pheatmap")
+library("reticulate")
 ```
 
 ```{r}
@@ -295,9 +284,7 @@ for (p in cor.pvals){
 }
 ```
 
-Number of unique gene pairs found when using different cutoffs. Each pannel corresponds to a different correlation p-value cutff. X-axis is the -log(pvalue) (for the effect to be significant) and differenc colors represent different values for the non-significant p-value (for the effect to be considered non-significant)
-
-```{r}
+```{r, fig.cap="Number of unique gene pairs found when using different cutoffs. X-axis is the -log(pvalue) (for the effect to be significant) and differenc colors represent different values for the non-significant p-value (for the effect to be considered non-significant)"}
 par(mfrow=c(1,1))
 
 xrange <- range(-log(res_table$sign.p)) # set x-axis range
@@ -313,7 +300,7 @@ for (i in 1:length(unique(res_table$nonsign.p))){
 }
 legend(x=20, yrange[2], unique(res_table$nonsign.p), col=colors, lty=linetype, cex=0.8)
 ```
-Number of unique gene pairs found when using different cutoffs. X-axis is the -log(pvalue) (for the effect to be significant) and differenc colors represent different values for the non-significant p-value (for the effect to be considered non-significant)  
+
 
 # Inferring causality with new parameters
 ```{r new parameters}
@@ -331,7 +318,7 @@ snp.pval.nsign <- as.numeric(1e-5)
 corr.pval <- 0.05/choose(nGenes,2)
 ```
 
-Assumptions:  
+Assumptions (same as before):  
 * geneA is in cis with eqtlA  
 * geneB is in cis with eqtlB  
 * var.explained for geneA must be > var.exp.lim  
@@ -360,6 +347,7 @@ How it works:
 
 ## Get the effect of each gene on the other and the cases where A->B = T and B->A = F
 ```{r include=FALSE}
+# find all effects
 if (!file.exists("results/findeffects_all_newparams.gz")){
   message("loading effects_table")
   load("results/effects_table.Rdata")
@@ -373,6 +361,7 @@ if (!file.exists("results/findeffects_all_newparams.gz")){
   fwrite(find.effects, "results/findeffects_all_newparams.gz")
 }
 
+# subset to get effects where A affects B and B does not affect A
 if (!file.exists("results/findeffects_TF_newparams.gz")){
   message("loading find.effects")
   find.effects <- fread("results/findeffects_all_newparams.gz")
@@ -398,7 +387,7 @@ if (!file.exists("results/findeffects_TF_newparams.gz")){
 
 ### Plot number of times a gene pair appears
 ```{r plot the number of times a gene pair appears}
-find.effects_TF.numpairs <- find.effects_TF[(`A->B`==T & `B->A`==F), .N, by=.(geneA, geneB)]
+find.effects_TF.numpairs <- find.effects_TF[, .N, by=.(geneA, geneB)]
 
 numpairs.table <- data.table(N = unique(find.effects_TF.numpairs$N), numpairs =NA)
 for (i in 1:nrow(numpairs.table)){
@@ -417,21 +406,21 @@ text(bp,numpairs.table[order(-numpairs)]$numpairs,
 
 ### Plot the number of times a gene-eqtl pair appears
 ```{r plot number of times gene-eqtl pair appears, eval=FALSE, include=FALSE}
-find.effects_TF.geneeqtl.A <- find.effects_TF[(`A->B`==T & `B->A`==F), .N, by=.(geneA, eqtl.A)]
-find.effects_TF.geneeqtl.B <- find.effects_TF[(`A->B`==T & `B->A`==F), .N, by=.(geneB, eqtl.B)]
+find.effects_TF.geneeqtl.A <- find.effects_TF[, .N, by=.(geneA, eqtl.A)]
+find.effects_TF.geneeqtl.B <- find.effects_TF[, .N, by=.(geneB, eqtl.B)]
 
 find.effects_TF.geneeqtl.A.plot <- find.effects_TF.geneeqtl.A %>% unite(gene_eqtlA, geneA, eqtl.A, sep = "__")
 #find.effects_TF.geneeqtl.B.plot <- find.effects_TF.geneeqtl.B %>% unite(gene_eqtlB, geneB, eqtl.B, sep = "__")
 
 plot(as.factor(find.effects_TF.geneeqtl.A.plot$gene_eqtlA), find.effects_TF.geneeqtl.A.plot$N,
-     xlab="gene-eqtl pairs", ylab="# times each pair appears", axes=FALSE,
+     xlab="Causal gene-eqtl pairs", ylab="# times each pair appears", axes=FALSE,
      main="Num times of times each gene-eqtl pair appears \n (A->B = T and B->A = F)")
 Axis(side=2, labels=T)
 ```
 
 ### Frequency of gene-eqtl pairs
 ```{r histogram gene-eqtl pairs}
-find.effects_TF.geneeqtl.A <- find.effects_TF[(`A->B`==T & `B->A`==F), .N, by=.(geneA, eqtl.A)]
+find.effects_TF.geneeqtl.A <- find.effects_TF[, .N, by=.(geneA, eqtl.A)]
 find.effects_TF.geneeqtl.A.plot <- find.effects_TF.geneeqtl.A %>% unite(gene_eqtlA, geneA, eqtl.A, sep = "__")
 numpairs.table2 <- data.table(N = unique(find.effects_TF.geneeqtl.A.plot$N), numpairs =NA)
 for (i in 1:nrow(numpairs.table2)){
@@ -440,13 +429,13 @@ for (i in 1:nrow(numpairs.table2)){
 numpairs.table2 <- numpairs.table2[order(N)]
 
 hist(find.effects_TF.geneeqtl.A.plot$N, main = "Frequency of gene-eqtl pairs", xlab = "# times gene-eqtl pairs appear",labels = T, ylim = c(0,780))
-# the majority of gene-eqtl pairs appear between 0-50 times
+# the majority of gene-eqtl pairs appear between 0-100 times
 ```
 ### Plot the network
 Takes a very long time and you can't really see anything so it's not very worth it.  
 There are no subclusters, it's just one bit network
 
-```{r eval=FALSE}
+```{r}
 plot_TF <- graph_from_edgelist(as.matrix(find.effects_TF[,.(geneA, geneB)]),directed=TRUE)
 # components(plot_TF)
 
@@ -454,27 +443,52 @@ memb <- components(plot_TF)$membership
 nodes <- data.table(id = names(memb),
                     group_id = memb)
 nodes <- nodes[order(nodes$id), ]
-nodes
 
-plot(plot_TF, layout=layout_with_gem,edge.arrow.size=.5, vertex.label=NA)
+if(length(unique(nodes$group_id))> 1){
+  message(paste0("There are ", length(unique(nodes$group_id)), " subclusters!"))
+} else {
+  message("There are no subclusters")
+}
+
+#plot(plot_TF, layout=layout_with_gem,edge.arrow.size=.5, vertex.label=NA)
 ```
 
 \newpage
 
 # GO analysis
-In order to find the GO terms associated with my genes I used YeastMine (Balakrishnan et al., 2012) (https://yeastmine.yeastgenome.org/yeastmine/begin.do). Since I was not being able to do it in R, using the YeastMine API, I used python to run my queries. To be able to run the queries with python, first I needed to create and account and request an API key. Since you can generate python code from the website, I used it as a guide and added/ removed parameters to get what I needed. 
+In order to find the GO terms associated with my genes I used YeastMine (Balakrishnan et al., 2012) (https://yeastmine.yeastgenome.org/yeastmine/begin.do). Since I was not being able to do it in R, using the YeastMine API, I used python to run my queries. To be able to run the queries with python, first I needed to create an account and request an API key. Since you can generate python code from the website, I used it as a guide and added/ removed parameters to get what I needed. 
 
 To get an API key, go to https://yeastmine.yeastgenome.org/yeastmine/begin.do and create an account. Go to account details and create a new key. 
 Save the key in a file called yeastmineAPI.txt  
 
-"genelist" is a list of the genes involved in the causality - Uploaded into yeastmine and saved in my area  
+"genelist" is a list of the genes involved in the causality - Uploaded into yeastmine and saved in my area   
 
+1. create gene list
+```{r}
+if (!file.exists("data/genelist.txt")){
+  genelist <- data.table(unique(c(find.effects_TF$geneA, find.effects_TF$geneB)))
+  fwrite(genelist, "data/genelist.txt", col.names = F)
+}
+
+genelist <- fread("data/genelist.txt", header = F)
+genes_in_find.effects <- data.table(unique(c(find.effects_TF$geneA, find.effects_TF$geneB)))
+if (nrow(genelist) != nrow(genes_in_find.effects)){
+  update_genelist <- T
+  stop("YOU'LL NEED TO REUPLOAD THE GENELIST INTO YEASTMINE AND RERUN THE PYTHON CODE BELOW")
+} else {
+  update_genelist <- F
+}
+```
+2. upload list into yeastmine giving it the name genelist
+3. Continue once you have uploaded the genelist into yeastmine
+
+Get table with geneID, gene symbol, gene name, GO identifier, GO term name, GO namespace and evidence code
 ```{python}
 # Sometimes breaks Rstudio, might be better to run it in a script/python console
 import os.path
 from os import path
 os.chdir("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/")
-if not path.isfile("results/genelistwithGOterm.txt"):
+if not path.isfile("results/genelistwithGOterm.txt" or r.update_genelist):
   # The following lines will be needed in every python script:
   from intermine.webservice import Service
   yeastmineAPItoken_file = open('data/yeastmineAPI.txt', 'r')
@@ -532,6 +546,7 @@ genes_GO.table <- fread("results/genelistwithGOterm.txt")
 genes_GO.table <- unique(genes_GO.table)
 ```
 
+Subset to have only the things we'll need for the next analysis - GO terms related to biological processes and remove unecessary columns
 ```{r}
 genes_GO.bio <- unique(genes_GO.table[GO.namespace=="biological_process"])
 genes_GO.bio.noevidence <- data.table(genes_GO.bio)
@@ -569,6 +584,7 @@ links_perGO_pergene <- merge(unique(genes_GO.bio.noevidence),
                              by.x="gene", by.y="geneA", all=T)
 head(links_perGO_pergene[order(-count.A), .(gene, GO.identifier, GO.term, count.A)])
 ```
+
 ```{r}
 links_perGO <- links_perGO_pergene[,.(gocount=sum(count.A, na.rm = T)), by=c("GO.identifier", "GO.term")]
 ```
