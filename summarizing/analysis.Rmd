@@ -599,7 +599,7 @@ head(links_perGO_transfactor[order(-gocount)][,.(GO.term, gocount)])
 There are `r nrow(links_perGO_transfactor)` different terms with "transcription" and "regulation" or "transcription factor" in their name
 
 
-### # causal links GO is regulating transcription or a transcription factor
+#### causal links GO is regulating transcription or a transcription factor
 ```{r, fig.cap="Number of links going out of causal genes that have terms with 'transcription factor' or 'transcription' and 'regulation'"}
 bp <-
   barplot(
@@ -706,6 +706,7 @@ pie(mytable, labels = nms,
 According to [EBI](https://www.ebi.ac.uk/QuickGO/term/GO:0050789), the GO term "biological process" is "any process that modulates the frequency, rate or extent of a biological process" it's usually used when the actual function of the gene is not known.  
 
 High values might be because there are many genes associated with a certain term or because the genes that are associated with that term have many "arrows" going out (they affect many other genes)
+
 \newpage
 
 
@@ -789,10 +790,9 @@ if (!isTRUE(all.equal(res.geneA, res.geneA.uniall)) | isTRUE(all.equal(res.geneB
 (where universe is all the genes involved in the causality)
 ```{r}
 #save all the graphs to a pdf
-if (!file.exists("results/figures/termgraph_A.pdf")){
+if (!file.exists("results/figures/termgraph_A.pdf") | update_genelist){
   
   termgrA <- termGraphs(res.geneA, use.terms = T, pvalue = 0.05)
-  
   pdf(file = "results/figures/termgraph_A.pdf", onefile = T)
   for (i in 1:length(termgrA)){
     plotGOTermGraph(termgrA[[i]], r = res.geneA, add.counts = T, 
@@ -805,7 +805,7 @@ if (!file.exists("results/figures/termgraph_A.pdf")){
   message("pdf with graphs for the causal genes already exists")
 }
 
-if (!file.exists("results/figures/termgraph_B.pdf")){
+if (!file.exists("results/figures/termgraph_B.pdf") | update_genelist){
   
   termgrB <- termGraphs(res.geneB, use.terms = T, pvalue = 0.05)
   
@@ -820,8 +820,6 @@ if (!file.exists("results/figures/termgraph_B.pdf")){
 } else {
   message("pdf with graphs for the affected genes already exists")
 }
-
-# to plot in the rmd, include dev.off() inside the loop, after the plotGOTermGraph
 ```
 
 
@@ -911,7 +909,7 @@ if (exists("hgCondA.dt") & exists("hgCondB.dt")){
   # Causal <- combined$Causal
   # Affected <- combined$Affected
 
-  if (!file.exists("results/figures/heatmap_enrichmentpvals.pdf")){
+  if (!file.exists("results/figures/heatmap_enrichmentpvals.pdf") | update_genelist){
     
     pdf("results/figures/heatmap_enrichmentpvals.pdf")
     combined[is.na(Causal)]$Causal <- 0
@@ -925,7 +923,7 @@ if (exists("hgCondA.dt") & exists("hgCondB.dt")){
     plot_enrichment_heatmap(combined)
   }
 } else {
-  message("Please perform the conditional hypergeometric test")
+  stop("Please perform the conditional hypergeometric test")
 }
 ```
 
@@ -986,11 +984,12 @@ colnames(combined) <- c("term", "Causal", "Affected")
 combined[is.na(Causal)]$Causal <- 0
 combined[is.na(Affected)]$Affected <- 0
 
-if (!file.exists("results/figures/heatmap_enrichmentpvals_geneslinks_c20.pdf")){
+if (!file.exists("results/figures/heatmap_enrichmentpvals_geneslinks_c20.pdf") | update_genelist){
   # plot GO enrichment heatmap
   pdf("results/figures/heatmap_enrichmentpvals_geneslinks_c20.pdf")
   plot_enrichment_heatmap(combined)
   dev.off()
+  
   plot_enrichment_heatmap(combined)
 } else {
   plot_enrichment_heatmap(combined)
