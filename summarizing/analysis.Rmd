@@ -44,30 +44,42 @@ options(tinytex.verbose = TRUE)
 
 
 ```{r load libraries, include=FALSE}
-library(data.table)
-library(tidyr)
-library(parallel)
-library(igraph)
-library(Hmisc)
-library(corrplot)
-library(dplyr)
-library(reticulate) # for python
+library("data.table")
+library("tidyr")
+library("parallel")
+library("igraph")
+library("Hmisc")
+library("corrplot")
+library("dplyr")
+# library(reticulate) # for python
 library("GSEABase")
 library("GOstats")
-library(pheatmap)
+library("pheatmap")
 ```
+
+```{r}
+files_in_zip <- unzip(zipfile = "data/zipped_data.zip", list = T)
+for (datafile in files_in_zip$Name){
+  if (!file.exists(paste0("data/", "datafile"))){
+    unzip(zipfile = "data/zipped_data.zip", exdir = "data/")
+  }
+}
+```
+
 
 ```{r load initial data files, include=FALSE}
 phenotype <- fread("data/SI_Data_01_expressionValues.txt")
 genotype <- fread("data/SI_Data_03_genotypes.txt")
 eqtl_results <- fread("data/SI_Data_04_eQTL.csv")
-eqtl_results[cis == "VERDADEIRO"]$cis <- T
-eqtl_results[cis == "FALSO"]$cis <- F
 
 source("myfunctions.R")
 ```
 
-Data from **Albert FW, Bloom JS, Siegel J, Day L, Kruglyak L. 2018. Genetics of trans-regulatory variation in gene expression. eLife 7: 1–39.**  [Source data](https://elifesciences.org/articles/35471/figures#supp1)  
+Data from **Albert FW, Bloom JS, Siegel J, Day L, Kruglyak L. 2018. Genetics of trans-regulatory variation in gene expression. eLife 7: 1–39.**  [Source data](https://elifesciences.org/articles/35471/figures#supp1) or [source data](https://figshare.com/s/83bddc1ddf3f97108ad4)  
+Files to download:  
+* SI_Data_01_expressionValues.txt (in the repo)
+* SI_Data_03_genotypes.txt (too big for the repo)
+* SI_Data_04_eQTL.csv
 
 I started with :  
 * **phenotype matrix** - contains the gene expression data (expression levels in units of log2(TPM) for all genes and segregants)  
