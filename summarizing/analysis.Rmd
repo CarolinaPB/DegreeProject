@@ -1200,5 +1200,16 @@ bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position
         xlab="Number of Gears", col=c("darkblue","red"),
         legend = c("causal genes", "affected genes"), beside=TRUE, ylim=c(0,max(toplotAB)+50))
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
+
+# bpB <- barplot(toplotB, 
+#               main = "Number of genes that have eqtls at each position relative to itself \n (causal genes)", 
+#               ylim = c(0, max(toplotB)+50))
+# text(bpB, toplotB, labels=toplotB, cex=1, pos=3)
+
+toplotA <- c(before=nrow(distA.before), inside=nrow(distA.inside), after=nrow(distA.after))
+bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position relative to itself \n (causal genes)", 
+        ylim = c(0, max(toplotA)+50), col="darkblue")
+text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
+Most of the eqtls seem to be located before the gene.  
