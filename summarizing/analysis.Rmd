@@ -1165,4 +1165,40 @@ plot(unique(causal.pos.eqtlB[,.(geneB, eqtl.B, dist.B)])[order(-dist.B)]$dist.B,
 legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), lty=1, cex=0.8, inset=.02)
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
+### Plot where (relative to the gene) the eqtls are located
+```{r}
+# Get genes that have eqtls "inside" the gene
+# unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)][abs(dist.A) <= 100]
+
+# negative distances mean that the eqtl is "inside" or after the gene
+# positive numbers mean that the eqtl is before the gene 
+# genesA that have an eqtl "inside"
+distance.A <- unique(causal.pos.eqtlB[,.(geneA, eqtl.A, chr.A, start.A, end.A, eqtlA.chr,eqtlA.pos, dist.A)])
+distance.B <- unique(causal.pos.eqtlB[,.(geneB, eqtl.B, chr.B, start.B, end.B, eqtlB.chr,eqtlB.pos, dist.B)])
+
+# genes that have an eqtl "inside" the gene 
+distA.inside <- distance.A[start.A < eqtlA.pos & eqtlA.pos < end.A][order(-dist.A)]
+# genesA that have an eqtl before their start position
+distA.before <- distance.A[start.A > eqtlA.pos][order(-dist.A)]
+# genes that have an eqtl after their end position
+distA.after <- distance.A[eqtlA.pos > end.A][order(-dist.A)]
+
+
+# genes that have an eqtl "inside" the gene 
+distB.inside <- distance.B[start.B < eqtlB.pos & eqtlB.pos < end.B][order(-dist.B)]
+# genesA that have an eqtl before their start position
+distB.before <- distance.B[start.B > eqtlB.pos][order(-dist.B)]
+# genes that have an eqtl after their end position
+distB.after <- distance.B[eqtlB.pos > end.B][order(-dist.B)]
+
+# Plot number of genes that have eqtls before the gene start site, within the gene or after the gene's end site
+toplotA <- c(before=nrow(distA.before), inside=nrow(distA.inside), after=nrow(distA.after))
+toplotB <- c(before=nrow(distB.before), inside=nrow(distB.inside), after=nrow(distB.after))
+
+toplotAB <- rbind(toplotA, toplotB)
+bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position relative to itself",
+        xlab="Number of Gears", col=c("darkblue","red"),
+        legend = c("causal genes", "affected genes"), beside=TRUE, ylim=c(0,max(toplotAB)+50))
+text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
+```
 
