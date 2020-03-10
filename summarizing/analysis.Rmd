@@ -38,6 +38,7 @@ library("GSEABase")
 library("GOstats")
 library("pheatmap")
 library("reticulate")
+library("plotfunctions")
 ```
 
 ```{r}
@@ -1101,6 +1102,9 @@ plot_sorted_coordinates(coordinates_plot, separator = separator)
 ```
 #### color by correlation value
 ```{r}
+if (!exists("find.effects")){
+  find.effects <- fread("results/findeffects_all_newparams.gz")
+}
 #Create a function to generate a continuous color palette
 rbPal <- colorRampPalette(c('blue','red'))
 
