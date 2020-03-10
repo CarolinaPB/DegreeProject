@@ -3,6 +3,10 @@ title: "Causality in Coexpression"
 author: "Carolina Pita Barros"
 date: "`r Sys.Date()`"
 output: 
+  pdf_document: 
+    fig_caption: yes
+    number_sections: yes
+    toc: yes
   html_document: 
     df_print: kable
     fig_caption: yes
@@ -21,6 +25,7 @@ options(tinytex.verbose = TRUE)
 ```
 
 
+
 ```{r load libraries, include=FALSE}
 library("data.table")
 library("tidyr")
@@ -36,10 +41,12 @@ library("reticulate")
 ```
 
 ```{r}
-files_in_zip <- unzip(zipfile = "data/zipped_data.zip", list = T)
-for (datafile in files_in_zip$Name){
-  if (!file.exists(paste0("data/", "datafile"))){
-    unzip(zipfile = "data/zipped_data.zip", exdir = "data/")
+if (!file.exists("data/SI_Data_01_expressionValues.txt") | !file.exists("data/SI_Data_03_genotypes.txt") | !file.exists("data/SI_Data_04_eQTL.csv")) {
+  files_in_zip <- unzip(zipfile = "data/zipped_data.zip", list = T)
+  for (datafile in files_in_zip$Name){
+    if (!file.exists(paste0("data/", "datafile"))){
+      unzip(zipfile = "data/zipped_data.zip", exdir = "data/")
+    }
   }
 }
 ```
