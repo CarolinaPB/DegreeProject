@@ -3,14 +3,14 @@ title: "Causality in Coexpression"
 author: "Carolina Pita Barros"
 date: "`r Sys.Date()`"
 output: 
-  pdf_document: 
-    fig_caption: yes
-    number_sections: yes
-    toc: yes
   html_document: 
     df_print: kable
     fig_caption: yes
     keep_md: yes
+    number_sections: yes
+    toc: yes
+  pdf_document: 
+    fig_caption: yes
     number_sections: yes
     toc: yes
 ---
@@ -18,7 +18,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set('python', engine.path = '/usr/local/bin/python3')
-knitr::opts_chunk$set(python.reticulate=T)
+knitr::opts_chunk$set(python.reticulate = T)
 
 knitr::opts_knit$set(root.dir = normalizePath("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/")) 
 options(tinytex.verbose = TRUE)
@@ -1010,6 +1010,7 @@ plot(-log10(pvalsmerge$Pvalue.x), -log10(pvalsmerge$Pvalue.y), pch=".")
 Albert FW, Bloom JS, Siegel J, Day L, Kruglyak L. 2018. Genetics of trans-regulatory variation in gene expression. eLife 7: 1–39.
 
 ## get gene position
+
 ```{python include=FALSE}
 # Sometimes breaks Rstudio, might be better to run it in a script/python console
 import os.path
@@ -1057,6 +1058,7 @@ if not path.isfile("results/gene_pos.gz"):
       file.write("\n")
 ```
 
+
 ### Plot affected genes x causal genes
 ```{r}
 genepos <- fread("results/gene_pos.gz")
@@ -1097,6 +1099,22 @@ separator <- 1e5
 coordinates_plot <- sort_by_chr(vchr = vchr, causal.pos.B.2.order, separator = separator)
 plot_sorted_coordinates(coordinates_plot, separator = separator)
 ```
+#### color by correlation value
+```{r}
+#Create a function to generate a continuous color palette
+rbPal <- colorRampPalette(c('red','blue'))
+
+
+coordinates_plot_cor <- merge(coordinates_plot, find.effects[,.(geneA, geneB, cor)], by=c("geneA", "geneB"), all.x=T)
+coordinates_plot_cor$cor <- abs(coordinates_plot_cor$cor)
+coordinates_plot_cor <- coordinates_plot_cor[order(cor)]
+coordinates_plot_cor$col <- rbPal(100)[as.numeric(cut(coordinates_plot_cor$cor,breaks = 100))]
+
+
+plot_sorted_coordinates(coordinates_plot_cor, separator = separator, col = coordinates_plot_cor$col)
+```
+
+
 
 ### Which genes in the paper are also in my results   
 Table with the number of times a gene form the paper is the causal or the affected gene
@@ -1126,6 +1144,9 @@ mygenes_paper.count <- merge(my_genes_in_text.effects[geneA %in% my_genes_in_tex
 setnames(mygenes_paper.count, c("gene", "causal", "affected"))
 mygenes_paper.count[order(-causal)]
 ```
+
+
+
 
 # Others
 ### Get distance between gene and eqtl
@@ -1200,6 +1221,14 @@ distB.before <- distance.B[start.B > eqtlB.pos][order(-dist.B)]
 # genes that have an eqtl after their end position
 distB.after <- distance.B[eqtlB.pos > end.B][order(-dist.B)]
 
+### sanity check
+comb.inside <- distA.inside %>% unite(gene_eqtl, geneA, eqtl.A, sep = "__")
+comb.before <- distA.before %>% unite(gene_eqtl, geneA, eqtl.A, sep = "__")
+comb.after <- distA.after %>% unite(gene_eqtl, geneA, eqtl.A, sep = "__")
+if(any(comb.inside %in% comb.before | comb.inside %in% comb.after | comb.before %in% comb.after)){
+  stop("Something's wrong with the gene-eqtl distance calculation")
+}
+###
 # Plot number of genes that have eqtls before the gene start site, within the gene or after the gene's end site
 toplotA <- c(before=nrow(distA.before), inside=nrow(distA.inside), after=nrow(distA.after))
 toplotB <- c(before=nrow(distB.before), inside=nrow(distB.inside), after=nrow(distB.after))
@@ -1222,3 +1251,21 @@ text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
 Most of the eqtls seem to be located before the gene.  
+
+### How many gene-eqtl pairs are not in the paper's reported pairs
+```{r}
+geneeqtlA.sub <- unique(find.effects_TF[,.(geneA, eqtl.A)])
+geneeqtlB.sub <- unique(find.effects_TF[,.(geneB, eqtl.B)])
+genepmarker.sub <- eqtl_results[,.(gene, pmarker)]
+
+combinegeneeqtlA <- geneeqtlA.sub %>% unite(gene_eqtl, geneA, eqtl.A, sep = "__")
+combinegeneeqtlB <- geneeqtlB.sub %>% unite(gene_eqtl, geneB, eqtl.B, sep = "__")
+combine_genepmarker <- genepmarker.sub %>% unite(gene_eqtl, gene, pmarker, sep = "__")
+
+
+geneA.eqtlA.notinpaper <- combinegeneeqtlA[which(!combinegeneeqtlA%in% combine_genepmarker)]
+geneB.eqtlB.notinpaper <- combinegeneeqtlB[which(!combinegeneeqtlB%in% combine_genepmarker)]
+```
+
+There are `r nrow(geneA.eqtlA.notinpaper)` gene-eqtl pairs for the causal genes not in the provided gene-eqtl table.  
+There are `r nrow(geneB.eqtlB.notinpaper)` gene-eqtl pairs for the affected genes not in the provided gene-eqtl table
