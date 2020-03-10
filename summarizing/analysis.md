@@ -17,8 +17,6 @@ output:
 
 
 
-
-
 ```r
 files_in_zip <- unzip(zipfile = "data/zipped_data.zip", list = T)
 for (datafile in files_in_zip$Name){
@@ -1131,8 +1129,8 @@ Number of GO terms that were not significant with the conditional hypergeo test:
 
 set of genes | Hypergeo | Conditional hypergeo
 -|-|-
-causal | 259 | 
-affected | 28 | 
+causal | 259 | 137
+affected | 28 | 16
 
 
 #### GO Enrichment Heatmap (-log10(pval))
@@ -1378,10 +1376,14 @@ causal.pos.eqtlB <- separate(causal.pos.eqtlA, eqtl.B, c("eqtlB.chr", "eqtlB.pos
                              convert = T, extra = "warn", fill = "warn")
 
 # tidy up
-colstoremove <-  c("eqtlA.other", "eqtlB.other", "strand.A", "end.A", "chr.strand", "chr.end")
+colstoremove <-  c("eqtlA.other", "eqtlB.other", "strand.A", "chr.strand")
 causal.pos.eqtlB[,paste0(colstoremove):=NULL]
-setnames(causal.pos.eqtlB, c("geneB", "geneA","eqtl.A" ,"eqtlA.chr", "eqtlA.pos", "eqtl.B","eqtlB.chr", "eqtlB.pos", "A->B", "B->A", "start.A", "chr.A", "start.B", "chr.B"))
-setcolorder(causal.pos.eqtlB, c("geneA", "geneB", "eqtl.A", "eqtl.B","chr.A", "start.A","chr.B", "start.B", "eqtlA.chr", "eqtlA.pos", "eqtlB.chr", "eqtlB.pos"))
+setnames(causal.pos.eqtlB, c("geneB", "geneA","eqtl.A","eqtlA.chr", "eqtlA.pos", 
+                             "eqtl.B","eqtlB.chr", "eqtlB.pos", "A->B", "B->A", 
+                             "start.A","end.A", "chr.A", "start.B","end.B","chr.B"))
+setcolorder(causal.pos.eqtlB, c("geneA", "geneB", "eqtl.A", "eqtl.B","chr.A", 
+                                "start.A","end.A","chr.B", "start.B","end.B","eqtlA.chr", 
+                                "eqtlA.pos", "eqtlB.chr", "eqtlB.pos"))
 
 # remove "chr" from chromosome number
 cols = c("chr.A","chr.B", "eqtlA.chr", "eqtlB.chr")   # define which columns to work with
@@ -1393,7 +1395,7 @@ causal.pos.eqtlB[ , (cols) := lapply(.SD, function(x) {as.numeric(as.roman(x))})
 causal.pos.eqtlB[,("dist.A"):=start.A-eqtlA.pos]
 causal.pos.eqtlB[,("dist.B"):=start.B-eqtlB.pos]
 
-# plot distance between gene and eqtl
+# plot distance between gene and eqtl (ordered by distance value)
 plot(unique(causal.pos.eqtlB[,.(geneB, eqtl.B, dist.B)])[order(-dist.B)]$dist.B, pch=".", col="red",
      cex=2, ylab="distance", xlab="gene-eqtl pair", main="Distance between eqtl and gene")
 legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), lty=1, cex=0.8, inset=.02)
@@ -1401,4 +1403,58 @@ points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.
 ```
 
 ![](analysis_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
+### Plot where (relative to the gene) the eqtls are located
 
+```r
+# Get genes that have eqtls "inside" the gene
+# unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)][abs(dist.A) <= 100]
+
+# negative distances mean that the eqtl is "inside" or after the gene
+# positive numbers mean that the eqtl is before the gene 
+# genesA that have an eqtl "inside"
+distance.A <- unique(causal.pos.eqtlB[,.(geneA, eqtl.A, chr.A, start.A, end.A, eqtlA.chr,eqtlA.pos, dist.A)])
+distance.B <- unique(causal.pos.eqtlB[,.(geneB, eqtl.B, chr.B, start.B, end.B, eqtlB.chr,eqtlB.pos, dist.B)])
+
+# genes that have an eqtl "inside" the gene 
+distA.inside <- distance.A[start.A < eqtlA.pos & eqtlA.pos < end.A][order(-dist.A)]
+# genesA that have an eqtl before their start position
+distA.before <- distance.A[start.A > eqtlA.pos][order(-dist.A)]
+# genes that have an eqtl after their end position
+distA.after <- distance.A[eqtlA.pos > end.A][order(-dist.A)]
+
+
+# genes that have an eqtl "inside" the gene 
+distB.inside <- distance.B[start.B < eqtlB.pos & eqtlB.pos < end.B][order(-dist.B)]
+# genesA that have an eqtl before their start position
+distB.before <- distance.B[start.B > eqtlB.pos][order(-dist.B)]
+# genes that have an eqtl after their end position
+distB.after <- distance.B[eqtlB.pos > end.B][order(-dist.B)]
+
+# Plot number of genes that have eqtls before the gene start site, within the gene or after the gene's end site
+toplotA <- c(before=nrow(distA.before), inside=nrow(distA.inside), after=nrow(distA.after))
+toplotB <- c(before=nrow(distB.before), inside=nrow(distB.inside), after=nrow(distB.after))
+
+toplotAB <- rbind(toplotA, toplotB)
+bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position relative to itself",
+        xlab="Number of Gears", col=c("darkblue","red"),
+        legend = c("causal genes", "affected genes"), beside=TRUE, ylim=c(0,max(toplotAB)+50))
+text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
+```
+
+![](analysis_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
+
+```r
+# bpB <- barplot(toplotB, 
+#               main = "Number of genes that have eqtls at each position relative to itself \n (causal genes)", 
+#               ylim = c(0, max(toplotB)+50))
+# text(bpB, toplotB, labels=toplotB, cex=1, pos=3)
+
+toplotA <- c(before=nrow(distA.before), inside=nrow(distA.inside), after=nrow(distA.after))
+bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position relative to itself \n (causal genes)", 
+        ylim = c(0, max(toplotA)+50), col="darkblue")
+text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
+```
+
+![](analysis_files/figure-html/unnamed-chunk-32-2.png)<!-- -->
+
+Most of the eqtls seem to be located before the gene.  

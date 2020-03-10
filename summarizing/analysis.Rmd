@@ -11,8 +11,6 @@ output:
     toc: yes
 ---
 
-
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set('python', engine.path = '/usr/local/bin/python3')
@@ -1144,10 +1142,14 @@ causal.pos.eqtlB <- separate(causal.pos.eqtlA, eqtl.B, c("eqtlB.chr", "eqtlB.pos
                              convert = T, extra = "warn", fill = "warn")
 
 # tidy up
-colstoremove <-  c("eqtlA.other", "eqtlB.other", "strand.A", "end.A", "chr.strand", "chr.end")
+colstoremove <-  c("eqtlA.other", "eqtlB.other", "strand.A", "chr.strand")
 causal.pos.eqtlB[,paste0(colstoremove):=NULL]
-setnames(causal.pos.eqtlB, c("geneB", "geneA","eqtl.A" ,"eqtlA.chr", "eqtlA.pos", "eqtl.B","eqtlB.chr", "eqtlB.pos", "A->B", "B->A", "start.A", "chr.A", "start.B", "chr.B"))
-setcolorder(causal.pos.eqtlB, c("geneA", "geneB", "eqtl.A", "eqtl.B","chr.A", "start.A","chr.B", "start.B", "eqtlA.chr", "eqtlA.pos", "eqtlB.chr", "eqtlB.pos"))
+setnames(causal.pos.eqtlB, c("geneB", "geneA","eqtl.A","eqtlA.chr", "eqtlA.pos", 
+                             "eqtl.B","eqtlB.chr", "eqtlB.pos", "A->B", "B->A", 
+                             "start.A","end.A", "chr.A", "start.B","end.B","chr.B"))
+setcolorder(causal.pos.eqtlB, c("geneA", "geneB", "eqtl.A", "eqtl.B","chr.A", 
+                                "start.A","end.A","chr.B", "start.B","end.B","eqtlA.chr", 
+                                "eqtlA.pos", "eqtlB.chr", "eqtlB.pos"))
 
 # remove "chr" from chromosome number
 cols = c("chr.A","chr.B", "eqtlA.chr", "eqtlB.chr")   # define which columns to work with
