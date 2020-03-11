@@ -285,8 +285,8 @@ sort_by_chr <- function(vchr, genepairs_pos, separator){
   for (i in 1:length(vchr)){
     if (vchr[i] != 1) {
       previous <- vchr[i-1]
-      res[chr.A == vchr[i]]$start.A <- max(res[chr.A==previous]$start.A) + res[chr.A == vchr[i]]$start.A + separator
-      res[chr.B == vchr[i]]$start.B <- max(res[chr.B==previous]$start.B) + res[chr.B == vchr[i]]$start.B + separator
+      res[chr.A == vchr[i]]$start.A <- max(res[chr.A==previous]$start.A) + res[chr.A == vchr[i]]$start.A #+ separator
+      res[chr.B == vchr[i]]$start.B <- max(res[chr.B==previous]$start.B) + res[chr.B == vchr[i]]$start.B #+ separator
     }
   }
   return(res)
@@ -307,7 +307,8 @@ plot_sorted_coordinates <- function(coordinates_plot, separator, ...){
   
   # the separator should be the same as the one used for the sort_by_chr() function
   
-  plot(coordinates_plot$start.A, coordinates_plot$start.B, pch=".", axes=F, xlab = "Causal gene position (chr)", ylab = "Affected gene position (chr)", ...)
+  plot(coordinates_plot$start.A, coordinates_plot$start.B, pch=".", axes=F, 
+       xlab = "Causal gene position (chr)", ylab = "Affected gene position (chr)", ...)
   
   nchr <- max(coordinates_plot$chr.A)
   # add chromosome separators
