@@ -327,7 +327,7 @@ plot_sorted_coordinates <- function(coordinates_plot, separator, ...){
 }
 
 
-genes_inside_hotspot <- function(hotspot_data, positions_table, chromosome){
+genes_inside_hotspot <- function(hotspot_data, positions_table, chromosome, lefttlim=3, rightlim=4){
   # function that takes a table with chromosome number, and hotspot left and 
   # right intervals and finds the genes in my dataset that are inside those intervals
   # prints the genes in the chosen chromosomes that are in the hotspots
@@ -346,10 +346,10 @@ genes_inside_hotspot <- function(hotspot_data, positions_table, chromosome){
     count <- 0
     print(paste("genes in chromosome", chr, "that are in the described hotspots", sep=" "))
     for (num in 1:nrow(hotspot_data[chromosome==chr])){
-      left <- hotspot_data[chromosome==chr]$bootstrapIntervalLeft[num]
-      right <- hotspot_data[chromosome==chr]$bootstrapIntervalRight[num]
+      left <- hotspot_data[chromosome==chr][num,..lefttlim]
+      right <- hotspot_data[chromosome==chr][num, ..rightlim]
       
-      gene_inside_hotspot <- unlist(unique(positions_table[chr.A==chr][between(start.A, left, right)][,1]))
+      gene_inside_hotspot <- unlist(unique(positions_table[chr.A==chr][between(start.A, unlist(left), unlist(right))][,1]))
       if (length(gene_inside_hotspot) >0){
         print(unname(gene_inside_hotspot))
         count <- count+1

@@ -26,7 +26,7 @@ options(tinytex.verbose = TRUE)
 
 
 
-```{r load libraries, include=FALSE}
+```{r load libraries, message=FALSE, warning=FALSE}
 library("data.table")
 library("tidyr")
 library("parallel")
@@ -72,7 +72,7 @@ I started with :
 * **genotype matrix** - contains the genotype information (genotypes at 42,052 markers for all segregants. BY (i.e. reference) alleles are denoted by ‘−1’. RM alleles are denoted by ‘1’.)  
 * **eqtl_results** - Genes with a local eQTL and significant Allele-specific expression (ASE), and discordant direction of effect. (1) Positive values indicate higher expression in RM compared to BY. (2) Shown is the less sig- nificant p-value from the two ASE datasets. (3) The table shows only genes where both ASE datasets agreed in the direction of effect. Shown is the average effect.  
 
-# for the actual analysis jump to "Do analysis with new parameters"
+# for the actual analysis jump to "Inferring causality with new parameters"
 
 Original parameters used
 ```{r original parameters}
@@ -309,8 +309,8 @@ var.exp.lim <- 0.1
 nSNPs <- 42052
 nGenes <- 5720
 
-snp.pval <- 0.01
-snp.pval.nsign <- as.numeric(1e-5)
+snp.pval <- as.numeric(1e-5)
+snp.pval.nsign <- 0.01
 
 corr.pval <- 0.05/choose(nGenes,2)
 ```
@@ -343,7 +343,7 @@ How it works:
 
 
 ## Get the effect of each gene on the other and the cases where A->B = T and B->A = F
-```{r include=FALSE}
+```{r}
 # find all effects
 if (!file.exists("results/findeffects_all_newparams.gz")){
   message("loading effects_table")
@@ -485,7 +485,7 @@ Get table with geneID, gene symbol, gene name, GO identifier, GO term name, GO n
 import os.path
 from os import path
 os.chdir("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/")
-if not path.isfile("results/genelistwithGOterm.txt" or r.update_genelist):
+if not path.isfile("results/genelistwithGOterm.txt"):
   # The following lines will be needed in every python script:
   from intermine.webservice import Service
   yeastmineAPItoken_file = open('data/yeastmineAPI.txt', 'r')
@@ -1012,7 +1012,7 @@ Albert FW, Bloom JS, Siegel J, Day L, Kruglyak L. 2018. Genetics of trans-regula
 
 ## get gene position
 
-```{python include=FALSE}
+```{python}
 # Sometimes breaks Rstudio, might be better to run it in a script/python console
 import os.path
 from os import path
@@ -1150,6 +1150,234 @@ mygenes_paper.count[order(-causal)]
 ```
 
 
+# STILL WORKING ON IT
+## Focus on chromosome 12
+```{r warning=FALSE}
+# coordinates_plot_cor[chr.A==12]
+plot_sorted_coordinates(coordinates_plot_cor[chr.A==12], separator = separator, col = coordinates_plot_cor[chr.A==12]$col)
+```
+
+### Focus on the group of vertical bands
+Chromosome 3 seems to mostly be affected by the genes in the vertical bands so I'm going to look closer at chromosome 3
+```{r warning=FALSE}
+# the first gene of chromosome 12 that affects chromosome 3
+lower_limit <- coordinates_plot_cor[chr.A==12 & chr.B==3][order(start.A)][1]$start.A
+# the last gene on chromosome 12 that affects chromosome 3 and that's in the band (there's an extra gene further away from the band)
+top_limit <- coordinates_plot_cor[chr.A==12 & chr.B==3][order(start.A)][nrow(coordinates_plot_cor[chr.A==12 & chr.B==3])-1]$start.A
+
+# plot chromosome 12 - the green lines are the limits of the group of vertical bands
+plot_sorted_coordinates(coordinates_plot_cor[chr.A==12], separator = separator, col = coordinates_plot_cor[chr.A==12]$col)
+abline(v = c(lower_limit-1500, top_limit+1500), col="green")
+```
+
+there are `r nrow(unique(coordinates_plot_cor[chr.A==12 & chr.B==3][order(start.A)][,.(geneA, start.A)])[between(start.A,lower_limit, top_limit )])` genes between the two green bands
+
+#### get gene names for genes on chromosome 12
+```{r}
+if (!exists("genes_GO.bio")){
+  genes_GO.table <- fread("results/genelistwithGOterm.txt")
+  genes_GO.table <- unique(genes_GO.table)
+  genes_GO.bio   <- unique(genes_GO.table[GO.namespace=="biological_process"])
+}
+```
+
+```{r}
+genesA_start_order <- unique(coordinates_plot_cor[chr.A == 12 & chr.B == 3][order(start.A)][, .(geneA, start.A)])
+chr12_genenames_chr3 <- merge(genesA_start_order, unique(genes_GO.bio[,.(gene, symbol, gene.name, GO.term)]), by.x="geneA", by.y="gene")
+chr12_genenames <- merge(unique(coordinates_plot_cor[chr.A == 12][order(start.A)][, .(geneA, start.A)]), unique(genes_GO.bio[,.(gene, symbol, gene.name, GO.term)]), by.x="geneA", by.y="gene")
+```
+
+### Look at the first group
+```{r warning=FALSE}
+# genes that are affecting chromosome 3 + positions
+band1.left <- min(genesA_start_order$start.A)
+band1.right <- 8525907
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col,
+  xlim = c(min(genesA_start_order$start.A), band1.right)
+)
+abline(v=c(band1.left-1500, band1.right), col="green")
+```
+
+
+There are `r nrow(genesA_start_order[between(band1.left,7422391-1500, band1.right+1500)])` between the green lines
+
+#### genes on the first "band" of chromosome 12
+```{r}
+# gene names
+unique(chr12_genenames[between(start.A,band1.left, band1.right)]$gene.name)
+# GO terms present
+unique(chr12_genenames[between(start.A,band1.left-1500, band1.right+1500)]$GO.term)
+```
+
+
+### Look at the second group
+```{r warning=FALSE}
+band2.left <- 8563067
+band2.right <- 8626178
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col,
+  xlim = c(band2.left, band2.right)
+)
+abline(v=c(band2.left-1500, band2.right+1500), col="green")
+```
+
+
+#### genes on the second band of chromsome 12
+```{r}
+# gene names
+unique(chr12_genenames[between(start.A,band2.left-1500, band2.right+1500)]$gene.name)
+# GO terms present
+unique(chr12_genenames[between(start.A,band2.left-1500, band2.right+1500)]$GO.term)
+```
+
+### Look at the last group
+
+```{r warning=FALSE}
+band3.left <- 8641374
+band3.right <- 8684887
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12 & chr.B==3],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col,
+  xlim = c(band3.left, 8844476)
+)
+abline(v=c(band3.left-1500, band3.right+1500), col="green")
+```
+
+There's one extra gene that does not belong to the "band"
+
+```{r warning=FALSE}
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col,
+  xlim = c(band3.left, band3.right)
+)
+abline(v=c(band3.left-1500, band3.right+1500), col="green")
+```
+
+
+There are `r nrow(genesA_start_order[between(start.A,band3.left-1500, band3.right+1500)])` genes between the green lines
+
+#### genes on the last band of chromsome 12
+```{r}
+# gene names
+unique(chr12_genenames[between(start.A,band3.left-1500, band3.right+1500)]$gene.name)
+# GO terms present
+unique(chr12_genenames[between(start.A,band3.left-1500, band3.right+1500)]$GO.term)
+```
+
+## checking if some of my genes in chromosome 12 are inside the described hotspots
+```{r}
+hotspot_data <- fread("data/SI_Data_08_hotspotTableForPaper_topGenes100_170420_page1.csv")
+```
+
+```{r}
+hotspot_data.interval <- hotspot_data[,.(hotspotMarker, chromosome, bootstrapIntervalLeft, bootstrapIntervalRight)]
+# remove "chr" part of the chromosome name
+hotspot_data.interval$chromosome <-gsub('chr', '', hotspot_data.interval$chromosome)
+
+# convert roman chromosome numbers to numbers
+hotspot_data.interval$chromosome <- as.numeric(as.roman(hotspot_data.interval$chromosome))
+
+genes_inside_hotspot(hotspot_data = hotspot_data.interval,causal.pos.B.2.order, seq(1:16))
+```
+
+
+## Get hotspot locations where the coordenates match with the ones in my plots
+```{r}
+vchr <- unique(hotspot_data.interval$chromosome)
+hotspot_data.interval$left.map <- 0
+hotspot_data.interval$right.map <- 0
+for (i in 1:length(vchr)){
+  if (vchr[i] != 1) {
+    previous <- vchr[i-1]
+    hotspot_data.interval[chromosome == vchr[i]]$left.map <- max(coordinates_plot_cor[chr.A==previous]$start.A) + separator + hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalLeft
+    hotspot_data.interval[chromosome == vchr[i]]$right.map <- max(coordinates_plot_cor[chr.A==previous]$start.A) + separator + hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalRight
+  } else if (vchr[i] == 1){
+    hotspot_data.interval[chromosome == vchr[i]]$left.map <- hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalLeft
+    hotspot_data.interval[chromosome == vchr[i]]$right.map <- hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalRight
+  }
+}
+
+hotspot_data.interval.12 <- hotspot_data.interval[chromosome==12]
+```
+
+### Plot gene 12 with described hotspots
+```{r warning=FALSE}
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A==12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col
+)
+
+
+nCol <- nrow(hotspot_data.interval[chromosome==12])
+col<- rep(1:nCol, each = 2)
+
+hotspots <- data.table(c(hotspot_data.interval[chromosome==12]$left.map, hotspot_data.interval[chromosome==12]$right.map))
+hotspots <- hotspots[order(V1)]
+abline(v=unlist(hotspots$V1), 
+       col=as.factor(col), lwd=1)
+```
+
+```{r}
+# genes that are affecting chromosome 3 + positions
+band1.left <- min(genesA_start_order$start.A)
+band1.right <- 8525907
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col,
+  xlim = c(min(genesA_start_order$start.A), top_limit)
+)
+# abline(v=c(band1.left-1500, band1.right+1500), col="green")
+abline(v=unlist(hotspots$V1), 
+       col=as.factor(col), lwd=1.5)
+```
+
+### genes in chromosome 12 that overlap with hotspots
+```{r}
+gnames <- c("YLR273C", "YLR275W", "YLR361C-A","YLR364W", "YLR369W","YLR371W","YLR375W","YLR376C")
+unique(chr12_genenames[chr12_genenames[, geneA %in% gnames]][,.(geneA, start.A, symbol, gene.name)])
+```
+
+
+```{r warning=FALSE}
+plot_sorted_coordinates(
+  coordinates_plot_cor,
+  separator = separator,
+  col = coordinates_plot_cor$col
+)
+
+
+nCol <- nrow(hotspot_data.interval)
+col<- rep(1:nCol, each = 2)
+
+hotspots <- data.table(c(hotspot_data.interval$left.map, hotspot_data.interval$right.map))
+hotspots <- hotspots[order(V1)]
+abline(v=unlist(hotspots$V1), 
+       col=as.factor(col), lwd=1)
+```
+
+```{r}
+numlinks_from_gene.A <- find.effects_TF[, .(geneB, count.A=.N), by=geneA]
+numlinks_from_gene.B <- find.effects_TF[, .(count.B=.N), by=geneB]
+numlinks_from_gene <- merge(numlinks_from_gene.A, numlinks_from_gene.B, by="geneB", all=T)
+setcolorder(numlinks_from_gene, c("geneA", "geneB", "count.A", "count.B"))
+```
+
+```{r}
+hist(numlinks_from_gene$count.A)
+```
+
+
+
 
 
 # Others
@@ -1199,6 +1427,7 @@ plot(unique(causal.pos.eqtlB[,.(geneB, eqtl.B, dist.B)])[order(-dist.B)]$dist.B,
 legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), lty=1, cex=0.8, inset=.02)
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
+
 ### Plot where (relative to the gene) the eqtls are located
 ```{r}
 # Get genes that have eqtls "inside" the gene
