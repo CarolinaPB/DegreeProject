@@ -54,14 +54,15 @@ BB <- cbind(datB[dat.mapB$ix, ], dat.mapB$cummap)
 withcumsum1 <- merge(causal.pos.B.2, AA, by=c("geneA", "start.A", "chr.A"))
 withcumsum <- merge(withcumsum1, BB, by=c("geneB", "start.B", "chr.B"))
 
-plot(withcumsum[chr.A == 12 &chr.B == 3]$`dat.mapA$cummap`, withcumsum[chr.A == 12 &chr.B == 3]$`dat.mapB$cummap`, pch=".")
+plot(withcumsum[chr.A == 12]$`dat.mapA$cummap`, withcumsum[chr.A == 12]$`dat.mapB$cummap`,
+     pch=".", col = coordinates_plot_cor$col)
 
 # get the same thing with sortmap and with my sorting function 
-# genesA_start_order <- unique(coordinates_plot_cor[chr.A == 12 &chr.B == 3][order(start.A)][, .(geneA, start.A)])
-# 
-# plot_sorted_coordinates(
-#   coordinates_plot_cor[chr.A == 12&chr.B == 3],
-#   separator = separator,
-#   col = coordinates_plot_cor$col,
-# )
-# abline(v=c(7463067-1500, 7526178+1500), col="pink")
+genesA_start_order <- unique(coordinates_plot_cor[chr.A == 12 &chr.B == 3][order(start.A)][, .(geneA, start.A)])
+
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12],
+  separator = separator,
+  col = coordinates_plot_cor$col
+)
+abline(v=c(7463067-1500, 7526178+1500), col="pink")
