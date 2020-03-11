@@ -285,11 +285,27 @@ sort_by_chr <- function(vchr, genepairs_pos, separator){
   for (i in 1:length(vchr)){
     if (vchr[i] != 1) {
       previous <- vchr[i-1]
-      res[chr.A == vchr[i]]$start.A <- max(res[chr.A==previous]$start.A) + res[chr.A == vchr[i]]$start.A #+ separator
-      res[chr.B == vchr[i]]$start.B <- max(res[chr.B==previous]$start.B) + res[chr.B == vchr[i]]$start.B #+ separator
+      res[chr.A == vchr[i]]$start.A <- max(res[chr.A==previous]$start.A) + res[chr.A == vchr[i]]$start.A + separator
+      res[chr.B == vchr[i]]$start.B <- max(res[chr.B==previous]$start.B) + res[chr.B == vchr[i]]$start.B + separator
     }
   }
   return(res)
+}
+
+sortmap <- function (chrom, map, delta = 1) #Stolen from GenABEL
+{
+  chnum <- as.numeric(as.factor(chrom))
+  ix <- order(chnum, map)
+  map <- map[ix]
+  off <- c(0, map[1:(length(map) - 1)])
+  off <- map - off
+  off[which(off <= 0)] <- delta
+  cummap <- cumsum(off)
+  out <- list()
+  out$ix <- ix
+  out$cummap <- cummap
+  out$chnum <- chnum
+  out
 }
 
 plot_sorted_coordinates <- function(coordinates_plot, separator, ...){
@@ -310,14 +326,48 @@ plot_sorted_coordinates <- function(coordinates_plot, separator, ...){
   plot(coordinates_plot$start.A, coordinates_plot$start.B, pch=".", axes=F, 
        xlab = "Causal gene position (chr)", ylab = "Affected gene position (chr)", ...)
   
-  nchr <- max(coordinates_plot$chr.A)
+  chrA <- unique(coordinates_plot[order(chr.A)]$chr.A)
+  chrB <- unique(coordinates_plot[order(chr.B)]$chr.B)
+  # nchr <- max(coordinates_plot$chr.A)
   # add chromosome separators
-  for (ch in 1:nchr){
+  for (ch in chrA){
     abline(v= max(coordinates_plot[chr.A==ch]$start.A)+separator/2, col="lightblue", lty=2) 
-    abline(h= max(coordinates_plot[chr.B==ch]$start.B)+separator/2, col="lightblue", lty=2) 
   }
-  
+  for (ch in chrB){
+  abline(h= max(coordinates_plot[chr.B==ch]$start.B)+separator/2, col="lightblue", lty=2) 
+  }
   # add x and y axis chromosomes
-  axis(1, at=sapply(1:16, function(i){min(coordinates_plot[chr.A==i]$start.A) + (max(coordinates_plot[chr.A==i]$start.A) - min(coordinates_plot[chr.A==i]$start.A))/2}), labels=as.roman(1:16), tick=FALSE)
-  axis(2, at=sapply(1:16, function(i){min(coordinates_plot[chr.B==i]$start.B) + (max(coordinates_plot[chr.B==i]$start.B) - min(coordinates_plot[chr.B==i]$start.B))/2}), labels=as.roman(1:16), tick=FALSE)
+  axis(1, at=sapply(chrA, function(i){min(coordinates_plot[chr.A==i]$start.A) + (max(coordinates_plot[chr.A==i]$start.A) - min(coordinates_plot[chr.A==i]$start.A))/2}), labels=as.roman(chrA), tick=FALSE)
+  axis(2, at=sapply(chrB, function(i){min(coordinates_plot[chr.B==i]$start.B) + (max(coordinates_plot[chr.B==i]$start.B) - min(coordinates_plot[chr.B==i]$start.B))/2}), labels=as.roman(chrB), tick=FALSE)
 }
+
+
+genes_inside_hotspot <- function(hotspot_data, positions_table, chromosome){
+  # function that takes a table with chromosome number, and hotspot left and 
+  # right intervals and finds the genes in my dataset that are inside those intervals
+  # prints the genes in the chosen chromosomes that are in the hotspots
+  
+  # hotspot_data: must have at least three columns: 
+  #   chr - chromosome number
+  #   bootstrapIntervalLeft - left limit position
+  #   bootstrapIntervalRigth - right limit position
+  # positions_table - must have at least three columns:
+  #   gene names in the first column
+  #   chr.A - chromosome number
+  #   start.A - gene start position
+  # chromosome - chromosome vector of the chromosomes whose genes should be tested
+  
+  for (chr in chromosome){
+    print(paste("genes in chromosome", chr, "that are in the described hotspots", sep=" "))
+    for (num in 1:nrow(hotspot_data[chromosome==chr])){
+      left <- hotspot_data[chromosome==chr]$bootstrapIntervalLeft[num]
+      right <- hotspot_data[chromosome==chr]$bootstrapIntervalRight[num]
+      
+      gene_inside_hotspot <- unlist(unique(positions_table[chr.A==chr][between(start.A, left, right)][,1]))
+      if (length(gene_inside_hotspot) >0){
+        print(unname(gene_inside_hotspot))
+      }
+    }
+  }
+}
+

@@ -17,7 +17,7 @@ options(tinytex.verbose = TRUE)
 
 
 # Going to look closer at chromosome 12
-```{r}
+```{r message=FALSE}
 library("data.table")
 library("plotfunctions")
 source("myfunctions.R")
@@ -85,21 +85,21 @@ gradientLegend(format(round(coordinates_plot_cor$cor, 3), nsmall = 3), rbPal(100
 plot_sorted_coordinates(coordinates_plot_cor[chr.A==12], separator = separator, col = coordinates_plot_cor[chr.A==12]$col)
 ```
 
-# focus on the group of vertical bands
+# Focus on the group of vertical bands
 Chromosome 3 seems to mostly be affected by the genes in the vertical bands so I'm going to look closer at chromosome 3
-```{r warning=FALSE, fig.keep="all"}
+```{r warning=FALSE}
 # the first gene of chromosome 12 that affects chromosome 3
 lower_limit <- coordinates_plot_cor[chr.A==12 & chr.B==3][order(start.A)][1]$start.A
 # the last gene on chromosome 12 that affects chromosome 3 and that's in the band (there's an extra gene further away from the band)
 top_limit <- coordinates_plot_cor[chr.A==12 & chr.B==3][order(start.A)][nrow(coordinates_plot_cor[chr.A==12 & chr.B==3])-1]$start.A
 
-# plot chromosome 12 - the pink lines are the limits of the group of vertical bands
+# plot chromosome 12 - the green lines are the limits of the group of vertical bands
 plot_sorted_coordinates(coordinates_plot_cor[chr.A==12], separator = separator, col = coordinates_plot_cor[chr.A==12]$col)
-abline(v = c(lower_limit-1500, top_limit+1500), col="pink")
+abline(v = c(lower_limit-1500, top_limit+1500), col="green")
 ```
 
 
-there are `r nrow(unique(coordinates_plot_cor[chr.A==12 & chr.B==3][order(start.A)][,.(geneA, start.A)])[between(start.A,lower_limit, top_limit )])` genes between the two pink bands
+there are `r nrow(unique(coordinates_plot_cor[chr.A==12 & chr.B==3][order(start.A)][,.(geneA, start.A)])[between(start.A,lower_limit, top_limit )])` genes between the two green bands
 
 ### get gene names for genes on chromosome 12
 ```{r}
@@ -111,23 +111,26 @@ if (!exists("genes_GO.bio")){
 ```
 
 ```{r}
-genesA_start_order <- unique(coordinates_plot_cor[chr.A == 12 &chr.B == 3][order(start.A)][, .(geneA, start.A)])
-chr12_genenames <- merge(genesA_start_order, unique(genes_GO.bio[,.(gene, symbol, gene.name, GO.term)]), by.x="geneA", by.y="gene")
+genesA_start_order <- unique(coordinates_plot_cor[chr.A == 12 & chr.B == 3][order(start.A)][, .(geneA, start.A)])
+chr12_genenames_chr3 <- merge(genesA_start_order, unique(genes_GO.bio[,.(gene, symbol, gene.name, GO.term)]), by.x="geneA", by.y="gene")
+chr12_genenames <- merge(unique(coordinates_plot_cor[chr.A == 12][order(start.A)][, .(geneA, start.A)]), unique(genes_GO.bio[,.(gene, symbol, gene.name, GO.term)]), by.x="geneA", by.y="gene")
 ```
 
 ## Look at the first group
 ```{r warning=FALSE}
 # genes that are affecting chromosome 3 + positions
+band1.left <- min(genesA_start_order$start.A)
+band1.right <- 8525907
 plot_sorted_coordinates(
   coordinates_plot_cor[chr.A == 12],
   separator = separator,
   col = coordinates_plot_cor[chr.A==12]$col,
   xlim = c(min(genesA_start_order$start.A), top_limit)
 )
-abline(v=c(min(genesA_start_order$start.A)-1500, 7425907+1500), col="pink")
+abline(v=c(band1.left-1500, band1.right+1500), col="green")
 ```
 
-There are `r nrow(genesA_start_order[between(start.A,7422391-1500, 7425907+1500)])` between the pink lines
+There are `r nrow(genesA_start_order[between(start.A,7422391-1500, 7425907+1500)])` between the green lines
 
 ```{r warning=FALSE}
 # genes that are affecting chromosome 3 + positions
@@ -135,32 +138,34 @@ plot_sorted_coordinates(
   coordinates_plot_cor[chr.A == 12],
   separator = separator,
   col = coordinates_plot_cor[chr.A==12]$col,
-  xlim=c(min(genesA_start_order$start.A), 7425907)
+  xlim=c(band1.left, band1.right)
 )
-abline(v=c(min(genesA_start_order$start.A)-1500, 7425907+1500), col="pink")
+abline(v=c(band1.left-100, band1.right+100), col="green")
 ```
 
 ### genes on the first "band" of chromosome 12
 ```{r}
 # gene names
-unique(chr12_genenames[between(start.A,7422391-1500, 7425907+1500)]$gene.name)
+unique(chr12_genenames[between(start.A,band1.left, band1.right)]$gene.name)
 # GO terms present
-unique(chr12_genenames[between(start.A,7422391-1500, 7425907+1500)]$GO.term)
+unique(chr12_genenames[between(start.A,band1.left-1500, band1.right+1500)]$GO.term)
 ```
 
 ## Look at the second group
 ```{r warning=FALSE}
+band2.left <- 8563067
+band2.right <- 8626178
 plot_sorted_coordinates(
   coordinates_plot_cor[chr.A == 12],
   separator = separator,
   col = coordinates_plot_cor[chr.A==12]$col,
-  xlim = c(min(genesA_start_order$start.A), top_limit)
+  xlim = c(band2.left, band2.right)
 )
-abline(v=c(7463067-1500, 7526178+1500), col="pink")
+abline(v=c(band2.left-1500, band2.right+1500), col="green")
 ```
 
 
-There are `r nrow(genesA_start_order[between(start.A,7463067-1500, 7526178+1500)])` genes between the pink lines
+There are `r nrow(genesA_start_order[between(start.A,7463067-1500, 7526178+1500)])` genes between the green lines
 
 #### Looking closer
 ```{r warning=FALSE}
@@ -168,28 +173,30 @@ plot_sorted_coordinates(
   coordinates_plot_cor[chr.A == 12],
   separator = separator,
   col = coordinates_plot_cor[chr.A==12]$col,
-  xlim = c(7463067, 7526178)
+  xlim = c(band2.left, band2.right)
 )
-abline(v=c(7463067-1500, 7526178+1500), col="pink")
+abline(v=c(band2.left-1500, band2.right+1500), col="green")
 ```
 
 #### genes on the second band of chromsome 12
 ```{r}
 # gene names
-unique(chr12_genenames[between(start.A,7463067-1500, 7526178+1500)]$gene.name)
+unique(chr12_genenames[between(start.A,band2.left-1500, band2.right+1500)]$gene.name)
 # GO terms present
-unique(chr12_genenames[between(start.A,7463067-1500, 7526178+1500)]$GO.term)
+unique(chr12_genenames[between(start.A,band2.left-1500, band2.right+1500)]$GO.term)
 ```
 ## Look at the last group
 
 ```{r warning=FALSE}
+band3.left <- 8641374
+band3.right <- 8684887
 plot_sorted_coordinates(
   coordinates_plot_cor[chr.A == 12 & chr.B==3],
   separator = separator,
   col = coordinates_plot_cor[chr.A==12]$col,
-  xlim = c(7541374, 7744476)
+  xlim = c(band3.left, 8844476)
 )
-abline(v=c(7541374-1500, 7584887+1500), col="pink")
+abline(v=c(band3.left-1500, band3.right+1500), col="green")
 ```
 
 
@@ -200,16 +207,51 @@ plot_sorted_coordinates(
   coordinates_plot_cor[chr.A == 12],
   separator = separator,
   col = coordinates_plot_cor[chr.A==12]$col,
-  xlim = c(7541374, 7584887)
+  xlim = c(band3.left, band3.right)
 )
-abline(v=c(7541374-1500, 7584887+1500), col="pink")
+abline(v=c(band3.left-1500, band3.right+1500), col="green")
 ```
 
 
 #### genes on the last band of chromsome 12
 ```{r}
 # gene names
-unique(chr12_genenames[between(start.A,7541374-1500, 7584887+1500)]$gene.name)
+unique(chr12_genenames[between(start.A,band3.left-1500, band3.right+1500)]$gene.name)
 # GO terms present
-unique(chr12_genenames[between(start.A,7541374-1500, 7584887+1500)]$GO.term)
+unique(chr12_genenames[between(start.A,band3.left-1500, band3.right+1500)]$GO.term)
 ```
+
+# checking if some of my genes in chromosome 12 are inside the described hotspots
+```{r}
+hotspot_data <- fread("data/SI_Data_08_hotspotTableForPaper_topGenes100_170420_page1.csv")
+```
+
+```{r}
+hotspot_data.interval <- hotspot_data[,.(hotspotMarker, chromosome, bootstrapIntervalLeft, bootstrapIntervalRight)]
+# remove "chr" part of the chromosome name
+hotspot_data.interval$chromosome <-gsub('chr', '', hotspot_data.interval$chromosome)
+
+# convert roman chromosome numbers to numbers
+hotspot_data.interval$chromosome <- as.numeric(as.roman(hotspot_data.interval$chromosome))
+
+genes_inside_hotspot(hotspot_data = hotspot_data.interval,causal.pos.B.2.order, 12)
+```
+
+```{r}
+hotspot_data.interval.12 <- hotspot_data.interval[chromosome==12]
+
+bothspositions <- merge(causal.pos.B.2.order, coordinates_plot_cor, by=c("geneA", "geneB", "chr.A", "chr.B"))
+setnames(bothspositions, c("geneA", "geneB", "chr.A", "chr.B", "ori.start.A", "ori.start.B", "map.start.A", "map.start.B", "cor","col"))
+
+bothspositions12 <- unique(bothspositions[chr.A==12][,.(geneA, chr.A, ori.start.A, map.start.A)])
+```
+
+```{r warning=FALSE}
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A==12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col
+)
+abline(v = c(7486306-100, 7491601+100),col="green")
+```
+
