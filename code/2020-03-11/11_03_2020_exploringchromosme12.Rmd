@@ -1,0 +1,215 @@
+---
+title: "Exploring chromosome 12"
+output:
+  html_document:
+    fig_caption: yes
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set('python', engine.path = '/usr/local/bin/python3')
+knitr::opts_chunk$set(python.reticulate = T)
+
+knitr::opts_knit$set(root.dir = normalizePath("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/")) 
+options(tinytex.verbose = TRUE)
+```
+
+
+# Going to look closer at chromosome 12
+```{r}
+library("data.table")
+library("plotfunctions")
+source("myfunctions.R")
+```
+
+```{r}
+genepos <- fread("results/gene_pos.gz")
+if (!exists("find.effects_TF")){
+  find.effects_TF <- fread("results/findeffects_TF_newparams.gz")
+}
+
+# Add chomosome and start position to each gene
+causal.pos.A <- merge(find.effects_TF, genepos, by.x="geneA", by.y="gene", all.x=T)
+colnames(causal.pos.A) <- c("geneA", "geneB", "eqtl.A", "eqtl.B", "A->B", "B->A", "strand.A", "start.A","end.A", "chr.A")
+causal.pos.B <- merge(causal.pos.A, genepos, by.x="geneB", by.y="gene", all.x=T)
+
+
+# Keep olnly columns with genes, start positions and chromosomes 
+causal.pos.B.2 <- unique(causal.pos.B[,.(geneA, geneB, start.A, chr.A, chr.start, chr.id)])
+colnames(causal.pos.B.2) <- c("geneA", "geneB", "start.A", "chr.A", "start.B", "chr.B")
+
+## transform chromosome ids into numbers
+# remove "chr" part of the chromosome name
+causal.pos.B.2$chr.A <-gsub('chr', '', causal.pos.B.2$chr.A)
+causal.pos.B.2$chr.B <-gsub('chr', '', causal.pos.B.2$chr.B)
+colnames(causal.pos.B.2) <- c("geneA", "geneB", "start.A", "chr.A", "start.B", "chr.B")
+
+# convert roman chromosome numbers to numbers
+causal.pos.B.2$chr.A <- as.numeric(as.roman(causal.pos.B.2$chr.A))
+causal.pos.B.2$chr.B <- as.numeric(as.roman(causal.pos.B.2$chr.B))
+
+# order values
+causal.pos.B.2.order <- causal.pos.B.2[order(chr.A, start.A, chr.B, start.B)]
+
+
+# organize coordinates so that they are ordered by chromosome
+# vector of chromosomes
+vchr <- 1:16
+# how much space will be separating chromosomes
+separator <- 1e5
+
+coordinates_plot <- sort_by_chr(vchr = vchr, causal.pos.B.2.order, separator = separator)
+```
+
+```{r}
+if (!exists("find.effects")){
+  find.effects <- fread("results/findeffects_all_newparams.gz")
+}
+#Create a function to generate a continuous color palette
+rbPal <- colorRampPalette(c('blue','red'))
+
+
+coordinates_plot_cor <- merge(coordinates_plot, find.effects[,.(geneA, geneB, cor)], by=c("geneA", "geneB"), all.x=T)
+coordinates_plot_cor$cor <- abs(coordinates_plot_cor$cor)
+coordinates_plot_cor <- coordinates_plot_cor[order(cor)]
+coordinates_plot_cor$col <- rbPal(100)[as.numeric(cut(coordinates_plot_cor$cor,breaks = 100))]
+
+plot_sorted_coordinates(coordinates_plot_cor, separator = separator, col = coordinates_plot_cor$col)
+gradientLegend(format(round(coordinates_plot_cor$cor, 3), nsmall = 3), rbPal(100), inside=F, side=3)
+```
+
+# Focus on causal gene 12
+```{r warning=FALSE}
+# coordinates_plot_cor[chr.A==12]
+plot_sorted_coordinates(coordinates_plot_cor[chr.A==12], separator = separator, col = coordinates_plot_cor[chr.A==12]$col)
+```
+
+# focus on the group of vertical bands
+Chromosome 3 seems to mostly be affected by the genes in the vertical bands so I'm going to look closer at chromosome 3
+```{r warning=FALSE, fig.keep="all"}
+# the first gene of chromosome 12 that affects chromosome 3
+lower_limit <- coordinates_plot_cor[chr.A==12 & chr.B==3][order(start.A)][1]$start.A
+# the last gene on chromosome 12 that affects chromosome 3 and that's in the band (there's an extra gene further away from the band)
+top_limit <- coordinates_plot_cor[chr.A==12 & chr.B==3][order(start.A)][nrow(coordinates_plot_cor[chr.A==12 & chr.B==3])-1]$start.A
+
+# plot chromosome 12 - the pink lines are the limits of the group of vertical bands
+plot_sorted_coordinates(coordinates_plot_cor[chr.A==12], separator = separator, col = coordinates_plot_cor[chr.A==12]$col)
+abline(v = c(lower_limit-1500, top_limit+1500), col="pink")
+```
+
+
+there are `r nrow(unique(coordinates_plot_cor[chr.A==12 & chr.B==3][order(start.A)][,.(geneA, start.A)])[between(start.A,lower_limit, top_limit )])` genes between the two pink bands
+
+### get gene names for genes on chromosome 12
+```{r}
+if (!exists("genes_GO.bio")){
+  genes_GO.table <- fread("results/genelistwithGOterm.txt")
+  genes_GO.table <- unique(genes_GO.table)
+  genes_GO.bio   <- unique(genes_GO.table[GO.namespace=="biological_process"])
+}
+```
+
+```{r}
+genesA_start_order <- unique(coordinates_plot_cor[chr.A == 12 &chr.B == 3][order(start.A)][, .(geneA, start.A)])
+chr12_genenames <- merge(genesA_start_order, unique(genes_GO.bio[,.(gene, symbol, gene.name, GO.term)]), by.x="geneA", by.y="gene")
+```
+
+## Look at the first group
+```{r warning=FALSE}
+# genes that are affecting chromosome 3 + positions
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col,
+  xlim = c(min(genesA_start_order$start.A), top_limit)
+)
+abline(v=c(min(genesA_start_order$start.A)-1500, 7425907+1500), col="pink")
+```
+
+There are `r nrow(genesA_start_order[between(start.A,7422391-1500, 7425907+1500)])` between the pink lines
+
+```{r warning=FALSE}
+# genes that are affecting chromosome 3 + positions
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col,
+  xlim=c(min(genesA_start_order$start.A), 7425907)
+)
+abline(v=c(min(genesA_start_order$start.A)-1500, 7425907+1500), col="pink")
+```
+
+### genes on the first "band" of chromosome 12
+```{r}
+# gene names
+unique(chr12_genenames[between(start.A,7422391-1500, 7425907+1500)]$gene.name)
+# GO terms present
+unique(chr12_genenames[between(start.A,7422391-1500, 7425907+1500)]$GO.term)
+```
+
+## Look at the second group
+```{r warning=FALSE}
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col,
+  xlim = c(min(genesA_start_order$start.A), top_limit)
+)
+abline(v=c(7463067-1500, 7526178+1500), col="pink")
+```
+
+
+There are `r nrow(genesA_start_order[between(start.A,7463067-1500, 7526178+1500)])` genes between the pink lines
+
+#### Looking closer
+```{r warning=FALSE}
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col,
+  xlim = c(7463067, 7526178)
+)
+abline(v=c(7463067-1500, 7526178+1500), col="pink")
+```
+
+#### genes on the second band of chromsome 12
+```{r}
+# gene names
+unique(chr12_genenames[between(start.A,7463067-1500, 7526178+1500)]$gene.name)
+# GO terms present
+unique(chr12_genenames[between(start.A,7463067-1500, 7526178+1500)]$GO.term)
+```
+## Look at the last group
+
+```{r warning=FALSE}
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12 & chr.B==3],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col,
+  xlim = c(7541374, 7744476)
+)
+abline(v=c(7541374-1500, 7584887+1500), col="pink")
+```
+
+
+There's one extra gene that does not belong to the "band"
+
+```{r warning=FALSE}
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col,
+  xlim = c(7541374, 7584887)
+)
+abline(v=c(7541374-1500, 7584887+1500), col="pink")
+```
+
+
+#### genes on the last band of chromsome 12
+```{r}
+# gene names
+unique(chr12_genenames[between(start.A,7541374-1500, 7584887+1500)]$gene.name)
+# GO terms present
+unique(chr12_genenames[between(start.A,7541374-1500, 7584887+1500)]$GO.term)
+```
