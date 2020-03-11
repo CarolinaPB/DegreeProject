@@ -1101,7 +1101,7 @@ coordinates_plot <- sort_by_chr(vchr = vchr, causal.pos.B.2.order, separator = s
 plot_sorted_coordinates(coordinates_plot, separator = separator)
 ```
 #### color by correlation value
-```{r}
+```{r, fig.cap="Pairs of genes where the gene on the x-axis if affecting the gene on the y-axis. Colored by correlation value and sorted by chromosome and position"}
 if (!exists("find.effects")){
   find.effects <- fread("results/findeffects_all_newparams.gz")
 }
@@ -1267,8 +1267,8 @@ combinegeneeqtlB <- geneeqtlB.sub %>% unite(gene_eqtl, geneB, eqtl.B, sep = "__"
 combine_genepmarker <- genepmarker.sub %>% unite(gene_eqtl, gene, pmarker, sep = "__")
 
 
-geneA.eqtlA.notinpaper <- combinegeneeqtlA[which(!combinegeneeqtlA%in% combine_genepmarker)]
-geneB.eqtlB.notinpaper <- combinegeneeqtlB[which(!combinegeneeqtlB%in% combine_genepmarker)]
+geneA.eqtlA.notinpaper <- combinegeneeqtlA[which(!combinegeneeqtlA %in% combine_genepmarker)]
+geneB.eqtlB.notinpaper <- combinegeneeqtlB[which(!combinegeneeqtlB %in% combine_genepmarker)]
 ```
 
 There are `r nrow(geneA.eqtlA.notinpaper)` gene-eqtl pairs for the causal genes not in the provided gene-eqtl table.  
