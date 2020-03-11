@@ -292,21 +292,6 @@ sort_by_chr <- function(vchr, genepairs_pos, separator){
   return(res)
 }
 
-sortmap <- function (chrom, map, delta = 1) #Stolen from GenABEL
-{
-  chnum <- as.numeric(as.factor(chrom))
-  ix <- order(chnum, map)
-  map <- map[ix]
-  off <- c(0, map[1:(length(map) - 1)])
-  off <- map - off
-  off[which(off <= 0)] <- delta
-  cummap <- cumsum(off)
-  out <- list()
-  out$ix <- ix
-  out$cummap <- cummap
-  out$chnum <- chnum
-  out
-}
 
 plot_sorted_coordinates <- function(coordinates_plot, separator, ...){
   # plots the gene position coordinates by chromosome using the result table from sort_by_chr()
@@ -358,6 +343,7 @@ genes_inside_hotspot <- function(hotspot_data, positions_table, chromosome){
   # chromosome - chromosome vector of the chromosomes whose genes should be tested
   
   for (chr in chromosome){
+    count <- 0
     print(paste("genes in chromosome", chr, "that are in the described hotspots", sep=" "))
     for (num in 1:nrow(hotspot_data[chromosome==chr])){
       left <- hotspot_data[chromosome==chr]$bootstrapIntervalLeft[num]
@@ -366,8 +352,26 @@ genes_inside_hotspot <- function(hotspot_data, positions_table, chromosome){
       gene_inside_hotspot <- unlist(unique(positions_table[chr.A==chr][between(start.A, left, right)][,1]))
       if (length(gene_inside_hotspot) >0){
         print(unname(gene_inside_hotspot))
+        count <- count+1
       }
     }
+    print(paste("your genes overlap with",count, "hotspots", sep=" "))
+    cat("\n")
   }
 }
 
+sortmap <- function (chrom, map, delta = 1) #Stolen from GenABEL
+{
+  chnum <- as.numeric(as.factor(chrom))
+  ix <- order(chnum, map)
+  map <- map[ix]
+  off <- c(0, map[1:(length(map) - 1)])
+  off <- map - off
+  off[which(off <= 0)] <- delta
+  cummap <- cumsum(off)
+  out <- list()
+  out$ix <- ix
+  out$cummap <- cummap
+  out$chnum <- chnum
+  out
+}

@@ -130,7 +130,7 @@ plot_sorted_coordinates(
 abline(v=c(band1.left-1500, band1.right+1500), col="green")
 ```
 
-There are `r nrow(genesA_start_order[between(start.A,7422391-1500, 7425907+1500)])` between the green lines
+There are `r nrow(genesA_start_order[between(band1.left,7422391-1500, band1.right+1500)])` between the green lines
 
 ```{r warning=FALSE}
 # genes that are affecting chromosome 3 + positions
@@ -165,18 +165,8 @@ abline(v=c(band2.left-1500, band2.right+1500), col="green")
 ```
 
 
-There are `r nrow(genesA_start_order[between(start.A,7463067-1500, 7526178+1500)])` genes between the green lines
+There are `r nrow(genesA_start_order[between(start.A,band2.left-1500, band2.right+1500)])` genes between the green lines
 
-#### Looking closer
-```{r warning=FALSE}
-plot_sorted_coordinates(
-  coordinates_plot_cor[chr.A == 12],
-  separator = separator,
-  col = coordinates_plot_cor[chr.A==12]$col,
-  xlim = c(band2.left, band2.right)
-)
-abline(v=c(band2.left-1500, band2.right+1500), col="green")
-```
 
 #### genes on the second band of chromsome 12
 ```{r}
@@ -212,6 +202,7 @@ plot_sorted_coordinates(
 abline(v=c(band3.left-1500, band3.right+1500), col="green")
 ```
 
+There are `r nrow(genesA_start_order[between(start.A,band3.left-1500, band3.right+1500)])` genes between the green lines
 
 #### genes on the last band of chromsome 12
 ```{r}
@@ -237,21 +228,67 @@ hotspot_data.interval$chromosome <- as.numeric(as.roman(hotspot_data.interval$ch
 genes_inside_hotspot(hotspot_data = hotspot_data.interval,causal.pos.B.2.order, 12)
 ```
 
+# Get hotspot locations where the coordenates match with the ones in my plots
 ```{r}
+vchr <- unique(hotspot_data.interval$chromosome)
+hotspot_data.interval$left.map <- 0
+hotspot_data.interval$right.map <- 0
+for (i in 1:length(vchr)){
+  if (vchr[i] != 1) {
+    previous <- vchr[i-1]
+    hotspot_data.interval[chromosome == vchr[i]]$left.map <- max(coordinates_plot_cor[chr.A==previous]$start.A) + separator + hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalLeft
+    hotspot_data.interval[chromosome == vchr[i]]$right.map <- max(coordinates_plot_cor[chr.A==previous]$start.A) + separator + hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalRight
+  } else if (vchr[i] == 1){
+    hotspot_data.interval[chromosome == vchr[i]]$left.map <- hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalLeft
+    hotspot_data.interval[chromosome == vchr[i]]$right.map <- hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalRight
+  }
+}
+
 hotspot_data.interval.12 <- hotspot_data.interval[chromosome==12]
-
-bothspositions <- merge(causal.pos.B.2.order, coordinates_plot_cor, by=c("geneA", "geneB", "chr.A", "chr.B"))
-setnames(bothspositions, c("geneA", "geneB", "chr.A", "chr.B", "ori.start.A", "ori.start.B", "map.start.A", "map.start.B", "cor","col"))
-
-bothspositions12 <- unique(bothspositions[chr.A==12][,.(geneA, chr.A, ori.start.A, map.start.A)])
 ```
 
+## Plot gene 12 with described hotspots
 ```{r warning=FALSE}
 plot_sorted_coordinates(
   coordinates_plot_cor[chr.A==12],
   separator = separator,
   col = coordinates_plot_cor[chr.A==12]$col
 )
-abline(v = c(7486306-100, 7491601+100),col="green")
+
+
+nCol <- nrow(hotspot_data.interval[chromosome==12])
+col<- rep(1:nCol, each = 2)
+
+hotspots <- data.table(c(hotspot_data.interval[chromosome==12]$left.map, hotspot_data.interval[chromosome==12]$right.map))
+hotspots <- hotspots[order(V1)]
+abline(v=unlist(hotspots$V1), 
+       col=as.factor(col), lwd=1)
+```
+
+```{r}
+# genes that are affecting chromosome 3 + positions
+# genes that are affecting chromosome 3 + positions
+band1.left <- min(genesA_start_order$start.A)
+band1.right <- 8525907
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col,
+  xlim = c(min(genesA_start_order$start.A), top_limit)
+)
+# abline(v=c(band1.left-1500, band1.right+1500), col="green")
+abline(v=unlist(hotspots$V1), 
+       col=as.factor(col), lwd=1.5)
+```
+
+```{r}
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A==12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col, 
+  xlim=c(8955830-2000, 8955830+2000)
+)
+abline(v=unlist(hotspots$V1), 
+       col=as.factor(col), lwd=1.5)
 ```
 
