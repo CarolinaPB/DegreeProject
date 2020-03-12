@@ -1290,7 +1290,7 @@ plot_sorted_coordinates(
   col = coordinates_plot_cor[chr.A==12]$col,
   xlim = c(band2.left, top_limit)
 )
-abline(v=c(band2.left, top_limit), col="green")
+abline(v=c(band2.left, top_limit+1000), col="green")
 ```
 
 
@@ -1306,7 +1306,7 @@ unique(chr12_genenames[between(start.A,band2.left-1500, top_limit+1500)]$GO.term
 ```
 
 
-## checking if some of my genes in chromosome 12 are inside the described hotspots
+# Look at hotspots
 ```{r}
 hotspot_data <- fread("data/SI_Data_08_hotspotTableForPaper_topGenes100_170420_page1.csv")
 ```
@@ -1335,14 +1335,14 @@ for (i in 1:length(vchr)){
     hotspot_data.interval[chromosome == vchr[i]]$right.map <- hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalRight
   }
 }
-
-hotspot_data.interval.12 <- hotspot_data.interval[chromosome==12]
 ```
 
 ## get info on which and how many genes overlap with the hotspots
 ```{r}
 genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,causal.pos.B.2.order, seq(1:16))
 ```
+There are `r length(unlist(genes_in_hotspot))` genes that overlap `r length(unique(names(genes_in_hotspot)))` hotspots
+
 ### to get genes from a specific specific hotspot
 ```{r}
 # to get genes from a specific specific hotspot
@@ -1471,7 +1471,7 @@ abline(v=unlist(hotspots$V1),
 ```
 
 ```{r}
-genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 12, lefttlim = 5, rightlim = 6)
+genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 12, leftlim = 5, rightlim = 6)
 ```
 
 ### Chromosome 14
@@ -1496,7 +1496,7 @@ abline(v=unlist(hotspots$V1),
 ```
 
 ```{r}
-genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 14, lefttlim = 5, rightlim = 6)
+genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 14, leftlim = 5, rightlim = 6)
 ```
 
 
@@ -1522,10 +1522,18 @@ abline(v=unlist(hotspots$V1),
 ```
 
 ```{r}
-genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 15, lefttlim = 5, rightlim = 6)
+genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 15, leftlim = 5, rightlim = 6)
 ```
 
 
+### How many genes that have more than 200 links going out overlap the hotspots
+```{r}
+coordinates_plot_links.200.A <- unique(coordinates_plot_links.200[,.(geneA, start.A, chr.A,count.A )])
+
+genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200.A, chromosome = seq(1:16), leftlim = 5, rightlim = 6)
+```
+
+There are `r length(unlist(genes_in_hotspot))` genes that overlap `r length(unique(names(genes_in_hotspot)))` hotspots
 
 
 
