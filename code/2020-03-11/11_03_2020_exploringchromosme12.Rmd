@@ -1,8 +1,9 @@
 ---
 title: "Exploring chromosome 12"
 output:
-  html_document:
+  html_document: 
     fig_caption: yes
+    highlight: textmate
   pdf_document: default
 ---
 
@@ -183,7 +184,7 @@ hotspot_data <- fread("data/SI_Data_08_hotspotTableForPaper_topGenes100_170420_p
 ```
 
 ```{r}
-hotspot_data.interval <- hotspot_data[,.(hotspotMarker, chromosome, bootstrapIntervalleft, bootstrapIntervalRight)]
+hotspot_data.interval <- hotspot_data[,.(hotspotMarker, chromosome, bootstrapIntervalLeft, bootstrapIntervalRight)]
 # remove "chr" part of the chromosome name
 hotspot_data.interval$chromosome <-gsub('chr', '', hotspot_data.interval$chromosome)
 
@@ -199,26 +200,26 @@ hotspot_data.interval$right.map <- 0
 for (i in 1:length(vchr)){
   if (vchr[i] != 1) {
     previous <- vchr[i-1]
-    hotspot_data.interval[chromosome == vchr[i]]$left.map <- max(coordinates_plot_cor[chr.A==previous]$start.A) + separator + hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalleft
+    hotspot_data.interval[chromosome == vchr[i]]$left.map <- max(coordinates_plot_cor[chr.A==previous]$start.A) + separator + hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalLeft
     hotspot_data.interval[chromosome == vchr[i]]$right.map <- max(coordinates_plot_cor[chr.A==previous]$start.A) + separator + hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalRight
   } else if (vchr[i] == 1){
-    hotspot_data.interval[chromosome == vchr[i]]$left.map <- hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalleft
+    hotspot_data.interval[chromosome == vchr[i]]$left.map <- hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalLeft
     hotspot_data.interval[chromosome == vchr[i]]$right.map <- hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalRight
   }
 }
-
-hotspot_data.interval.12 <- hotspot_data.interval[chromosome==12]
 ```
 
 ## get info on which and how many genes overlap with the hotspots
 ```{r}
 genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,causal.pos.B.2.order, seq(1:16))
 ```
+There are `r length(unlist(genes_in_hotspot))` genes that overlap `r length(unique(names(genes_in_hotspot)))` hotspots
+
 ### to get genes from a specific specific hotspot
 ```{r}
 # to get genes from a specific specific hotspot
 genes_in_hotspot.un <- unlist(genes_in_hotspot)
-hotspot_name <- unique(vars_select(names(test), starts_with("chrXII:")))
+hotspot_name <- unique(vars_select(names(genes_in_hotspot.un), starts_with("chrXII:")))
 genes_hotspot <- genes_in_hotspot.un[hotspot_name]
 ```
 
@@ -401,6 +402,13 @@ genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,co
 ```{r}
 coordinates_plot_links.200.A <- unique(coordinates_plot_links.200[,.(geneA, start.A, chr.A,count.A )])
 
-genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200.A, chromosome = seq(1:16), leftlim = 5, rightlim = 6)
+genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200.A, chromosome = seq(1:16), leftlim = 5, rightlim = 6, verbose = F)
 ```
-There are `r length(unlist(genes_in_hotspot))` genes that overlap with hotspots
+There are `r length(unlist(genes_in_hotspot))` genes that overlap `r length(unique(names(genes_in_hotspot)))` hotspots
+
+Get name + GO term for these genes
+```{r}
+genesnames_200 <- merge(data.table(unlist(genes_in_hotspot)), unique(genes_GO.bio[,.(gene, symbol, gene.name, GO.term)]), by.x="V1", by.y="gene")[order(gene.name)]
+merge(genesnames_200, coordinates_plot_links.200.A, by.x="V1", by.y="geneA")
+```
+

@@ -1347,7 +1347,7 @@ There are `r length(unlist(genes_in_hotspot))` genes that overlap `r length(uniq
 ```{r}
 # to get genes from a specific specific hotspot
 genes_in_hotspot.un <- unlist(genes_in_hotspot)
-hotspot_name <- unique(vars_select(names(test), starts_with("chrXII:")))
+hotspot_name <- unique(vars_select(names(genes_in_hotspot.un), starts_with("chrXII:")))
 genes_hotspot <- genes_in_hotspot.un[hotspot_name]
 ```
 
@@ -1530,12 +1530,17 @@ genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,co
 ```{r}
 coordinates_plot_links.200.A <- unique(coordinates_plot_links.200[,.(geneA, start.A, chr.A,count.A )])
 
-genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200.A, chromosome = seq(1:16), leftlim = 5, rightlim = 6)
+genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200.A, chromosome = seq(1:16), leftlim = 5, rightlim = 6, verbose = F)
 ```
 
 There are `r length(unlist(genes_in_hotspot))` genes that overlap `r length(unique(names(genes_in_hotspot)))` hotspots
 
 
+Get name + GO term for these genes
+```{r}
+genesnames_200 <- merge(data.table(unlist(genes_in_hotspot)), unique(genes_GO.bio[,.(gene, symbol, gene.name, GO.term)]), by.x="V1", by.y="gene")[order(gene.name)]
+merge(genesnames_200, coordinates_plot_links.200.A, by.x="V1", by.y="geneA")
+```
 
 
 

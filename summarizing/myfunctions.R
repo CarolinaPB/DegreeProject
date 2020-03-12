@@ -327,7 +327,7 @@ plot_sorted_coordinates <- function(coordinates_plot, separator, ...){
 }
 
 
-genes_inside_hotspot <- function(hotspot_data, positions_table, chromosome, leftlim=3, rightlim=4){
+genes_inside_hotspot <- function(hotspot_data, positions_table, chromosome, leftlim=3, rightlim=4, verbose=T){
   # function that takes a table with chromosome number, and hotspot left and 
   # right intervals and finds the genes in my dataset that are inside those intervals
   # prints the genes in the chosen chromosomes that are in the hotspots
@@ -348,14 +348,18 @@ genes_inside_hotspot <- function(hotspot_data, positions_table, chromosome, left
   indx <- 1
   for (chr in chromosome){
     count <- 0
-    print(paste("genes in chromosome", chr, "that are in the described hotspots", sep=" "))
+    if (verbose){
+      print(paste("genes in chromosome", chr, "that are in the described hotspots", sep=" "))
+    }
     for (num in 1:nrow(hotspot_data[chromosome==chr])){
       left <- hotspot_data[chromosome==chr][num,..leftlim]
       right <- hotspot_data[chromosome==chr][num, ..rightlim]
       
       gene_inside_hotspot <- unlist(unique(positions_table[chr.A==chr][between(start.A, unlist(left), unlist(right))][,1]))
       if (length(gene_inside_hotspot) >0){
-        print(unname(gene_inside_hotspot))
+        if (verbose){
+          print(unname(gene_inside_hotspot))
+        }
         count <- count+1
         total_count <- total_count +length(gene_inside_hotspot)
         res[[indx]] <- unname(gene_inside_hotspot)
@@ -363,10 +367,14 @@ genes_inside_hotspot <- function(hotspot_data, positions_table, chromosome, left
         indx <- indx+1
       }
     }
-    print(paste("your genes overlap with",count, "hotspots", sep=" "))
-    cat("\n")
+    if (verbose){
+      print(paste("your genes overlap with",count, "hotspots", sep=" "))
+      cat("\n")
+    }
   }
-  print(paste("In total there are", total_count, "genes that overlap with the hotspots", sep=" "))
+  if (verbose){
+    print(paste("In total there are", total_count, "genes that overlap with the hotspots", sep=" "))
+  }
   return(res)
 }
 
