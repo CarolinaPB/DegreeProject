@@ -3638,6 +3638,188 @@ abline(v=unlist(hotspots$V1),
 
 genes_in_hotspot &lt;- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200.A, chromosome = seq(1:16), leftlim = 5, rightlim = 6, verbose = F)</code></pre>
 <p>There are 4 genes that overlap 3 hotspots</p>
+<p>Get name + GO term for these genes</p>
+<pre class="r"><code>genesnames_200 &lt;- merge(data.table(unlist(genes_in_hotspot)), unique(genes_GO.bio[,.(gene, symbol, gene.name, GO.term)]), by.x=&quot;V1&quot;, by.y=&quot;gene&quot;)[order(gene.name)]
+merge(genesnames_200, coordinates_plot_links.200.A, by.x=&quot;V1&quot;, by.y=&quot;geneA&quot;)</code></pre>
+<div class="kable-table">
+<table>
+<thead>
+<tr class="header">
+<th align="left">V1</th>
+<th align="left">symbol</th>
+<th align="left">gene.name</th>
+<th align="left">GO.term</th>
+<th align="right">start.A</th>
+<th align="right">chr.A</th>
+<th align="right">count.A</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">YLR273C</td>
+<td align="left">PIG1</td>
+<td align="left">Protein Interacting with Gsy2p</td>
+<td align="left">glycogen biosynthetic process</td>
+<td align="right">8383425</td>
+<td align="right">12</td>
+<td align="right">664</td>
+</tr>
+<tr class="even">
+<td align="left">YLR273C</td>
+<td align="left">PIG1</td>
+<td align="left">Protein Interacting with Gsy2p</td>
+<td align="left">regulation of glycogen biosynthetic process</td>
+<td align="right">8383425</td>
+<td align="right">12</td>
+<td align="right">664</td>
+</tr>
+<tr class="odd">
+<td align="left">YLR273C</td>
+<td align="left">PIG1</td>
+<td align="left">Protein Interacting with Gsy2p</td>
+<td align="left">regulation of phosphoprotein phosphatase activity</td>
+<td align="right">8383425</td>
+<td align="right">12</td>
+<td align="right">664</td>
+</tr>
+<tr class="even">
+<td align="left">YLR275W</td>
+<td align="left">SMD2</td>
+<td align="left">NA</td>
+<td align="left">spliceosomal snRNP assembly</td>
+<td align="right">8388720</td>
+<td align="right">12</td>
+<td align="right">550</td>
+</tr>
+<tr class="odd">
+<td align="left">YLR275W</td>
+<td align="left">SMD2</td>
+<td align="left">NA</td>
+<td align="left">mRNA processing</td>
+<td align="right">8388720</td>
+<td align="right">12</td>
+<td align="right">550</td>
+</tr>
+<tr class="even">
+<td align="left">YLR275W</td>
+<td align="left">SMD2</td>
+<td align="left">NA</td>
+<td align="left">biological_process</td>
+<td align="right">8388720</td>
+<td align="right">12</td>
+<td align="right">550</td>
+</tr>
+<tr class="odd">
+<td align="left">YLR275W</td>
+<td align="left">SMD2</td>
+<td align="left">NA</td>
+<td align="left">RNA splicing</td>
+<td align="right">8388720</td>
+<td align="right">12</td>
+<td align="right">550</td>
+</tr>
+<tr class="even">
+<td align="left">YNL135C</td>
+<td align="left">FPR1</td>
+<td align="left">Fk 506-sensitive Proline Rotamase</td>
+<td align="left">protein peptidyl-prolyl isomerization</td>
+<td align="right">10226861</td>
+<td align="right">14</td>
+<td align="right">514</td>
+</tr>
+<tr class="odd">
+<td align="left">YNL135C</td>
+<td align="left">FPR1</td>
+<td align="left">Fk 506-sensitive Proline Rotamase</td>
+<td align="left">chromatin organization</td>
+<td align="right">10226861</td>
+<td align="right">14</td>
+<td align="right">514</td>
+</tr>
+<tr class="even">
+<td align="left">YNL135C</td>
+<td align="left">FPR1</td>
+<td align="left">Fk 506-sensitive Proline Rotamase</td>
+<td align="left">protein folding</td>
+<td align="right">10226861</td>
+<td align="right">14</td>
+<td align="right">514</td>
+</tr>
+<tr class="odd">
+<td align="left">YNL135C</td>
+<td align="left">FPR1</td>
+<td align="left">Fk 506-sensitive Proline Rotamase</td>
+<td align="left">chaperone-mediated protein folding</td>
+<td align="right">10226861</td>
+<td align="right">14</td>
+<td align="right">514</td>
+</tr>
+<tr class="even">
+<td align="left">YNL135C</td>
+<td align="left">FPR1</td>
+<td align="left">Fk 506-sensitive Proline Rotamase</td>
+<td align="left">regulation of homoserine biosynthetic process</td>
+<td align="right">10226861</td>
+<td align="right">14</td>
+<td align="right">514</td>
+</tr>
+<tr class="odd">
+<td align="left">YOL082W</td>
+<td align="left">ATG19</td>
+<td align="left">AuTophaGy related</td>
+<td align="left">autophagy</td>
+<td align="right">10818758</td>
+<td align="right">15</td>
+<td align="right">334</td>
+</tr>
+<tr class="even">
+<td align="left">YOL082W</td>
+<td align="left">ATG19</td>
+<td align="left">AuTophaGy related</td>
+<td align="left">protein transport</td>
+<td align="right">10818758</td>
+<td align="right">15</td>
+<td align="right">334</td>
+</tr>
+<tr class="odd">
+<td align="left">YOL082W</td>
+<td align="left">ATG19</td>
+<td align="left">AuTophaGy related</td>
+<td align="left">vesicle organization</td>
+<td align="right">10818758</td>
+<td align="right">15</td>
+<td align="right">334</td>
+</tr>
+<tr class="even">
+<td align="left">YOL082W</td>
+<td align="left">ATG19</td>
+<td align="left">AuTophaGy related</td>
+<td align="left">ubiquitin-dependent ERAD pathway</td>
+<td align="right">10818758</td>
+<td align="right">15</td>
+<td align="right">334</td>
+</tr>
+<tr class="odd">
+<td align="left">YOL082W</td>
+<td align="left">ATG19</td>
+<td align="left">AuTophaGy related</td>
+<td align="left">cellular protein-containing complex localization</td>
+<td align="right">10818758</td>
+<td align="right">15</td>
+<td align="right">334</td>
+</tr>
+<tr class="even">
+<td align="left">YOL082W</td>
+<td align="left">ATG19</td>
+<td align="left">AuTophaGy related</td>
+<td align="left">selective autophagy</td>
+<td align="right">10818758</td>
+<td align="right">15</td>
+<td align="right">334</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 </div>
 </div>
