@@ -1150,14 +1150,71 @@ mygenes_paper.count[order(-causal)]
 ```
 
 
-# STILL WORKING ON IT
-## Focus on chromosome 12
+
+
+```{r}
+genepos <- fread("results/gene_pos.gz")
+if (!exists("find.effects_TF")){
+  find.effects_TF <- fread("results/findeffects_TF_newparams.gz")
+}
+
+# Add chomosome and start position to each gene
+causal.pos.A <- merge(find.effects_TF, genepos, by.x="geneA", by.y="gene", all.x=T)
+colnames(causal.pos.A) <- c("geneA", "geneB", "eqtl.A", "eqtl.B", "A->B", "B->A", "strand.A", "start.A","end.A", "chr.A")
+causal.pos.B <- merge(causal.pos.A, genepos, by.x="geneB", by.y="gene", all.x=T)
+
+
+# Keep olnly columns with genes, start positions and chromosomes 
+causal.pos.B.2 <- unique(causal.pos.B[,.(geneA, geneB, start.A, chr.A, chr.start, chr.id)])
+colnames(causal.pos.B.2) <- c("geneA", "geneB", "start.A", "chr.A", "start.B", "chr.B")
+
+## transform chromosome ids into numbers
+# remove "chr" part of the chromosome name
+causal.pos.B.2$chr.A <-gsub('chr', '', causal.pos.B.2$chr.A)
+causal.pos.B.2$chr.B <-gsub('chr', '', causal.pos.B.2$chr.B)
+colnames(causal.pos.B.2) <- c("geneA", "geneB", "start.A", "chr.A", "start.B", "chr.B")
+
+# convert roman chromosome numbers to numbers
+causal.pos.B.2$chr.A <- as.numeric(as.roman(causal.pos.B.2$chr.A))
+causal.pos.B.2$chr.B <- as.numeric(as.roman(causal.pos.B.2$chr.B))
+
+# order values
+causal.pos.B.2.order <- causal.pos.B.2[order(chr.A, start.A, chr.B, start.B)]
+
+
+# organize coordinates so that they are ordered by chromosome
+# vector of chromosomes
+vchr <- 1:16
+# how much space will be separating chromosomes
+separator <- 1e5
+
+coordinates_plot <- sort_by_chr(vchr = vchr, causal.pos.B.2.order, separator = separator)
+```
+
+```{r}
+if (!exists("find.effects")){
+  find.effects <- fread("results/findeffects_all_newparams.gz")
+}
+#Create a function to generate a continuous color palette
+rbPal <- colorRampPalette(c('blue','red'))
+
+
+coordinates_plot_cor <- merge(coordinates_plot, find.effects[,.(geneA, geneB, cor)], by=c("geneA", "geneB"), all.x=T)
+coordinates_plot_cor$cor <- abs(coordinates_plot_cor$cor)
+coordinates_plot_cor <- coordinates_plot_cor[order(cor)]
+coordinates_plot_cor$col <- rbPal(100)[as.numeric(cut(coordinates_plot_cor$cor,breaks = 100))]
+
+plot_sorted_coordinates(coordinates_plot_cor, separator = separator, col = coordinates_plot_cor$col)
+gradientLegend(format(round(coordinates_plot_cor$cor, 3), nsmall = 3), rbPal(100), inside=F, side=3)
+```
+
+# Focus on causal gene 12
 ```{r warning=FALSE}
 # coordinates_plot_cor[chr.A==12]
 plot_sorted_coordinates(coordinates_plot_cor[chr.A==12], separator = separator, col = coordinates_plot_cor[chr.A==12]$col)
 ```
 
-### Focus on the group of vertical bands
+## Focus on the group of vertical bands
 Chromosome 3 seems to mostly be affected by the genes in the vertical bands so I'm going to look closer at chromosome 3
 ```{r warning=FALSE}
 # the first gene of chromosome 12 that affects chromosome 3
@@ -1170,9 +1227,10 @@ plot_sorted_coordinates(coordinates_plot_cor[chr.A==12], separator = separator, 
 abline(v = c(lower_limit-1500, top_limit+1500), col="green")
 ```
 
+
 there are `r nrow(unique(coordinates_plot_cor[chr.A==12 & chr.B==3][order(start.A)][,.(geneA, start.A)])[between(start.A,lower_limit, top_limit )])` genes between the two green bands
 
-#### get gene names for genes on chromosome 12
+### get gene names for genes on chromosome 12
 ```{r}
 if (!exists("genes_GO.bio")){
   genes_GO.table <- fread("results/genelistwithGOterm.txt")
@@ -1191,86 +1249,61 @@ chr12_genenames <- merge(unique(coordinates_plot_cor[chr.A == 12][order(start.A)
 ```{r warning=FALSE}
 # genes that are affecting chromosome 3 + positions
 band1.left <- min(genesA_start_order$start.A)
-band1.right <- 8525907
+band1.right <- 8323026
 plot_sorted_coordinates(
   coordinates_plot_cor[chr.A == 12],
   separator = separator,
   col = coordinates_plot_cor[chr.A==12]$col,
-  xlim = c(min(genesA_start_order$start.A), band1.right)
+  xlim = c(band1.left, top_limit)
 )
-abline(v=c(band1.left-1500, band1.right), col="green")
+abline(v=c(band1.left-1500, band1.right+1500), col="green")
 ```
 
-
 There are `r nrow(genesA_start_order[between(band1.left,7422391-1500, band1.right+1500)])` between the green lines
+
+```{r warning=FALSE}
+# genes that are affecting chromosome 3 + positions
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col,
+  xlim=c(band1.left, band1.right)
+)
+abline(v=c(band1.left-100, band1.right+100), col="green")
+```
 
 #### genes on the first "band" of chromosome 12
 ```{r}
 # gene names
 unique(chr12_genenames[between(start.A,band1.left, band1.right)]$gene.name)
 # GO terms present
-unique(chr12_genenames[between(start.A,band1.left-1500, band1.right+1500)]$GO.term)
+unique(chr12_genenames[between(start.A,band1.left-100, band1.right+100)]$GO.term)
 ```
-
 
 ### Look at the second group
 ```{r warning=FALSE}
-band2.left <- 8563067
-band2.right <- 8626178
+band2.left <- 8360186
 plot_sorted_coordinates(
   coordinates_plot_cor[chr.A == 12],
   separator = separator,
   col = coordinates_plot_cor[chr.A==12]$col,
-  xlim = c(band2.left, band2.right)
+  xlim = c(band2.left, top_limit)
 )
-abline(v=c(band2.left-1500, band2.right+1500), col="green")
+abline(v=c(band2.left, top_limit), col="green")
 ```
+
+
+There are `r nrow(genesA_start_order[between(start.A,band2.left-1500, top_limit+1500)])` genes between the green lines
 
 
 #### genes on the second band of chromsome 12
 ```{r}
 # gene names
-unique(chr12_genenames[between(start.A,band2.left-1500, band2.right+1500)]$gene.name)
+unique(chr12_genenames[between(start.A,band2.left-1500, top_limit+1500)]$gene.name)
 # GO terms present
-unique(chr12_genenames[between(start.A,band2.left-1500, band2.right+1500)]$GO.term)
+unique(chr12_genenames[between(start.A,band2.left-1500, top_limit+1500)]$GO.term)
 ```
 
-### Look at the last group
-
-```{r warning=FALSE}
-band3.left <- 8641374
-band3.right <- 8684887
-plot_sorted_coordinates(
-  coordinates_plot_cor[chr.A == 12 & chr.B==3],
-  separator = separator,
-  col = coordinates_plot_cor[chr.A==12]$col,
-  xlim = c(band3.left, 8844476)
-)
-abline(v=c(band3.left-1500, band3.right+1500), col="green")
-```
-
-There's one extra gene that does not belong to the "band"
-
-```{r warning=FALSE}
-plot_sorted_coordinates(
-  coordinates_plot_cor[chr.A == 12],
-  separator = separator,
-  col = coordinates_plot_cor[chr.A==12]$col,
-  xlim = c(band3.left, band3.right)
-)
-abline(v=c(band3.left-1500, band3.right+1500), col="green")
-```
-
-
-There are `r nrow(genesA_start_order[between(start.A,band3.left-1500, band3.right+1500)])` genes between the green lines
-
-#### genes on the last band of chromsome 12
-```{r}
-# gene names
-unique(chr12_genenames[between(start.A,band3.left-1500, band3.right+1500)]$gene.name)
-# GO terms present
-unique(chr12_genenames[between(start.A,band3.left-1500, band3.right+1500)]$GO.term)
-```
 
 ## checking if some of my genes in chromosome 12 are inside the described hotspots
 ```{r}
@@ -1288,8 +1321,7 @@ hotspot_data.interval$chromosome <- as.numeric(as.roman(hotspot_data.interval$ch
 genes_inside_hotspot(hotspot_data = hotspot_data.interval,causal.pos.B.2.order, seq(1:16))
 ```
 
-
-## Get hotspot locations where the coordenates match with the ones in my plots
+# Get hotspot locations where the coordenates match with the ones in my plots
 ```{r}
 vchr <- unique(hotspot_data.interval$chromosome)
 hotspot_data.interval$left.map <- 0
@@ -1308,7 +1340,7 @@ for (i in 1:length(vchr)){
 hotspot_data.interval.12 <- hotspot_data.interval[chromosome==12]
 ```
 
-### Plot gene 12 with described hotspots
+## Plot gene 12 with described hotspots
 ```{r warning=FALSE}
 plot_sorted_coordinates(
   coordinates_plot_cor[chr.A==12],
@@ -1326,7 +1358,9 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=1)
 ```
 
+### closer look 
 ```{r}
+# genes that are affecting chromosome 3 + positions
 # genes that are affecting chromosome 3 + positions
 band1.left <- min(genesA_start_order$start.A)
 band1.right <- 8525907
@@ -1347,7 +1381,6 @@ gnames <- c("YLR273C", "YLR275W", "YLR361C-A","YLR364W", "YLR369W","YLR371W","YL
 unique(chr12_genenames[chr12_genenames[, geneA %in% gnames]][,.(geneA, start.A, symbol, gene.name)])
 ```
 
-
 ```{r warning=FALSE}
 plot_sorted_coordinates(
   coordinates_plot_cor,
@@ -1362,7 +1395,7 @@ col<- rep(1:nCol, each = 2)
 hotspots <- data.table(c(hotspot_data.interval$left.map, hotspot_data.interval$right.map))
 hotspots <- hotspots[order(V1)]
 abline(v=unlist(hotspots$V1), 
-       col=as.factor(col), lwd=1)
+       col=as.factor(col), lwd=0.5)
 ```
 
 ```{r}
@@ -1375,6 +1408,114 @@ setcolorder(numlinks_from_gene, c("geneA", "geneB", "count.A", "count.B"))
 ```{r}
 hist(numlinks_from_gene$count.A)
 ```
+
+
+see which genes that have more than 200 links going out overlap with the hotspots
+# See overlap of genes that have > 200 links going out with the hotspots
+Add number of links going out to the coordinates table
+```{r}
+coordinates_plot_links <- merge(coordinates_plot_cor, unique(numlinks_from_gene[,.(geneA, count.A)])[order(-count.A)], by="geneA")
+```
+
+## Plot where causal genes have > 200 links going out and the existing hotspots in the chromosomes they are in
+```{r}
+coordinates_plot_links.200 <- coordinates_plot_links[count.A>=200]
+
+plot_sorted_coordinates(
+  coordinates_plot_links.200,
+  separator = separator,
+  col = coordinates_plot_links.200$col
+)
+
+chrom_to_plot <- unique(coordinates_plot_links.200$chr.A)
+
+nCol <- nrow(hotspot_data.interval)
+col<- rep(1:nCol, each = 2)
+
+hotspots <- data.table(c(hotspot_data.interval[chromosome %in% chrom_to_plot]$left.map, hotspot_data.interval[chromosome %in% chrom_to_plot]$right.map))
+hotspots <- hotspots[order(V1)]
+abline(v=unlist(hotspots$V1),
+       col=as.factor(col), lwd=1)
+```
+
+### Chromosome 12
+```{r}
+coordinates_plot_links.200 <- coordinates_plot_links[count.A>=200]
+
+plot_sorted_coordinates(
+  coordinates_plot_links.200[chr.A==12],
+  separator = separator,
+  col = coordinates_plot_links.200[chr.A==12]$col
+)
+
+chrom_to_plot <- unique(coordinates_plot_links.200$chr.A)
+
+nCol <- nrow(hotspot_data.interval)
+col<- rep(1:nCol, each = 2)
+
+hotspots <- data.table(c(hotspot_data.interval[chromosome %in% chrom_to_plot]$left.map, hotspot_data.interval[chromosome %in% chrom_to_plot]$right.map))
+hotspots <- hotspots[order(V1)]
+abline(v=unlist(hotspots$V1), 
+       col=as.factor(col), lwd=1)
+```
+
+```{r}
+genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 12, lefttlim = 5, rightlim = 6)
+```
+
+### Chromosome 14
+```{r}
+coordinates_plot_links.200 <- coordinates_plot_links[count.A>=200]
+
+plot_sorted_coordinates(
+  coordinates_plot_links.200[chr.A==14],
+  separator = separator,
+  col = coordinates_plot_links.200[chr.A==14]$col
+)
+
+chrom_to_plot <- unique(coordinates_plot_links.200$chr.A)
+
+nCol <- nrow(hotspot_data.interval)
+col<- rep(1:nCol, each = 2)
+
+hotspots <- data.table(c(hotspot_data.interval[chromosome %in% chrom_to_plot]$left.map, hotspot_data.interval[chromosome %in% chrom_to_plot]$right.map))
+hotspots <- hotspots[order(V1)]
+abline(v=unlist(hotspots$V1),
+       col=as.factor(col), lwd=1.5)
+```
+
+```{r}
+genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 14, lefttlim = 5, rightlim = 6)
+```
+
+
+### Chromosome 15
+```{r}
+coordinates_plot_links.200 <- coordinates_plot_links[count.A>=200]
+
+plot_sorted_coordinates(
+  coordinates_plot_links.200[chr.A==15],
+  separator = separator,
+  col = coordinates_plot_links.200[chr.A==15]$col
+)
+
+chrom_to_plot <- unique(coordinates_plot_links.200$chr.A)
+
+nCol <- nrow(hotspot_data.interval)
+col<- rep(1:nCol, each = 2)
+
+hotspots <- data.table(c(hotspot_data.interval[chromosome %in% chrom_to_plot]$left.map, hotspot_data.interval[chromosome %in% chrom_to_plot]$right.map))
+hotspots <- hotspots[order(V1)]
+abline(v=unlist(hotspots$V1),
+       col=as.factor(col), lwd=0.5)
+```
+
+```{r}
+genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 15, lefttlim = 5, rightlim = 6)
+```
+
+
+
 
 
 

@@ -319,9 +319,9 @@ plot_sorted_coordinates <- function(coordinates_plot, separator, ...){
     abline(v= max(coordinates_plot[chr.A==ch]$start.A)+separator/2, col="lightblue", lty=2) 
   }
   for (ch in chrB){
-  abline(h= max(coordinates_plot[chr.B==ch]$start.B)+separator/2, col="lightblue", lty=2) 
+    abline(h= max(coordinates_plot[chr.B==ch]$start.B)+separator/2, col="lightblue", lty=2) 
   }
-  # add x and y axis chromosomes
+  # add x and y axis chromosomes to the axis
   axis(1, at=sapply(chrA, function(i){min(coordinates_plot[chr.A==i]$start.A) + (max(coordinates_plot[chr.A==i]$start.A) - min(coordinates_plot[chr.A==i]$start.A))/2}), labels=as.roman(chrA), tick=FALSE)
   axis(2, at=sapply(chrB, function(i){min(coordinates_plot[chr.B==i]$start.B) + (max(coordinates_plot[chr.B==i]$start.B) - min(coordinates_plot[chr.B==i]$start.B))/2}), labels=as.roman(chrB), tick=FALSE)
 }
@@ -341,6 +341,7 @@ genes_inside_hotspot <- function(hotspot_data, positions_table, chromosome, left
   #   chr.A - chromosome number
   #   start.A - gene start position
   # chromosome - chromosome vector of the chromosomes whose genes should be tested
+  # lefttlim/righttlim - number of column to be used at the left and right limit of the hotspot
   
   for (chr in chromosome){
     count <- 0
