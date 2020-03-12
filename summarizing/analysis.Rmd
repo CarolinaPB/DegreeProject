@@ -39,6 +39,7 @@ library("GOstats")
 library("pheatmap")
 library("reticulate")
 library("plotfunctions")
+library("tidyselect")
 ```
 
 ```{r}
@@ -1317,8 +1318,6 @@ hotspot_data.interval$chromosome <-gsub('chr', '', hotspot_data.interval$chromos
 
 # convert roman chromosome numbers to numbers
 hotspot_data.interval$chromosome <- as.numeric(as.roman(hotspot_data.interval$chromosome))
-
-genes_inside_hotspot(hotspot_data = hotspot_data.interval,causal.pos.B.2.order, seq(1:16))
 ```
 
 # Get hotspot locations where the coordenates match with the ones in my plots
@@ -1338,6 +1337,18 @@ for (i in 1:length(vchr)){
 }
 
 hotspot_data.interval.12 <- hotspot_data.interval[chromosome==12]
+```
+
+## get info on which and how many genes overlap with the hotspots
+```{r}
+genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,causal.pos.B.2.order, seq(1:16))
+```
+### to get genes from a specific specific hotspot
+```{r}
+# to get genes from a specific specific hotspot
+genes_in_hotspot.un <- unlist(genes_in_hotspot)
+hotspot_name <- unique(vars_select(names(test), starts_with("chrXII:")))
+genes_hotspot <- genes_in_hotspot.un[hotspot_name]
 ```
 
 ## Plot gene 12 with described hotspots
@@ -1460,7 +1471,7 @@ abline(v=unlist(hotspots$V1),
 ```
 
 ```{r}
-genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 12, lefttlim = 5, rightlim = 6)
+genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 12, lefttlim = 5, rightlim = 6)
 ```
 
 ### Chromosome 14
@@ -1485,7 +1496,7 @@ abline(v=unlist(hotspots$V1),
 ```
 
 ```{r}
-genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 14, lefttlim = 5, rightlim = 6)
+genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 14, lefttlim = 5, rightlim = 6)
 ```
 
 
@@ -1511,7 +1522,7 @@ abline(v=unlist(hotspots$V1),
 ```
 
 ```{r}
-genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 15, lefttlim = 5, rightlim = 6)
+genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 15, lefttlim = 5, rightlim = 6)
 ```
 
 

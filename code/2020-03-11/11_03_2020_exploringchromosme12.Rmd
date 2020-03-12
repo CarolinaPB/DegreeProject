@@ -20,6 +20,7 @@ options(tinytex.verbose = TRUE)
 ```{r message=FALSE}
 library("data.table")
 library("plotfunctions")
+library("tidyselect")
 source("myfunctions.R")
 ```
 
@@ -120,12 +121,12 @@ chr12_genenames <- merge(unique(coordinates_plot_cor[chr.A == 12][order(start.A)
 ```{r warning=FALSE}
 # genes that are affecting chromosome 3 + positions
 band1.left <- min(genesA_start_order$start.A)
-band1.right <- 8525907
+band1.right <- 8323026
 plot_sorted_coordinates(
   coordinates_plot_cor[chr.A == 12],
   separator = separator,
   col = coordinates_plot_cor[chr.A==12]$col,
-  xlim = c(min(genesA_start_order$start.A), top_limit)
+  xlim = c(band1.left, top_limit)
 )
 abline(v=c(band1.left-1500, band1.right+1500), col="green")
 ```
@@ -148,69 +149,33 @@ abline(v=c(band1.left-100, band1.right+100), col="green")
 # gene names
 unique(chr12_genenames[between(start.A,band1.left, band1.right)]$gene.name)
 # GO terms present
-unique(chr12_genenames[between(start.A,band1.left-1500, band1.right+1500)]$GO.term)
+unique(chr12_genenames[between(start.A,band1.left-100, band1.right+100)]$GO.term)
 ```
 
 ## Look at the second group
 ```{r warning=FALSE}
-band2.left <- 8563067
-band2.right <- 8626178
+band2.left <- 8360186
 plot_sorted_coordinates(
   coordinates_plot_cor[chr.A == 12],
   separator = separator,
   col = coordinates_plot_cor[chr.A==12]$col,
-  xlim = c(band2.left, band2.right)
+  xlim = c(band2.left, top_limit)
 )
-abline(v=c(band2.left-1500, band2.right+1500), col="green")
+abline(v=c(band2.left, top_limit), col="green")
 ```
 
 
-There are `r nrow(genesA_start_order[between(start.A,band2.left-1500, band2.right+1500)])` genes between the green lines
+There are `r nrow(genesA_start_order[between(start.A,band2.left-1500, top_limit+1500)])` genes between the green lines
 
 
 #### genes on the second band of chromsome 12
 ```{r}
 # gene names
-unique(chr12_genenames[between(start.A,band2.left-1500, band2.right+1500)]$gene.name)
+unique(chr12_genenames[between(start.A,band2.left-1500, top_limit+1500)]$gene.name)
 # GO terms present
-unique(chr12_genenames[between(start.A,band2.left-1500, band2.right+1500)]$GO.term)
-```
-## Look at the last group
-
-```{r warning=FALSE}
-band3.left <- 8641374
-band3.right <- 8684887
-plot_sorted_coordinates(
-  coordinates_plot_cor[chr.A == 12 & chr.B==3],
-  separator = separator,
-  col = coordinates_plot_cor[chr.A==12]$col,
-  xlim = c(band3.left, 8844476)
-)
-abline(v=c(band3.left-1500, band3.right+1500), col="green")
+unique(chr12_genenames[between(start.A,band2.left-1500, top_limit+1500)]$GO.term)
 ```
 
-
-There's one extra gene that does not belong to the "band"
-
-```{r warning=FALSE}
-plot_sorted_coordinates(
-  coordinates_plot_cor[chr.A == 12],
-  separator = separator,
-  col = coordinates_plot_cor[chr.A==12]$col,
-  xlim = c(band3.left, band3.right)
-)
-abline(v=c(band3.left-1500, band3.right+1500), col="green")
-```
-
-There are `r nrow(genesA_start_order[between(start.A,band3.left-1500, band3.right+1500)])` genes between the green lines
-
-#### genes on the last band of chromsome 12
-```{r}
-# gene names
-unique(chr12_genenames[between(start.A,band3.left-1500, band3.right+1500)]$gene.name)
-# GO terms present
-unique(chr12_genenames[between(start.A,band3.left-1500, band3.right+1500)]$GO.term)
-```
 
 # checking if some of my genes in chromosome 12 are inside the described hotspots
 ```{r}
@@ -224,8 +189,6 @@ hotspot_data.interval$chromosome <-gsub('chr', '', hotspot_data.interval$chromos
 
 # convert roman chromosome numbers to numbers
 hotspot_data.interval$chromosome <- as.numeric(as.roman(hotspot_data.interval$chromosome))
-
-genes_inside_hotspot(hotspot_data = hotspot_data.interval,causal.pos.B.2.order, 12)
 ```
 
 # Get hotspot locations where the coordenates match with the ones in my plots
@@ -247,6 +210,19 @@ for (i in 1:length(vchr)){
 hotspot_data.interval.12 <- hotspot_data.interval[chromosome==12]
 ```
 
+## get info on which and how many genes overlap with the hotspots
+```{r}
+genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,causal.pos.B.2.order, seq(1:16))
+```
+### to get genes from a specific specific hotspot
+```{r}
+# to get genes from a specific specific hotspot
+genes_in_hotspot.un <- unlist(genes_in_hotspot)
+hotspot_name <- unique(vars_select(names(test), starts_with("chrXII:")))
+genes_hotspot <- genes_in_hotspot.un[hotspot_name]
+```
+
+
 ## Plot gene 12 with described hotspots
 ```{r warning=FALSE}
 plot_sorted_coordinates(
@@ -265,6 +241,7 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=1)
 ```
 
+### closer look 
 ```{r}
 # genes that are affecting chromosome 3 + positions
 # genes that are affecting chromosome 3 + positions
@@ -281,14 +258,153 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=1.5)
 ```
 
+### genes in chromosome 12 that overlap with hotspots
 ```{r}
+gnames <- c("YLR273C", "YLR275W", "YLR361C-A","YLR364W", "YLR369W","YLR371W","YLR375W","YLR376C")
+unique(chr12_genenames[chr12_genenames[, geneA %in% gnames]][,.(geneA, start.A, symbol, gene.name)])
+```
+
+```{r warning=FALSE}
 plot_sorted_coordinates(
-  coordinates_plot_cor[chr.A==12],
+  coordinates_plot_cor,
   separator = separator,
-  col = coordinates_plot_cor[chr.A==12]$col, 
-  xlim=c(8955830-2000, 8955830+2000)
+  col = coordinates_plot_cor$col
 )
+
+
+nCol <- nrow(hotspot_data.interval)
+col<- rep(1:nCol, each = 2)
+
+hotspots <- data.table(c(hotspot_data.interval$left.map, hotspot_data.interval$right.map))
+hotspots <- hotspots[order(V1)]
 abline(v=unlist(hotspots$V1), 
+       col=as.factor(col), lwd=0.5)
+```
+
+```{r}
+numlinks_from_gene.A <- find.effects_TF[, .(geneB, count.A=.N), by=geneA]
+numlinks_from_gene.B <- find.effects_TF[, .(count.B=.N), by=geneB]
+numlinks_from_gene <- merge(numlinks_from_gene.A, numlinks_from_gene.B, by="geneB", all=T)
+setcolorder(numlinks_from_gene, c("geneA", "geneB", "count.A", "count.B"))
+```
+
+```{r}
+hist(numlinks_from_gene$count.A)
+```
+
+
+see which genes that have more than 200 links going out overlap with the hotspots
+# See overlap of genes that have > 200 links going out with the hotspots
+Add number of links going out to the coordinates table
+```{r}
+coordinates_plot_links <- merge(coordinates_plot_cor, unique(numlinks_from_gene[,.(geneA, count.A)])[order(-count.A)], by="geneA")
+```
+
+## Plot where causal genes have > 200 links going out and the existing hotspots in the chromosomes they are in
+```{r}
+coordinates_plot_links.200 <- coordinates_plot_links[count.A>=200]
+
+plot_sorted_coordinates(
+  coordinates_plot_links.200,
+  separator = separator,
+  col = coordinates_plot_links.200$col
+)
+
+chrom_to_plot <- unique(coordinates_plot_links.200$chr.A)
+
+nCol <- nrow(hotspot_data.interval)
+col<- rep(1:nCol, each = 2)
+
+hotspots <- data.table(c(hotspot_data.interval[chromosome %in% chrom_to_plot]$left.map, hotspot_data.interval[chromosome %in% chrom_to_plot]$right.map))
+hotspots <- hotspots[order(V1)]
+abline(v=unlist(hotspots$V1),
+       col=as.factor(col), lwd=1)
+```
+
+### Chromosome 12
+```{r}
+coordinates_plot_links.200 <- coordinates_plot_links[count.A>=200]
+
+plot_sorted_coordinates(
+  coordinates_plot_links.200[chr.A==12],
+  separator = separator,
+  col = coordinates_plot_links.200[chr.A==12]$col
+)
+
+chrom_to_plot <- unique(coordinates_plot_links.200$chr.A)
+
+nCol <- nrow(hotspot_data.interval)
+col<- rep(1:nCol, each = 2)
+
+hotspots <- data.table(c(hotspot_data.interval[chromosome %in% chrom_to_plot]$left.map, hotspot_data.interval[chromosome %in% chrom_to_plot]$right.map))
+hotspots <- hotspots[order(V1)]
+abline(v=unlist(hotspots$V1), 
+       col=as.factor(col), lwd=1)
+```
+
+```{r}
+genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 12, lefttlim = 5, rightlim = 6)
+```
+
+### Chromosome 14
+```{r}
+coordinates_plot_links.200 <- coordinates_plot_links[count.A>=200]
+
+plot_sorted_coordinates(
+  coordinates_plot_links.200[chr.A==14],
+  separator = separator,
+  col = coordinates_plot_links.200[chr.A==14]$col
+)
+
+chrom_to_plot <- unique(coordinates_plot_links.200$chr.A)
+
+nCol <- nrow(hotspot_data.interval)
+col<- rep(1:nCol, each = 2)
+
+hotspots <- data.table(c(hotspot_data.interval[chromosome %in% chrom_to_plot]$left.map, hotspot_data.interval[chromosome %in% chrom_to_plot]$right.map))
+hotspots <- hotspots[order(V1)]
+abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=1.5)
+```
+
+```{r}
+genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 14, lefttlim = 5, rightlim = 6)
+```
+
+
+### Chromosome 15
+```{r}
+coordinates_plot_links.200 <- coordinates_plot_links[count.A>=200]
+
+plot_sorted_coordinates(
+  coordinates_plot_links.200[chr.A==15],
+  separator = separator,
+  col = coordinates_plot_links.200[chr.A==15]$col
+)
+
+chrom_to_plot <- unique(coordinates_plot_links.200$chr.A)
+
+nCol <- nrow(hotspot_data.interval)
+col<- rep(1:nCol, each = 2)
+
+hotspots <- data.table(c(hotspot_data.interval[chromosome %in% chrom_to_plot]$left.map, hotspot_data.interval[chromosome %in% chrom_to_plot]$right.map))
+hotspots <- hotspots[order(V1)]
+abline(v=unlist(hotspots$V1),
+       col=as.factor(col), lwd=0.5)
+```
+
+```{r}
+genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links, c(12, 13), lefttlim = 5, rightlim = 6)
+```
+
+```{r}
+coordinates_plot_links.200.A <- unique(coordinates_plot_links.200[,.(geneA, start.A, chr.A,count.A )])
+hotspot_data.interval[chromosome %in% chrom_to_plot]
+```
+
+
+
+```{r}
+
 ```
 
