@@ -1319,6 +1319,34 @@ genes_in_hotspot_poshot <-  merge(genes_in_hotspot, hotspot_data.interval[,.(hot
 genes_in_hotspot_pos <- unique(merge(genes_in_hotspot_poshot, coordinates_plot_cor[,.(geneA, start.A.map=start.A, end.A.map =end.A)],  by="geneA"))
 ```
 
+#### number of genes in hotspots and number of hotspots in each chromosome in and how many causal genes are in each hotspot
+```{r}
+# how many hotspots are in each chromosome and how many genes overlapping with hotspots are in each chromosome
+hotspot_genes_in_chr <- genes_in_hotspot_pos[,.N, by=chr.A]
+hotspots_in_chr <- hotspot_data.interval[,.N, by=chromosome]
+
+hotspots_per_chr <- merge(hotspot_genes_in_chr, hotspots_in_chr, by.x="chr.A", by.y="chromosome")
+setnames(hotspots_per_chr, c("chr", "n_genes", "n_hotspots"))
+head(hotspots_per_chr[order(-n_genes)])
+
+# how many causal genes are in the each hotspot (that contains causal genes) (ordered by number of genes)
+head(genes_in_hotspot[,.(n_genes=.N),  by=hotspot][order(-n_genes)])
+```
+
+## comparison of found causal genes in hotspots with genes from paper in hotspots
+```{r}
+genes_hotspot_paper <- hotspot_data[,.(hotspotMarker, allGenesInInterval)]
+genes_in_hotspot.names <- merge(genes_in_hotspot, unique(genes_GO.bio[,.(gene, symbol, gene.name)]), by.x="geneA", by.y="gene")
+
+# genes_in_hotspot.names[geneA %in% unlist(strsplit(genes_hotspot_paper$allGenesInInterval, split = ";")) | symbol %in% unlist(strsplit(genes_hotspot_paper$allGenesInInterval, split = ";"))]
+
+if (all(genes_in_hotspot.names$geneA %in% unlist(strsplit(genes_hotspot_paper$allGenesInInterval, split = ";")) | genes_in_hotspot.names$symbol %in% unlist(strsplit(genes_hotspot_paper$allGenesInInterval, split = ";")))){
+  print("All the causal genes found in the hotspots have been reported by the paper")
+} else {
+  print("Some of the causal genes are not reported in the paper")
+}
+```
+
 
 
 ## Plot gene 12 with described hotspots
@@ -1422,93 +1450,41 @@ abline(v=unlist(hotspots$V1),
 ### How many genes that have more than 200 links going out overlap the hotspots
 ```{r}
 genes_hotspot_links.200 <- genes_in_hotspot_pos[geneA %in% coordinates_plot_links.200$geneA]
-genes_hotspot_links.200.names <- merge(genes_hotspot_links.200[,.(geneA, hotspot, chr.A)], genes_GO.bio[,.(gene, symbol, gene.name, GO.term)], by.x="geneA", by.y="gene")
+genes_hotspot_links.200.names <- unique(merge(genes_hotspot_links.200[,.(geneA, hotspot, chr.A)], genes_GO.bio[,.(gene, symbol, gene.name)], by.x="geneA", by.y="gene"))
 genes_hotspot_links.200.names
 ```
 
-There are `r length(unique(genes_hotspot_links.200.names$geneA))` genes overlapping `r length(unique(genes_hotspot_links.200.names$hotspots))` hotspots
+There are `r length(unique(genes_hotspot_links.200.names$geneA))` genes overlapping `r length(unique(genes_hotspot_links.200.names$hotspot))` hotspots
 
 
-
-
-### Chromosome 12
 ```{r}
-coordinates_plot_links.200 <- coordinates_plot_links[count.A>=200]
-
-plot_sorted_coordinates(
-  coordinates_plot_links.200[chr.A==12],
-  separator = separator,
-  col = coordinates_plot_links.200[chr.A==12]$col
-)
-
-chrom_to_plot <- unique(coordinates_plot_links.200$chr.A)
-
-nCol <- nrow(hotspot_data.interval)
-col<- rep(1:nCol, each = 2)
-
-hotspots <- data.table(c(hotspot_data.interval[chromosome %in% chrom_to_plot]$left.map, hotspot_data.interval[chromosome %in% chrom_to_plot]$right.map))
-hotspots <- hotspots[order(V1)]
-abline(v=unlist(hotspots$V1), 
-       col=as.factor(col), lwd=1)
-```
-
-Genes on chr 12 that overlap hotspots
-```{r}
-genes_hotspot_links.200.names[chr.A==12]
-```
-
-### Chromosome 14
-```{r}
-coordinates_plot_links.200 <- coordinates_plot_links[count.A>=200]
-
-plot_sorted_coordinates(
-  coordinates_plot_links.200[chr.A==14],
-  separator = separator,
-  col = coordinates_plot_links.200[chr.A==14]$col
-)
-
-chrom_to_plot <- unique(coordinates_plot_links.200$chr.A)
-
-nCol <- nrow(hotspot_data.interval)
-col<- rep(1:nCol, each = 2)
-
-hotspots <- data.table(c(hotspot_data.interval[chromosome %in% chrom_to_plot]$left.map, hotspot_data.interval[chromosome %in% chrom_to_plot]$right.map))
-hotspots <- hotspots[order(V1)]
-abline(v=unlist(hotspots$V1),
-       col=as.factor(col), lwd=1.5)
-```
-
-Genes on chr 14 that overlap hotspots
-```{r}
-genes_hotspot_links.200.names[chr.A==14]
+chrom_to_plot <- unique(genes_hotspot_links.200.names$chr.A)
+for (chr in unique(genes_hotspot_links.200.names$chr.A)){
+  plot_sorted_coordinates(
+    coordinates_plot_links.200[chr.A==chr],
+    separator = separator,
+    col = coordinates_plot_links.200[chr.A==chr]$col, 
+    main = paste("Overlap of genes on chr", chr,"with the hotspots" ,sep=" ")
+  )
+ 
+  chrom_to_plot <- unique(coordinates_plot_links.200$chr.A)
+  
+  nCol <- nrow(hotspot_data.interval)
+  col<- rep(1:nCol, each = 2)
+  
+  hotspots <- data.table(c(hotspot_data.interval[chromosome %in% chrom_to_plot]$left.map, hotspot_data.interval[chromosome %in% chrom_to_plot]$right.map))
+  hotspots <- hotspots[order(V1)]
+  abline(v=unlist(hotspots$V1), 
+         col=as.factor(col), lwd=1)
+  
+  print(genes_hotspot_links.200.names[chr.A== chr])
+}
 ```
 
 
-### Chromosome 15
-```{r}
-coordinates_plot_links.200 <- coordinates_plot_links[count.A>=200]
 
-plot_sorted_coordinates(
-  coordinates_plot_links.200[chr.A==15],
-  separator = separator,
-  col = coordinates_plot_links.200[chr.A==15]$col
-)
 
-chrom_to_plot <- unique(coordinates_plot_links.200$chr.A)
 
-nCol <- nrow(hotspot_data.interval)
-col<- rep(1:nCol, each = 2)
-
-hotspots <- data.table(c(hotspot_data.interval[chromosome %in% chrom_to_plot]$left.map, hotspot_data.interval[chromosome %in% chrom_to_plot]$right.map))
-hotspots <- hotspots[order(V1)]
-abline(v=unlist(hotspots$V1),
-       col=as.factor(col), lwd=0.5)
-```
-
-Genes on chr 15 that overlap hotspots
-```{r}
-genes_hotspot_links.200.names[chr.A==15]
-```
 
 
 
