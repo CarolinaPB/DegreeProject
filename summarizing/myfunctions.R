@@ -268,7 +268,7 @@ plot_enrichment_heatmap <- function(dt, ...){
   
 }
 
-sort_by_chr <- function(vchr, genepairs_pos, separator){
+sort_by_chr <- function(vchr, genepairs_pos, separator, coordA=3, coordB=6){
   # Sorts genes' chromosome positions to be plotted
   # takes a numeric vector of chromosome numbers (should be ordered by the order you want to plot by)
   # takes a table where there must be the following columns:
@@ -279,19 +279,21 @@ sort_by_chr <- function(vchr, genepairs_pos, separator){
   # chr.A - chromosome of geneA
   # chr.B - chromosome of geneB
   # interval between genes (for plotting purposes)
+  # coordA and coordB is the number of the columns to order
   
   res <- data.table(genepairs_pos)
   
   for (i in 1:length(vchr)){
     if (vchr[i] != 1) {
       previous <- vchr[i-1]
-      res[chr.A == vchr[i]]$start.A <- max(res[chr.A==previous]$start.A) + res[chr.A == vchr[i]]$start.A + separator
-      res[chr.B == vchr[i]]$start.B <- max(res[chr.B==previous]$start.B) + res[chr.B == vchr[i]]$start.B + separator
+      valA <- max(res[chr.A==previous,..coordA]) + res[chr.A == vchr[i],..coordA] + separator
+      res[chr.A == vchr[i], (coordA):=valA] 
+      valB <- max(res[chr.B==previous,..coordB]) + res[chr.B == vchr[i],..coordB] + separator
+      res[chr.B == vchr[i], (coordB):=valB] 
     }
   }
   return(res)
 }
-
 
 plot_sorted_coordinates <- function(coordinates_plot, separator, ...){
   # plots the gene position coordinates by chromosome using the result table from sort_by_chr()

@@ -40,6 +40,7 @@ library("pheatmap")
 library("reticulate")
 library("plotfunctions")
 library("tidyselect")
+library("GenomicRanges")
 ```
 
 ```{r}
@@ -1074,22 +1075,21 @@ colnames(causal.pos.A) <- c("geneA", "geneB", "eqtl.A", "eqtl.B", "A->B", "B->A"
 causal.pos.B <- merge(causal.pos.A, genepos, by.x="geneB", by.y="gene", all.x=T)
 
 
-# Keep olnly columns with genes, start positions and chromosomes 
-causal.pos.B.2 <- unique(causal.pos.B[,.(geneA, geneB, start.A, chr.A, chr.start, chr.id)])
-colnames(causal.pos.B.2) <- c("geneA", "geneB", "start.A", "chr.A", "start.B", "chr.B")
+# Keep olnly columns with genes, start positions and chromosomes
+gene.location <- unique(causal.pos.B[,.(geneA, geneB, start.A,end.A, chr.A, chr.start,chr.end, chr.id, strand.A, chr.strand)])
+colnames(gene.location) <- c("geneA", "geneB", "start.A","end.A", "chr.A", "start.B","end.B", "chr.B", "strand.A", "strand.B")
 
 ## transform chromosome ids into numbers
 # remove "chr" part of the chromosome name
-causal.pos.B.2$chr.A <-gsub('chr', '', causal.pos.B.2$chr.A)
-causal.pos.B.2$chr.B <-gsub('chr', '', causal.pos.B.2$chr.B)
-colnames(causal.pos.B.2) <- c("geneA", "geneB", "start.A", "chr.A", "start.B", "chr.B")
+gene.location$chr.A <-gsub('chr', '', gene.location$chr.A)
+gene.location$chr.B <-gsub('chr', '', gene.location$chr.B)
 
 # convert roman chromosome numbers to numbers
-causal.pos.B.2$chr.A <- as.numeric(as.roman(causal.pos.B.2$chr.A))
-causal.pos.B.2$chr.B <- as.numeric(as.roman(causal.pos.B.2$chr.B))
+gene.location$chr.A <- as.numeric(as.roman(gene.location$chr.A))
+gene.location$chr.B <- as.numeric(as.roman(gene.location$chr.B))
 
 # order values
-causal.pos.B.2.order <- causal.pos.B.2[order(chr.A, start.A, chr.B, start.B)]
+gene.location.order <- gene.location[order(chr.A, start.A, chr.B, start.B)]
 
 
 # organize coordinates so that they are ordered by chromosome
@@ -1098,7 +1098,14 @@ vchr <- 1:16
 # how much space will be separating chromosomes
 separator <- 1e5
 
-coordinates_plot <- sort_by_chr(vchr = vchr, causal.pos.B.2.order, separator = separator)
+coordinates_plot.start <- sort_by_chr(vchr = vchr, gene.location.order, separator = separator)
+coordinates_plot.end <- sort_by_chr(vchr = vchr, gene.location.order, separator = separator, coordA = 4, coordB = 7 )
+
+coordinates_plot <- merge(coordinates_plot.start[,.(geneA, geneB, start.A, chr.A, start.B, chr.B, strand.A, strand.B)], 
+                          coordinates_plot.end[,.(geneA, geneB, end.A, end.B)], 
+                          by=c("geneA", "geneB"))
+setcolorder(coordinates_plot, c("geneA","geneB", "start.A", "end.A", "chr.A", "start.B", "end.B", "chr.B"))
+
 plot_sorted_coordinates(coordinates_plot, separator = separator)
 ```
 #### color by correlation value
@@ -1150,64 +1157,6 @@ setnames(mygenes_paper.count, c("gene", "causal", "affected"))
 mygenes_paper.count[order(-causal)]
 ```
 
-
-
-
-```{r}
-genepos <- fread("results/gene_pos.gz")
-if (!exists("find.effects_TF")){
-  find.effects_TF <- fread("results/findeffects_TF_newparams.gz")
-}
-
-# Add chomosome and start position to each gene
-causal.pos.A <- merge(find.effects_TF, genepos, by.x="geneA", by.y="gene", all.x=T)
-colnames(causal.pos.A) <- c("geneA", "geneB", "eqtl.A", "eqtl.B", "A->B", "B->A", "strand.A", "start.A","end.A", "chr.A")
-causal.pos.B <- merge(causal.pos.A, genepos, by.x="geneB", by.y="gene", all.x=T)
-
-
-# Keep olnly columns with genes, start positions and chromosomes 
-causal.pos.B.2 <- unique(causal.pos.B[,.(geneA, geneB, start.A, chr.A, chr.start, chr.id)])
-colnames(causal.pos.B.2) <- c("geneA", "geneB", "start.A", "chr.A", "start.B", "chr.B")
-
-## transform chromosome ids into numbers
-# remove "chr" part of the chromosome name
-causal.pos.B.2$chr.A <-gsub('chr', '', causal.pos.B.2$chr.A)
-causal.pos.B.2$chr.B <-gsub('chr', '', causal.pos.B.2$chr.B)
-colnames(causal.pos.B.2) <- c("geneA", "geneB", "start.A", "chr.A", "start.B", "chr.B")
-
-# convert roman chromosome numbers to numbers
-causal.pos.B.2$chr.A <- as.numeric(as.roman(causal.pos.B.2$chr.A))
-causal.pos.B.2$chr.B <- as.numeric(as.roman(causal.pos.B.2$chr.B))
-
-# order values
-causal.pos.B.2.order <- causal.pos.B.2[order(chr.A, start.A, chr.B, start.B)]
-
-
-# organize coordinates so that they are ordered by chromosome
-# vector of chromosomes
-vchr <- 1:16
-# how much space will be separating chromosomes
-separator <- 1e5
-
-coordinates_plot <- sort_by_chr(vchr = vchr, causal.pos.B.2.order, separator = separator)
-```
-
-```{r}
-if (!exists("find.effects")){
-  find.effects <- fread("results/findeffects_all_newparams.gz")
-}
-#Create a function to generate a continuous color palette
-rbPal <- colorRampPalette(c('blue','red'))
-
-
-coordinates_plot_cor <- merge(coordinates_plot, find.effects[,.(geneA, geneB, cor)], by=c("geneA", "geneB"), all.x=T)
-coordinates_plot_cor$cor <- abs(coordinates_plot_cor$cor)
-coordinates_plot_cor <- coordinates_plot_cor[order(cor)]
-coordinates_plot_cor$col <- rbPal(100)[as.numeric(cut(coordinates_plot_cor$cor,breaks = 100))]
-
-plot_sorted_coordinates(coordinates_plot_cor, separator = separator, col = coordinates_plot_cor$col)
-gradientLegend(format(round(coordinates_plot_cor$cor, 3), nsmall = 3), rbPal(100), inside=F, side=3)
-```
 
 # Focus on causal gene 12
 ```{r warning=FALSE}
@@ -1320,7 +1269,7 @@ hotspot_data.interval$chromosome <-gsub('chr', '', hotspot_data.interval$chromos
 hotspot_data.interval$chromosome <- as.numeric(as.roman(hotspot_data.interval$chromosome))
 ```
 
-# Get hotspot locations where the coordenates match with the ones in my plots
+# Get hotspot locations ordered
 ```{r}
 vchr <- unique(hotspot_data.interval$chromosome)
 hotspot_data.interval$left.map <- 0
@@ -1337,19 +1286,40 @@ for (i in 1:length(vchr)){
 }
 ```
 
-## get info on which and how many genes overlap with the hotspots
+## Get genes that are inside the hotspots
 ```{r}
-genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,causal.pos.B.2.order, seq(1:16))
-```
-There are `r length(unlist(genes_in_hotspot))` genes that overlap `r length(unique(names(genes_in_hotspot)))` hotspots
+granges.A <- GRanges(seqnames = gene.location.order$chr.A,
+        ranges=IRanges(start=gene.location.order$start.A,
+                       end = gene.location.order$end.A),
+        strand= gene.location.order$strand.A)
+names(granges.A) <- gene.location.order$geneA
+granges.A <- unique(granges.A)
 
-### to get genes from a specific specific hotspot
-```{r}
-# to get genes from a specific specific hotspot
-genes_in_hotspot.un <- unlist(genes_in_hotspot)
-hotspot_name <- unique(vars_select(names(genes_in_hotspot.un), starts_with("chrXII:")))
-genes_hotspot <- genes_in_hotspot.un[hotspot_name]
+granges.B <- GRanges(seqnames = gene.location.order$chr.B,
+                     ranges=IRanges(start=gene.location.order$start.B,
+                                    end = gene.location.order$end.B),
+                     strand= gene.location.order$strand.B)
+names(granges.B) <- gene.location.order$geneB
+granges.B <- unique(granges.B)
+
+
+granges.hotspots <- GRanges(seqnames = hotspot_data.interval$chromosome,
+                            ranges=IRanges(start=hotspot_data.interval$bootstrapIntervalLeft,
+                                           end=hotspot_data.interval$bootstrapIntervalRight))
+names(granges.hotspots) <- hotspot_data.interval$hotspotMarker
+
+
+# genes that are in hotspots
+overlapping_genesA <- subsetByOverlaps(granges.A, granges.hotspots)
+genes_in_hotspot <- unique(gene.location.order[geneA %in% names(overlapping_genesA)][,.(geneA, start.A, end.A, chr.A, strand.A)])
+
+overlap <- findOverlaps(granges.A, granges.hotspots, ignore.strand=T)
+genes_in_hotspot$hotspot <- names(granges.hotspots[subjectHits(overlap)])
+genes_in_hotspot_poshot <-  merge(genes_in_hotspot, hotspot_data.interval[,.(hotspotMarker, bootstrapIntervalLeft, bootstrapIntervalRight, left.map, right.map)], by.x="hotspot", by.y="hotspotMarker")
+genes_in_hotspot_pos <- unique(merge(genes_in_hotspot_poshot, coordinates_plot_cor[,.(geneA, start.A.map=start.A, end.A.map =end.A)],  by="geneA"))
 ```
+
+
 
 ## Plot gene 12 with described hotspots
 ```{r warning=FALSE}
@@ -1388,8 +1358,7 @@ abline(v=unlist(hotspots$V1),
 
 ### genes in chromosome 12 that overlap with hotspots
 ```{r}
-gnames <- c("YLR273C", "YLR275W", "YLR361C-A","YLR364W", "YLR369W","YLR371W","YLR375W","YLR376C")
-unique(chr12_genenames[chr12_genenames[, geneA %in% gnames]][,.(geneA, start.A, symbol, gene.name)])
+unique(chr12_genenames[chr12_genenames[, geneA %in% genes_in_hotspot_pos[chr.A==12]$geneA]][,.(geneA, start.A, symbol, gene.name)])
 ```
 
 ```{r warning=FALSE}
@@ -1416,8 +1385,9 @@ numlinks_from_gene <- merge(numlinks_from_gene.A, numlinks_from_gene.B, by="gene
 setcolorder(numlinks_from_gene, c("geneA", "geneB", "count.A", "count.B"))
 ```
 
+
 ```{r}
-hist(numlinks_from_gene$count.A)
+hist(numlinks_from_gene$count.A, main = "Frequency of links going out of causal genes")
 ```
 
 
@@ -1449,6 +1419,18 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=1)
 ```
 
+### How many genes that have more than 200 links going out overlap the hotspots
+```{r}
+genes_hotspot_links.200 <- genes_in_hotspot_pos[geneA %in% coordinates_plot_links.200$geneA]
+genes_hotspot_links.200.names <- merge(genes_hotspot_links.200[,.(geneA, hotspot, chr.A)], genes_GO.bio[,.(gene, symbol, gene.name, GO.term)], by.x="geneA", by.y="gene")
+genes_hotspot_links.200.names
+```
+
+There are `r length(unique(genes_hotspot_links.200.names$geneA))` genes overlapping `r length(unique(genes_hotspot_links.200.names$hotspots))` hotspots
+
+
+
+
 ### Chromosome 12
 ```{r}
 coordinates_plot_links.200 <- coordinates_plot_links[count.A>=200]
@@ -1470,8 +1452,9 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=1)
 ```
 
+Genes on chr 12 that overlap hotspots
 ```{r}
-genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 12, leftlim = 5, rightlim = 6)
+genes_hotspot_links.200.names[chr.A==12]
 ```
 
 ### Chromosome 14
@@ -1495,8 +1478,9 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=1.5)
 ```
 
+Genes on chr 14 that overlap hotspots
 ```{r}
-genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 14, leftlim = 5, rightlim = 6)
+genes_hotspot_links.200.names[chr.A==14]
 ```
 
 
@@ -1521,26 +1505,12 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=0.5)
 ```
 
+Genes on chr 15 that overlap hotspots
 ```{r}
-genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200, 15, leftlim = 5, rightlim = 6)
+genes_hotspot_links.200.names[chr.A==15]
 ```
 
 
-### How many genes that have more than 200 links going out overlap the hotspots
-```{r}
-coordinates_plot_links.200.A <- unique(coordinates_plot_links.200[,.(geneA, start.A, chr.A,count.A )])
-
-genes_in_hotspot <- genes_inside_hotspot(hotspot_data = hotspot_data.interval,coordinates_plot_links.200.A, chromosome = seq(1:16), leftlim = 5, rightlim = 6, verbose = F)
-```
-
-There are `r length(unlist(genes_in_hotspot))` genes that overlap `r length(unique(names(genes_in_hotspot)))` hotspots
-
-
-Get name + GO term for these genes
-```{r}
-genesnames_200 <- merge(data.table(unlist(genes_in_hotspot)), unique(genes_GO.bio[,.(gene, symbol, gene.name, GO.term)]), by.x="V1", by.y="gene")[order(gene.name)]
-merge(genesnames_200, coordinates_plot_links.200.A, by.x="V1", by.y="geneA")
-```
 
 
 
@@ -1632,8 +1602,7 @@ toplotA <- c(before=nrow(distA.before), inside=nrow(distA.inside), after=nrow(di
 toplotB <- c(before=nrow(distB.before), inside=nrow(distB.inside), after=nrow(distB.after))
 
 toplotAB <- rbind(toplotA, toplotB)
-bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position relative to itself",
-        xlab="Number of Gears", col=c("darkblue","red"),
+bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position relative to itself", col=c("darkblue","red"),
         legend = c("causal genes", "affected genes"), beside=TRUE, ylim=c(0,max(toplotAB)+50))
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 
