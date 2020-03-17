@@ -1333,6 +1333,15 @@ head(hotspots_per_chr[order(-n_genes)])
 head(genes_in_hotspot[,.(n_genes=.N),  by=hotspot][order(-n_genes)])
 ```
 
+### Plot number of hotspots that have a certain number of causal genes
+```{r}
+ngenes_hotspot <- genes_in_hotspot[,.(n_genes=.N),  by=hotspot]
+nhotspots_genes <- ngenes_hotspot[,.N, by=n_genes][order(n_genes)]
+bp <- barplot(nhotspots_genes$N, names.arg = nhotspots_genes$n_genes, xlab = "Number of genes in hotspot", ylab="Number of hotspots", ylim=c(0,max(nhotspots_genes$N)+2))
+text(bp, nhotspots_genes$N, labels=nhotspots_genes$N, pos = 3)
+```
+
+
 ## comparison of found causal genes in hotspots with genes from paper in hotspots
 ```{r}
 genes_hotspot_paper <- hotspot_data[,.(hotspotMarker, allGenesInInterval)]
