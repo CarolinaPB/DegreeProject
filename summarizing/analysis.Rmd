@@ -1108,6 +1108,8 @@ setcolorder(coordinates_plot, c("geneA","geneB", "start.A", "end.A", "chr.A", "s
 
 plot_sorted_coordinates(coordinates_plot, separator = separator)
 ```
+
+
 #### color by correlation value
 ```{r, fig.cap="Pairs of genes where the gene on the x-axis if affecting the gene on the y-axis. Colored by correlation value and sorted by chromosome and position"}
 if (!exists("find.effects")){
@@ -1319,6 +1321,9 @@ genes_in_hotspot_poshot <-  merge(genes_in_hotspot, hotspot_data.interval[,.(hot
 genes_in_hotspot_pos <- unique(merge(genes_in_hotspot_poshot, coordinates_plot_cor[,.(geneA, start.A.map=start.A, end.A.map =end.A)],  by="geneA"))
 ```
 
+Only `r paste0(signif(length(unique(genes_in_hotspot_pos$geneA))/length(unique(gene.location.order$geneA)), digits=4)*100, "%")` of the causal genes are in the hotspots.  
+Most of the causal genes were not located in the hotspots
+
 #### number of genes in hotspots and number of hotspots in each chromosome in and how many causal genes are in each hotspot
 ```{r}
 # how many hotspots are in each chromosome and how many genes overlapping with hotspots are in each chromosome
@@ -1354,6 +1359,28 @@ if (all(genes_in_hotspot.names$geneA %in% unlist(strsplit(genes_hotspot_paper$al
 } else {
   print("Some of the causal genes are not reported in the paper")
 }
+```
+
+## Genes that are being affected by genes in a hotspot
+```{r}
+genes_affected_byhotspot <- unique(find.effects_TF[geneA %in% genes_in_hotspot$geneA][,.(geneA, geneB)])
+```
+In total, there are `r length(unique(genes_affected_byhotspot$geneB))` genes affected by genes in a hotspot
+
+```{r}
+genes_affected_byhotspotB <- unique(merge(unique(gene.location.order[geneA %in% names(overlapping_genesA)]), genes_in_hotspot[,.(geneA, hotspot)], by="geneA")[,.(geneB, start.B, end.B, chr.B, hotspot, chr.A)])
+toplot <- unique(genes_affected_byhotspotB[,.(chr.A,.N), hotspot][order(chr.A)])
+pal <- sample(color, 16)
+toplot$col <-pal[toplot$chr.A]
+barplot(
+  toplot$N,
+  names.arg = toplot$hotspot,
+  las = 2,
+  cex.names = 0.5,
+  col=toplot$col, 
+  main ="Number of genes each hotspot affects"
+)
+legend(x = "topright", legend = unique(toplot$chr.A), col = pal, pch=20, title="chr", cex = 0.7)
 ```
 
 
