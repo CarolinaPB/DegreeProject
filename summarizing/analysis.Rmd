@@ -452,6 +452,9 @@ if(length(unique(nodes$group_id))> 1){
 #plot(plot_TF, layout=layout_with_gem,edge.arrow.size=.5, vertex.label=NA)
 ```
 
+From the `r length(unique(eqtl_results[cis==T]$gene))` genes with an eqtl in cis, only `r length(unique(find.effects_TF$geneA))` (`r paste0(signif(length(unique(find.effects_TF$geneA))/length(unique(eqtl_results[cis==T]$gene))*100, digits=4), "%")`) of the genes have a causal effect.
+
+
 \newpage
 
 # GO analysis
@@ -1370,7 +1373,8 @@ In total, there are `r length(unique(genes_affected_byhotspot$geneB))` genes aff
 ```{r}
 genes_affected_byhotspotB <- unique(merge(unique(gene.location.order[geneA %in% names(overlapping_genesA)]), genes_in_hotspot[,.(geneA, hotspot)], by="geneA")[,.(geneB, start.B, end.B, chr.B, hotspot, chr.A)])
 toplot <- unique(genes_affected_byhotspotB[,.(chr.A,.N), hotspot][order(chr.A)])
-pal <- sample(color, 16)
+color = grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = T)]
+pal <- sample(color, length(unique(toplot$chr.A)))
 toplot$col <-pal[toplot$chr.A]
 barplot(
   toplot$N,
@@ -1425,6 +1429,7 @@ abline(v=unlist(hotspots$V1),
 unique(chr12_genenames[chr12_genenames[, geneA %in% genes_in_hotspot_pos[chr.A==12]$geneA]][,.(geneA, start.A, symbol, gene.name)])
 ```
 
+### All hotspots plotted
 ```{r warning=FALSE}
 plot_sorted_coordinates(
   coordinates_plot_cor,
@@ -1441,6 +1446,27 @@ hotspots <- hotspots[order(V1)]
 abline(v=unlist(hotspots$V1), 
        col=as.factor(col), lwd=0.5)
 ```
+
+### Only hotspots that contain causal genes plotted
+```{r}
+plot_sorted_coordinates(
+  coordinates_plot_cor,
+  separator = separator,
+  col = coordinates_plot_cor$col
+)
+
+
+hotspots_causalgenes <- unique(genes_in_hotspot_pos[,.(hotspot, left.map, right.map)])
+nCol <- nrow(hotspots_causalgenes)
+col<- rep(1:nCol, each = 2)
+
+hotspots <- data.table(c(hotspots_causalgenes$left.map, hotspots_causalgenes$right.map))
+hotspots <- hotspots[order(V1)]
+abline(v=unlist(hotspots$V1), 
+       col=as.factor(col), lwd=0.5)
+```
+
+
 
 ```{r}
 numlinks_from_gene.A <- find.effects_TF[, .(geneB, count.A=.N), by=geneA]
@@ -1516,7 +1542,6 @@ for (chr in unique(genes_hotspot_links.200.names$chr.A)){
   print(genes_hotspot_links.200.names[chr.A== chr])
 }
 ```
-
 
 
 
