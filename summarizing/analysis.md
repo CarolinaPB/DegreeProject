@@ -1,12 +1,16 @@
 ---
 title: "Causality in Coexpression"
 author: "Carolina Pita Barros"
-date: "2020-03-10"
+date: "2020-03-19"
 output: 
   html_document: 
     df_print: kable
     fig_caption: yes
     keep_md: yes
+    number_sections: yes
+    toc: yes
+  pdf_document: 
+    fig_caption: yes
     number_sections: yes
     toc: yes
 ---
@@ -16,12 +20,31 @@ output:
 
 
 
+```r
+library("data.table")
+library("tidyr")
+library("parallel")
+library("igraph")
+library("Hmisc")
+library("corrplot")
+library("dplyr")
+library("GSEABase")
+library("GOstats")
+library("pheatmap")
+library("reticulate")
+library("plotfunctions")
+library("tidyselect")
+library("GenomicRanges")
+```
+
 
 ```r
-files_in_zip <- unzip(zipfile = "data/zipped_data.zip", list = T)
-for (datafile in files_in_zip$Name){
-  if (!file.exists(paste0("data/", "datafile"))){
-    unzip(zipfile = "data/zipped_data.zip", exdir = "data/")
+if (!file.exists("data/SI_Data_01_expressionValues.txt") | !file.exists("data/SI_Data_03_genotypes.txt") | !file.exists("data/SI_Data_04_eQTL.csv")) {
+  files_in_zip <- unzip(zipfile = "data/zipped_data.zip", list = T)
+  for (datafile in files_in_zip$Name){
+    if (!file.exists(paste0("data/", "datafile"))){
+      unzip(zipfile = "data/zipped_data.zip", exdir = "data/")
+    }
   }
 }
 ```
@@ -40,7 +63,7 @@ I started with :
 * **genotype matrix** - contains the genotype information (genotypes at 42,052 markers for all segregants. BY (i.e. reference) alleles are denoted by ‘−1’. RM alleles are denoted by ‘1’.)  
 * **eqtl_results** - Genes with a local eQTL and significant Allele-specific expression (ASE), and discordant direction of effect. (1) Positive values indicate higher expression in RM compared to BY. (2) Shown is the less sig- nificant p-value from the two ASE datasets. (3) The table shows only genes where both ASE datasets agreed in the direction of effect. Shown is the average effect.  
 
-# for the actual analysis jump to "Do analysis with new parameters"
+# for the actual analysis jump to "Inferring causality with new parameters"
 
 Original parameters used
 
@@ -291,8 +314,8 @@ var.exp.lim <- 0.1
 nSNPs <- 42052
 nGenes <- 5720
 
-snp.pval <- 0.01
-snp.pval.nsign <- as.numeric(1e-5)
+snp.pval <- as.numeric(1e-5)
+snp.pval.nsign <- 0.01
 
 corr.pval <- 0.05/choose(nGenes,2)
 ```
@@ -326,6 +349,48 @@ How it works:
 
 ## Get the effect of each gene on the other and the cases where A->B = T and B->A = F
 
+```r
+# find all effects
+if (!file.exists("results/findeffects_all_newparams.gz")){
+  message("loading effects_table")
+  load("results/effects_table.Rdata")
+  
+  message("finding causality")
+
+  find.effects <- effects_table[cor.pval < corr.pval & cis.A ==T & cis.B==T & geneA!=geneB]
+  find.effects <- find.effects_fun(find.effects, snp.pval, snp.pval.nsign)
+  
+  message("saving to file")
+  fwrite(find.effects, "results/findeffects_all_newparams.gz")
+}
+
+# subset to get effects where A affects B and B does not affect A
+if (!file.exists("results/findeffects_TF_newparams.gz")){
+  message("loading find.effects")
+  find.effects <- fread("results/findeffects_all_newparams.gz")
+  
+  message("getting cases where A->B = T and B->A = F")
+  find.effects_TF.1 <- find.effects[find.effects$`A->B`==T & find.effects$`B->A`==F,
+                                    .(geneA, geneB, eqtl.A, eqtl.B, `A->B`, `B->A`)]
+  find.effects_TF.2 <- rbind(find.effects_TF.1, 
+                             find.effects[find.effects$`A->B`==F & find.effects$`B->A`==T & 
+                                            var.exp.B > var.exp.lim, 
+                                          .(geneA=geneB, geneB=geneA, eqtl.A=eqtl.B, 
+                                            eqtl.B=eqtl.A, `A->B`=`B->A`, `B->A`=`A->B`)])
+  find.effects_TF <- unique(find.effects_TF.2)
+  
+  message("saving to file")
+  fwrite(find.effects_TF, "results/findeffects_TF_newparams.gz")
+
+} else if (file.exists("results/findeffects_TF_newparams.gz")){
+  message("loading find.effects_TF")
+  find.effects_TF <- fread("results/findeffects_TF_newparams.gz")
+}
+```
+
+```
+## loading find.effects_TF
+```
 
 ### Plot number of times a gene pair appears
 
@@ -400,6 +465,9 @@ if(length(unique(nodes$group_id))> 1){
 #plot(plot_TF, layout=layout_with_gem,edge.arrow.size=.5, vertex.label=NA)
 ```
 
+From the 2884 genes with an eqtl in cis, only 741 (25.69%) of the genes have a causal effect.
+
+
 \newpage
 
 # GO analysis
@@ -437,7 +505,7 @@ Get table with geneID, gene symbol, gene name, GO identifier, GO term name, GO n
 import os.path
 from os import path
 os.chdir("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/")
-if not path.isfile("results/genelistwithGOterm.txt" or r.update_genelist):
+if not path.isfile("results/genelistwithGOterm.txt"):
   # The following lines will be needed in every python script:
   from intermine.webservice import Service
   yeastmineAPItoken_file = open('data/yeastmineAPI.txt', 'r')
@@ -538,12 +606,12 @@ head(numlinks_from_gene[order(-count.A, count.B)])
 
 geneA     geneB      count.A   count.B
 --------  --------  --------  --------
-YLR270W   YDR236C        897         2
-YLR270W   YJL008C        897         2
-YLR270W   YJL193W        897         3
-YLR270W   YLR343W        897         3
-YLR270W   YGL193C        897         4
-YLR270W   YLR455W        897         4
+YLR270W   YDR236C        836         2
+YLR270W   YGL193C        836         2
+YLR270W   YJL008C        836         2
+YLR270W   YJL193W        836         3
+YLR270W   YJL143W        836         4
+YLR270W   YLR179C        836         4
 
 </div>
 
@@ -560,12 +628,12 @@ head(links_perGO_pergene[order(-count.A), .(gene, GO.identifier, GO.term, count.
 
 gene      GO.identifier   GO.term                                                                        count.A
 --------  --------------  ----------------------------------------------------------------------------  --------
-YLR270W   GO:0000290      deadenylation-dependent decapping of nuclear-transcribed mRNA                      897
-YLR270W   GO:0009267      cellular response to starvation                                                    897
-YLR270W   GO:0031086      nuclear-transcribed mRNA catabolic process, deadenylation-independent decay        897
-YLR270W   GO:1901919      positive regulation of exoribonuclease activity                                    897
-YLR264W   GO:0000028      ribosomal small subunit assembly                                                   834
-YLR264W   GO:0002181      cytoplasmic translation                                                            834
+YLR270W   GO:0000290      deadenylation-dependent decapping of nuclear-transcribed mRNA                      836
+YLR270W   GO:0009267      cellular response to starvation                                                    836
+YLR270W   GO:0031086      nuclear-transcribed mRNA catabolic process, deadenylation-independent decay        836
+YLR270W   GO:1901919      positive regulation of exoribonuclease activity                                    836
+YLR264W   GO:0000028      ribosomal small subunit assembly                                                   806
+YLR264W   GO:0002181      cytoplasmic translation                                                            806
 
 </div>
 
@@ -587,12 +655,12 @@ head(links_perGO_transfactor[order(-gocount)][,.(GO.term, gocount)])
 
 GO.term                                                                            gocount
 --------------------------------------------------------------------------------  --------
-positive regulation of transcription by RNA polymerase II                              568
-negative regulation of transcription by RNA polymerase II                              479
-positive regulation of transcription elongation from RNA polymerase II promoter        127
-negative regulation of transcription by transcription factor localization              119
-positive regulation of transcription initiation from RNA polymerase II promoter        100
-positive regulation of transcription by RNA polymerase I                                43
+positive regulation of transcription by RNA polymerase II                              493
+negative regulation of transcription by RNA polymerase II                              433
+negative regulation of transcription by transcription factor localization              109
+positive regulation of transcription elongation from RNA polymerase II promoter        107
+positive regulation of transcription initiation from RNA polymerase II promoter         86
+positive regulation of transcription by RNA polymerase I                                33
 
 </div>
 There are 65 different terms with "transcription" and "regulation" or "transcription factor" in their name
@@ -641,7 +709,7 @@ data.table(links_perGO[(grepl(" transcription ",GO.term, fixed = F) & grepl(" re
 
  sum_trans   sum_others
 ----------  -----------
-      1662       164609
+      1432       149730
 
 </div>
 
@@ -898,9 +966,9 @@ hgCondA
 
 ```
 ## Gene to GO BP Conditional test for over-representation 
-## 3138 GO BP ids tested (137 have p < 0.05)
-## Selected gene set size: 808 
-##     Gene universe size: 2480 
+## 3062 GO BP ids tested (115 have p < 0.05)
+## Selected gene set size: 740 
+##     Gene universe size: 2433 
 ##     Annotation package: Based on a GeneSetCollection Object
 ```
 
@@ -911,9 +979,9 @@ hgCondB
 
 ```
 ## Gene to GO BP Conditional test for over-representation 
-## 4337 GO BP ids tested (16 have p < 0.05)
-## Selected gene set size: 2377 
-##     Gene universe size: 2480 
+## 4305 GO BP ids tested (25 have p < 0.05)
+## Selected gene set size: 2277 
+##     Gene universe size: 2433 
 ##     Annotation package: Based on a GeneSetCollection Object
 ```
 
@@ -923,145 +991,123 @@ hgCondA.dt
 
 <div class="kable-table">
 
-GOBPID           Pvalue   OddsRatio      ExpCount   Count   Size  Term                                                                                       
------------  ----------  ----------  ------------  ------  -----  -------------------------------------------------------------------------------------------
-GO:0015074    0.0000017    7.409149     8.7967742      21     27  DNA integration                                                                            
-GO:0044260    0.0000493    1.407163   329.7161290     375   1012  cellular macromolecule metabolic process                                                   
-GO:0032774    0.0001334    1.594596   100.0225806     129    307  RNA biosynthetic process                                                                   
-GO:2000112    0.0001536    1.741600    65.0561509      89    204  regulation of cellular macromolecule biosynthetic process                                  
-GO:0006310    0.0001578    2.588475    20.7334963      35     64  DNA recombination                                                                          
-GO:0006351    0.0001738    1.585169    98.7193548     127    303  transcription, DNA-templated                                                               
-GO:0050789    0.0002188    1.402571   219.7579204     257    678  regulation of biological process                                                           
-GO:0031328    0.0002471    1.707768    65.8129032      89    202  positive regulation of cellular biosynthetic process                                       
-GO:0009889    0.0002639    1.685235    68.4890228      92    215  regulation of biosynthetic process                                                         
-GO:0006508    0.0003048    1.691701    66.1387097      89    203  proteolysis                                                                                
-GO:0080090    0.0003075    1.572287    93.5558430     120    292  regulation of primary metabolic process                                                    
-GO:0010557    0.0003752    1.691413    63.8580645      86    196  positive regulation of macromolecule biosynthetic process                                  
-GO:0018130    0.0005465    1.421242   157.0387097     188    482  heterocycle biosynthetic process                                                           
-GO:0032197    0.0005672    3.032484    12.7064516      23     39  transposition, RNA-mediated                                                                
-GO:0006278    0.0005672    3.032484    12.7064516      23     39  RNA-dependent DNA biosynthetic process                                                     
-GO:0010628    0.0007401    1.647514    63.2064516      84    194  positive regulation of gene expression                                                     
-GO:0019438    0.0009689    1.399374   154.7580645     184    475  aromatic compound biosynthetic process                                                     
-GO:0006449    0.0011812         Inf     1.9548387       6      6  regulation of translational termination                                                    
-GO:1901362    0.0014664    1.368941   167.1387097     196    513  organic cyclic compound biosynthetic process                                               
-GO:0031323    0.0017321    1.492755    87.0693717     109    273  regulation of cellular metabolic process                                                   
-GO:0051254    0.0017756    1.614944    57.6677419      76    177  positive regulation of RNA metabolic process                                               
-GO:0090502    0.0021940    2.383743    15.9645161      26     49  RNA phosphodiester bond hydrolysis, endonucleolytic                                        
-GO:0009890    0.0023687    1.634437    51.1516129      68    157  negative regulation of biosynthetic process                                                
-GO:0090305    0.0026634    1.837383    31.6032258      45     97  nucleic acid phosphodiester bond hydrolysis                                                
-GO:2000113    0.0027213    1.646845    47.8935484      64    147  negative regulation of cellular macromolecule biosynthetic process                         
-GO:0051173    0.0030367    1.527000    66.5951896      85    206  positive regulation of nitrogen compound metabolic process                                 
-GO:0044271    0.0033930    1.300038   218.2903226     247    670  cellular nitrogen compound biosynthetic process                                            
-GO:1903508    0.0036026    1.571207    55.3870968      72    170  positive regulation of nucleic acid-templated transcription                                
-GO:0010603    0.0036405         Inf     1.6290323       5      5  regulation of cytoplasmic mRNA processing body assembly                                    
-GO:0071704    0.0043227    1.271438   514.1225806     544   1578  organic substance metabolic process                                                        
-GO:1903008    0.0046312    2.698373    10.4258065      18     32  organelle disassembly                                                                      
-GO:1903507    0.0046587    1.663822    40.0741935      54    123  negative regulation of nucleic acid-templated transcription                                
-GO:0098813    0.0047088    1.986659    21.5032258      32     66  nuclear chromosome segregation                                                             
-GO:0043632    0.0051799    1.718655    34.2096774      47    105  modification-dependent macromolecule catabolic process                                     
-GO:0048522    0.0053085    1.434294    82.2409488     101    255  positive regulation of cellular process                                                    
-GO:0006974    0.0056948    1.616138    43.0064516      57    132  cellular response to DNA damage stimulus                                                   
-GO:0009057    0.0058392    1.480644    66.1387097      83    203  macromolecule catabolic process                                                            
-GO:0007165    0.0058473    1.567173    49.1967742      64    151  signal transduction                                                                        
-GO:1902532    0.0058693    3.585786     6.1903226      12     19  negative regulation of intracellular signal transduction                                   
-GO:0042908    0.0059707   12.501247     2.2806452       6      7  xenobiotic transport                                                                       
-GO:0048585    0.0061125    2.794613     9.1225806      16     28  negative regulation of response to stimulus                                                
-GO:0006357    0.0063853    2.269841    13.7361111      22     43  regulation of transcription by RNA polymerase II                                           
-GO:0031929    0.0064349    3.832288     5.5387097      11     17  TOR signaling                                                                              
-GO:0006139    0.0065210    1.257750   262.2741935     290    805  nucleobase-containing compound metabolic process                                           
-GO:0031146    0.0070948    7.297129     2.9322581       7      9  SCF-dependent proteasomal ubiquitin-dependent protein catabolic process                    
-GO:0031324    0.0074633    1.481335    61.2516129      77    188  negative regulation of cellular metabolic process                                          
-GO:0006511    0.0091638    1.705703    29.8990715      41     92  ubiquitin-dependent protein catabolic process                                              
-GO:0016042    0.0096995    2.204066    13.3580645      21     41  lipid catabolic process                                                                    
-GO:0140013    0.0099863    2.100637    14.9870968      23     46  meiotic nuclear division                                                                   
-GO:0051253    0.0102045    1.568729    41.3774194      54    127  negative regulation of RNA metabolic process                                               
-GO:0051172    0.0106382    1.459986    59.2967742      74    182  negative regulation of nitrogen compound metabolic process                                 
-GO:0034250    0.0111024    2.616646     8.7967742      15     27  positive regulation of cellular amide metabolic process                                    
-GO:0043007    0.0112114         Inf     1.3032258       4      4  maintenance of rDNA                                                                        
-GO:0031145    0.0112114         Inf     1.3032258       4      4  anaphase-promoting complex-dependent catabolic process                                     
-GO:0034063    0.0112114         Inf     1.3032258       4      4  stress granule assembly                                                                    
-GO:0016567    0.0114159    1.900248    19.2225806      28     59  protein ubiquitination                                                                     
-GO:0010648    0.0128494    2.662469     8.1451613      14     25  negative regulation of cell communication                                                  
-GO:0023057    0.0128494    2.662469     8.1451613      14     25  negative regulation of signaling                                                           
-GO:0044257    0.0131998    1.551010    40.0741935      52    123  cellular protein catabolic process                                                         
-GO:0016070    0.0140420    1.376252    78.1974050      94    250  RNA metabolic process                                                                      
-GO:0045143    0.0146346    3.755444     4.5612903       9     14  homologous chromosome segregation                                                          
-GO:0043624    0.0148611    2.717736     7.4935484      13     23  cellular protein complex disassembly                                                       
-GO:0046686    0.0159375   10.404732     1.9548387       5      6  response to cadmium ion                                                                    
-GO:0006817    0.0170293    4.861839     3.2580645       7     10  phosphate ion transport                                                                    
-GO:0006928    0.0170293    4.861839     3.2580645       7     10  movement of cell or subcellular component                                                  
-GO:0010608    0.0178532    1.675291    25.7387097      35     79  posttranscriptional regulation of gene expression                                          
-GO:0051246    0.0192575    1.436182    52.4548387      65    161  regulation of protein metabolic process                                                    
-GO:0033043    0.0204253    1.483516    42.6806452      54    131  regulation of organelle organization                                                       
-GO:0032270    0.0212220    1.741170    20.8516129      29     64  positive regulation of cellular protein metabolic process                                  
-GO:0006325    0.0222035    1.517417    36.5939788      47    113  chromatin organization                                                                     
-GO:0000086    0.0228064    2.980666     5.5387097      10     17  G2/M transition of mitotic cell cycle                                                      
-GO:0051171    0.0234895    1.848214    15.8704589      23     51  regulation of nitrogen compound metabolic process                                          
-GO:0000122    0.0236022    1.652535    24.4354839      33     75  negative regulation of transcription by RNA polymerase II                                  
-GO:0010629    0.0236386    1.389130    59.2967742      72    182  negative regulation of gene expression                                                     
-GO:1903506    0.0236932    1.917149    14.2400000      21     45  regulation of nucleic acid-templated transcription                                         
-GO:0045944    0.0242023    1.467288    42.1178862      53    130  positive regulation of transcription by RNA polymerase II                                  
-GO:0007049    0.0244254    1.311048    89.9225806     105    276  cell cycle                                                                                 
-GO:1903047    0.0253338    1.538433    32.4115494      42    100  mitotic cell cycle process                                                                 
-GO:0043543    0.0253897    1.989100    12.7064516      19     39  protein acylation                                                                          
-GO:0010468    0.0255923    1.827773    15.9833102      23     51  regulation of gene expression                                                              
-GO:0001302    0.0268090    2.505528     7.1677419      12     22  replicative cell aging                                                                     
-GO:0003333    0.0268090    2.505528     7.1677419      12     22  amino acid transmembrane transport                                                         
-GO:0006333    0.0268090    2.505528     7.1677419      12     22  chromatin assembly or disassembly                                                          
-GO:0006950    0.0279536    1.274141   109.1451613     125    335  response to stress                                                                         
-GO:0043620    0.0288900    2.250145     8.7967742      14     27  regulation of DNA-templated transcription in response to stress                            
-GO:1903825    0.0297046    2.090909    10.4258065      16     32  organic acid transmembrane transport                                                       
-GO:0036003    0.0313313    2.550258     6.5161290      11     20  positive regulation of transcription from RNA polymerase II promoter in response to stress 
-GO:0000422    0.0313313    2.550258     6.5161290      11     20  autophagy of mitochondrion                                                                 
-GO:1903432    0.0338113    3.644195     3.5838710       7     11  regulation of TORC1 signaling                                                              
-GO:0006448    0.0338113    3.644195     3.5838710       7     11  regulation of translational elongation                                                     
-GO:0036211    0.0342190    1.247119   122.1774194     138    375  protein modification process                                                               
-GO:2000059    0.0344977         Inf     0.9774194       3      3  negative regulation of ubiquitin-dependent protein catabolic process                       
-GO:1903710    0.0344977         Inf     0.9774194       3      3  spermine transmembrane transport                                                           
-GO:1903711    0.0344977         Inf     0.9774194       3      3  spermidine transmembrane transport                                                         
-GO:0045842    0.0344977         Inf     0.9774194       3      3  positive regulation of mitotic metaphase/anaphase transition                               
-GO:0002949    0.0344977         Inf     0.9774194       3      3  tRNA threonylcarbamoyladenosine modification                                               
-GO:0120174    0.0344977         Inf     0.9774194       3      3  stress-induced homeostatically regulated protein degradation pathway                       
-GO:0005980    0.0344977         Inf     0.9774194       3      3  glycogen catabolic process                                                                 
-GO:0071168    0.0344977         Inf     0.9774194       3      3  protein localization to chromatin                                                          
-GO:0051446    0.0344977         Inf     0.9774194       3      3  positive regulation of meiotic cell cycle                                                  
-GO:1905820    0.0344977         Inf     0.9774194       3      3  positive regulation of chromosome separation                                               
-GO:0062033    0.0344977         Inf     0.9774194       3      3  positive regulation of mitotic sister chromatid segregation                                
-GO:0051228    0.0344977         Inf     0.9774194       3      3  mitotic spindle disassembly                                                                
-GO:0006384    0.0344977         Inf     0.9774194       3      3  transcription initiation from RNA polymerase III promoter                                  
-GO:0051130    0.0354937    1.575484    25.0870968      33     77  positive regulation of cellular component organization                                     
-GO:0010498    0.0355812    1.665512    19.8741935      27     61  proteasomal protein catabolic process                                                      
-GO:0030148    0.0366405    2.606516     5.8645161      10     18  sphingolipid biosynthetic process                                                          
-GO:0040008    0.0366405    2.606516     5.8645161      10     18  regulation of growth                                                                       
-GO:0016570    0.0378869    1.690149    18.2451613      25     56  histone modification                                                                       
-GO:0033045    0.0398432    2.276382     7.4935484      12     23  regulation of sister chromatid segregation                                                 
-GO:0098656    0.0402081    1.720291    16.6161290      23     51  anion transmembrane transport                                                              
-GO:0030705    0.0408544    5.199253     2.2806452       5      7  cytoskeleton-dependent intracellular transport                                             
-GO:0060237    0.0408544    5.199253     2.2806452       5      7  regulation of fungal-type cell wall organization                                           
-GO:0046015    0.0408544    5.199253     2.2806452       5      7  regulation of transcription by glucose                                                     
-GO:0007346    0.0410701    1.600770    21.8290323      29     67  regulation of mitotic cell cycle                                                           
-GO:0071824    0.0410701    1.600770    21.8290323      29     67  protein-DNA complex subunit organization                                                   
-GO:0048017    0.0414949    8.313433     1.6290323       4      5  inositol lipid-mediated signaling                                                          
-GO:0030149    0.0414949    8.313433     1.6290323       4      5  sphingolipid catabolic process                                                             
-GO:2000104    0.0414949    8.313433     1.6290323       4      5  negative regulation of DNA-dependent DNA replication                                       
-GO:0000076    0.0414949    8.313433     1.6290323       4      5  DNA replication checkpoint                                                                 
-GO:0045903    0.0414949    8.313433     1.6290323       4      5  positive regulation of translational fidelity                                              
-GO:0051785    0.0414949    8.313433     1.6290323       4      5  positive regulation of nuclear division                                                    
-GO:0015740    0.0414949    8.313433     1.6290323       4      5  C4-dicarboxylate transport                                                                 
-GO:0015828    0.0414949    8.313433     1.6290323       4      5  tyrosine transport                                                                         
-GO:0015813    0.0414949    8.313433     1.6290323       4      5  L-glutamate transmembrane transport                                                        
-GO:0046173    0.0414949    8.313433     1.6290323       4      5  polyol biosynthetic process                                                                
-GO:0051252    0.0426191    1.721470    15.8106297      22     50  regulation of RNA metabolic process                                                        
-GO:0048285    0.0438284    1.495061    28.9967742      37     89  organelle fission                                                                          
-GO:0044089    0.0465924    1.705306    15.9645161      22     49  positive regulation of cellular component biogenesis                                       
-GO:0007093    0.0469081    2.293852     6.8419355      11     21  mitotic cell cycle checkpoint                                                              
-GO:0015867    0.0469081    2.293852     6.8419355      11     21  ATP transport                                                                              
-GO:0051716    0.0477139    1.249970    97.7518248     111    306  cellular response to stimulus                                                              
-GO:1901264    0.0477616    1.957755    10.1000000      15     31  carbohydrate derivative transport                                                          
-GO:0000226    0.0481370    2.086793     8.4709677      13     26  microtubule cytoskeleton organization                                                      
-GO:0000725    0.0481370    2.086793     8.4709677      13     26  recombinational repair                                                                     
-GO:0006413    0.0481370    2.086793     8.4709677      13     26  translational initiation                                                                   
-GO:0007568    0.0481370    2.086793     8.4709677      13     26  aging                                                                                      
+GOBPID           Pvalue   OddsRatio      ExpCount   Count   Size  Term                                                                              
+-----------  ----------  ----------  ------------  ------  -----  ----------------------------------------------------------------------------------
+GO:0015074    0.0000033    6.690476     8.2120838      20     27  DNA integration                                                                   
+GO:2000112    0.0000294    1.883809    58.2262997      84    196  regulation of cellular macromolecule biosynthetic process                         
+GO:0009889    0.0000479    1.825424    61.4006143      87    207  regulation of biosynthetic process                                                
+GO:0031328    0.0000545    1.831857    59.9177970      85    197  positive regulation of cellular biosynthetic process                              
+GO:0032774    0.0000606    1.653361    91.2453761     121    300  RNA biosynthetic process                                                          
+GO:0080090    0.0000759    1.669385    84.6262093     113    283  regulation of primary metabolic process                                           
+GO:0006351    0.0000839    1.641275    90.0287711     119    296  transcription, DNA-templated                                                      
+GO:0010557    0.0000925    1.810992    58.0928894      82    191  positive regulation of macromolecule biosynthetic process                         
+GO:0010628    0.0001103    1.803870    57.4845869      81    189  positive regulation of gene expression                                            
+GO:0006278    0.0002131    3.427669    11.2535964      22     37  RNA-dependent DNA biosynthetic process                                            
+GO:0018130    0.0002211    1.473873   142.6469379     175    469  heterocycle biosynthetic process                                                  
+GO:0006310    0.0002433    2.525737    19.3488372      33     64  DNA recombination                                                                 
+GO:0019438    0.0002936    1.465007   140.5178792     172    462  aromatic compound biosynthetic process                                            
+GO:0031323    0.0002937    1.617189    78.9813167     104    265  regulation of cellular metabolic process                                          
+GO:0050789    0.0003480    1.506967   115.4398321     144    391  regulation of biological process                                                  
+GO:1901362    0.0005162    1.426117   152.0756268     183    500  organic cyclic compound biosynthetic process                                      
+GO:0051254    0.0006350    1.717006    52.3140156      72    172  positive regulation of RNA metabolic process                                      
+GO:0006449    0.0007805         Inf     1.8249075       6      6  regulation of translational termination                                           
+GO:0045944    0.0009824    1.751615    44.4060830      62    146  positive regulation of transcription by RNA polymerase II                         
+GO:0006508    0.0009953    1.625763    60.8302507      81    200  proteolysis                                                                       
+GO:1903508    0.0010438    1.691951    50.4891081      69    166  positive regulation of nucleic acid-templated transcription                       
+GO:0051173    0.0010664    1.619066    60.9272954      81    202  positive regulation of nitrogen compound metabolic process                        
+GO:0044271    0.0011298    1.354018   199.5232224     231    656  cellular nitrogen compound biosynthetic process                                   
+GO:0048522    0.0015723    1.529220    74.9325127      96    249  positive regulation of cellular process                                           
+GO:0009890    0.0015979    1.686259    46.8392931      64    154  negative regulation of biosynthetic process                                       
+GO:0032197    0.0017845    2.717895    11.8618989      21     39  transposition, RNA-mediated                                                       
+GO:0006139    0.0019659    1.314026   238.7587341     270    785  nucleobase-containing compound metabolic process                                  
+GO:0090305    0.0020440    1.898887    28.5902178      42     94  nucleic acid phosphodiester bond hydrolysis                                       
+GO:2000113    0.0020722    1.690126    43.7977805      60    144  negative regulation of cellular macromolecule biosynthetic process                
+GO:0044260    0.0022341    1.322285   229.2397661     259    784  cellular macromolecule metabolic process                                          
+GO:1903507    0.0026994    1.742159    36.4981504      51    120  negative regulation of nucleic acid-templated transcription                       
+GO:0006974    0.0030499    1.698192    39.2355117      54    129  cellular response to DNA damage stimulus                                          
+GO:0007059    0.0030749    1.990156    22.5071928      34     74  chromosome segregation                                                            
+GO:0090502    0.0032152    2.331006    14.5992602      24     48  RNA phosphodiester bond hydrolysis, endonucleolytic                               
+GO:0031929    0.0035390    4.242570     5.1705713      11     17  TOR signaling                                                                     
+GO:1903047    0.0039370    1.705524    36.1939992      50    119  mitotic cell cycle process                                                        
+GO:0007165    0.0044264    1.609291    45.0143855      60    148  signal transduction                                                               
+GO:0031146    0.0046075    8.074352     2.7373613       7      9  SCF-dependent proteasomal ubiquitin-dependent protein catabolic process           
+GO:0071704    0.0051567    1.274064   472.6510481     501   1554  organic substance metabolic process                                               
+GO:1903008    0.0058136    2.630337     9.7328401      17     32  organelle disassembly                                                             
+GO:0051253    0.0060545    1.642643    37.7147554      51    124  negative regulation of RNA metabolic process                                      
+GO:0016070    0.0061015    1.452213    70.5594901      88    243  RNA metabolic process                                                             
+GO:0043624    0.0079486    3.009491     6.9954788      13     23  cellular protein complex disassembly                                              
+GO:0043007    0.0085095         Inf     1.2166050       4      4  maintenance of rDNA                                                               
+GO:0045143    0.0089690    4.156498     4.2581176       9     14  homologous chromosome segregation                                                 
+GO:0140013    0.0091864    2.130803    13.9909577      22     46  meiotic nuclear division                                                          
+GO:0006950    0.0093778    1.353247   100.0657624     119    329  response to stress                                                                
+GO:0016042    0.0098089    2.211640    12.4702014      20     41  lipid catabolic process                                                           
+GO:0034250    0.0103783    2.701332     7.9079326      14     26  positive regulation of cellular amide metabolic process                           
+GO:0006817    0.0113429    5.379718     3.0415125       7     10  phosphate ion transport                                                           
+GO:0006928    0.0113429    5.379718     3.0415125       7     10  movement of cell or subcellular component                                         
+GO:0051171    0.0114562    2.046312    14.1465433      22     49  regulation of nitrogen compound metabolic process                                 
+GO:0046686    0.0115678   11.510204     1.8249075       5      6  response to cadmium ion                                                           
+GO:0000122    0.0120761    1.776702    22.5071928      32     74  negative regulation of transcription by RNA polymerase II                         
+GO:0000819    0.0124401    2.044345    14.2951089      22     47  sister chromatid segregation                                                      
+GO:0010608    0.0127158    1.749293    23.4196465      33     77  posttranscriptional regulation of gene expression                                 
+GO:0051716    0.0131314    1.350248    89.8730853     107    302  cellular response to stimulus                                                     
+GO:0000086    0.0137669    3.299413     5.1705713      10     17  G2/M transition of mitotic cell cycle                                             
+GO:0031324    0.0150198    1.433615    56.2679819      70    185  negative regulation of cellular metabolic process                                 
+GO:0001302    0.0153214    2.774176     6.6913276      12     22  replicative cell aging                                                            
+GO:0048519    0.0160641    1.343835    85.7706535     102    282  negative regulation of biological process                                         
+GO:1903506    0.0165833    2.031746    12.9411765      20     44  regulation of nucleic acid-templated transcription                                
+GO:0007049    0.0184123    1.342701    81.5125360      97    268  cell cycle                                                                        
+GO:0010629    0.0194304    1.423026    53.2264694      66    175  negative regulation of gene expression                                            
+GO:0006357    0.0203374    2.065833    11.5498008      18     39  regulation of transcription by RNA polymerase II                                  
+GO:0051172    0.0222357    1.405315    54.4430744      67    179  negative regulation of nitrogen compound metabolic process                        
+GO:0040008    0.0226889    2.885274     5.4747226      10     18  regulation of growth                                                              
+GO:0032270    0.0230816    1.742987    19.1615290      27     63  positive regulation of cellular protein metabolic process                         
+GO:0006448    0.0230875    4.032401     3.3456638       7     11  regulation of translational elongation                                            
+GO:1903432    0.0230875    4.032401     3.3456638       7     11  regulation of TORC1 signaling                                                     
+GO:0033043    0.0233562    1.480462    39.2355117      50    129  regulation of organelle organization                                              
+GO:0071824    0.0241908    1.712744    20.0739827      28     66  protein-DNA complex subunit organization                                          
+GO:0051246    0.0249559    1.420677    48.3600493      60    159  regulation of protein metabolic process                                           
+GO:0006511    0.0270639    1.553656    28.8943691      38     95  ubiquitin-dependent protein catabolic process                                     
+GO:0007568    0.0278380    2.310867     7.9079326      13     26  aging                                                                             
+GO:0006384    0.0280570         Inf     0.9124538       3      3  transcription initiation from RNA polymerase III promoter                         
+GO:0051446    0.0280570         Inf     0.9124538       3      3  positive regulation of meiotic cell cycle                                         
+GO:0071168    0.0280570         Inf     0.9124538       3      3  protein localization to chromatin                                                 
+GO:0051228    0.0280570         Inf     0.9124538       3      3  mitotic spindle disassembly                                                       
+GO:0120174    0.0280570         Inf     0.9124538       3      3  stress-induced homeostatically regulated protein degradation pathway              
+GO:1903711    0.0280570         Inf     0.9124538       3      3  spermidine transmembrane transport                                                
+GO:0002949    0.0280570         Inf     0.9124538       3      3  tRNA threonylcarbamoyladenosine modification                                      
+GO:0005980    0.0280570         Inf     0.9124538       3      3  glycogen catabolic process                                                        
+GO:0006333    0.0286217    2.539506     6.3871763      11     21  chromatin assembly or disassembly                                                 
+GO:0009059    0.0286478    1.299873    87.4954955     102    304  macromolecule biosynthetic process                                                
+GO:0051252    0.0295680    1.827077    14.4104545      21     49  regulation of RNA metabolic process                                               
+GO:0060237    0.0303689    5.751701     2.1290588       5      7  regulation of fungal-type cell wall organization                                  
+GO:0030705    0.0303689    5.751701     2.1290588       5      7  cytoskeleton-dependent intracellular transport                                    
+GO:0042908    0.0303689    5.751701     2.1290588       5      7  xenobiotic transport                                                              
+GO:0046015    0.0303689    5.751701     2.1290588       5      7  regulation of transcription by glucose                                            
+GO:2000104    0.0322337    9.195652     1.5207563       4      5  negative regulation of DNA-dependent DNA replication                              
+GO:0010603    0.0322337    9.195652     1.5207563       4      5  regulation of cytoplasmic mRNA processing body assembly                           
+GO:0045903    0.0322337    9.195652     1.5207563       4      5  positive regulation of translational fidelity                                     
+GO:0000076    0.0322337    9.195652     1.5207563       4      5  DNA replication checkpoint                                                        
+GO:0015828    0.0322337    9.195652     1.5207563       4      5  tyrosine transport                                                                
+GO:0016567    0.0327043    1.706088    17.9449240      25     59  protein ubiquitination                                                            
+GO:0009057    0.0330338    1.360520    56.3147460      68    186  macromolecule catabolic process                                                   
+GO:0051276    0.0333557    1.379491    50.8420168      62    169  chromosome organization                                                           
+GO:0043632    0.0335749    1.492959    31.9358816      41    105  modification-dependent macromolecule catabolic process                            
+GO:0070192    0.0337030    3.072860     4.2581176       8     14  chromosome organization involved in meiotic cell cycle                            
+GO:0043618    0.0391539    2.144527     8.2120838      13     27  regulation of transcription from RNA polymerase II promoter in response to stress 
+GO:0006855    0.0391539    2.144527     8.2120838      13     27  drug transmembrane transport                                                      
+GO:0051130    0.0396372    1.565493    23.4196465      31     77  positive regulation of cellular component organization                            
+GO:0048869    0.0402661    1.444229    34.9773942      44    115  cellular developmental process                                                    
+GO:0035601    0.0411058    3.224011     3.6498150       7     12  protein deacylation                                                               
+GO:0000272    0.0411058    3.224011     3.6498150       7     12  polysaccharide catabolic process                                                  
+GO:0044089    0.0423795    1.736787    14.9034114      21     49  positive regulation of cellular component biogenesis                              
+GO:1905268    0.0432545    2.593194     5.1705713       9     17  negative regulation of chromatin organization                                     
+GO:0008608    0.0432545    2.593194     5.1705713       9     17  attachment of spindle microtubules to kinetochore                                 
+GO:0006259    0.0467712    1.419733    35.2630231      44    119  DNA metabolic process                                                             
+GO:0000226    0.0479839    2.130177     7.6037813      12     25  microtubule cytoskeleton organization                                             
+GO:0000725    0.0479839    2.130177     7.6037813      12     25  recombinational repair                                                            
+GO:0006665    0.0479839    2.130177     7.6037813      12     25  sphingolipid metabolic process                                                    
+GO:0010498    0.0493973    1.609363    18.5532265      25     61  proteasomal protein catabolic process                                             
+GO:0048285    0.0495738    1.490192    26.4611591      34     87  organelle fission                                                                 
 
 </div>
 
@@ -1071,24 +1117,33 @@ hgCondB.dt
 
 <div class="kable-table">
 
-GOBPID           Pvalue   OddsRatio    ExpCount   Count   Size  Term                                         
------------  ----------  ----------  ----------  ------  -----  ---------------------------------------------
-GO:0044281    0.0002792    3.965604   388.17944     400    405  small molecule metabolic process             
-GO:0006753    0.0031634         Inf   126.51774     132    132  nucleoside phosphate metabolic process       
-GO:0016053    0.0070694         Inf   109.26532     114    114  organic acid biosynthetic process            
-GO:1901135    0.0133808    4.212170   177.31653     183    185  carbohydrate derivative metabolic process    
-GO:0055114    0.0151275    3.314832   208.94597     215    218  oxidation-reduction process                  
-GO:0019752    0.0156343    3.297889   207.98750     214    217  carboxylic acid metabolic process            
-GO:1901605    0.0157001         Inf    92.01290      96     96  alpha-amino acid metabolic process           
-GO:0006732    0.0171490         Inf    90.09597      94     94  coenzyme metabolic process                   
-GO:0090407    0.0259591    5.757333   122.68387     127    128  organophosphate biosynthetic process         
-GO:0009165    0.0290788         Inf    78.59435      82     82  nucleotide biosynthetic process              
-GO:0072521    0.0331686         Inf    75.71895      79     79  purine-containing compound metabolic process 
-GO:0009259    0.0362065         Inf    73.80202      77     77  ribonucleotide metabolic process             
-GO:0006790    0.0431330         Inf    69.96815      73     73  sulfur compound metabolic process            
-GO:0051188    0.0450604         Inf    69.00968      72     72  cofactor biosynthetic process                
-GO:0005975    0.0453705    5.043709   108.30685     112    113  carbohydrate metabolic process               
-GO:0008652    0.0491747         Inf    67.09274      70     70  cellular amino acid biosynthetic process     
+GOBPID           Pvalue   OddsRatio    ExpCount   Count   Size  Term                                                   
+-----------  ----------  ----------  ----------  ------  -----  -------------------------------------------------------
+GO:0055086    0.0005735   10.464135   135.70284     144    145  nucleobase-containing small molecule metabolic process 
+GO:0044283    0.0009677    4.643028   180.62515     190    193  small molecule biosynthetic process                    
+GO:0055114    0.0010395    3.921512   203.08631     213    217  oxidation-reduction process                            
+GO:0009117    0.0014825    9.308659   121.66461     129    130  nucleotide metabolic process                           
+GO:0051186    0.0017890    9.079498   118.85697     126    127  cofactor metabolic process                             
+GO:0032787    0.0032288         Inf    79.54994      85     85  monocarboxylic acid metabolic process                  
+GO:0019693    0.0032288         Inf    79.54994      85     85  ribose phosphate metabolic process                     
+GO:1901293    0.0042496         Inf    75.80641      81     81  nucleoside phosphate biosynthetic process              
+GO:0046394    0.0042567    8.018476   105.75462     112    113  carboxylic acid biosynthetic process                   
+GO:0072521    0.0052201         Inf    72.99877      78     78  purine-containing compound metabolic process           
+GO:0043436    0.0066456    2.673797   211.50925     220    226  oxoacid metabolic process                              
+GO:1901566    0.0093448    1.815680   424.89026     436    454  organonitrogen compound biosynthetic process           
+GO:0017144    0.0096272    4.434742   117.92109     124    126  drug metabolic process                                 
+GO:0009123    0.0118536         Inf    61.76819      66     66  nucleoside monophosphate metabolic process             
+GO:0009150    0.0126896         Inf    60.83231      65     65  purine ribonucleotide metabolic process                
+GO:1901607    0.0135841         Inf    59.89642      64     64  alpha-amino acid biosynthetic process                  
+GO:0090150    0.0268015         Inf    50.53761      54     54  establishment of protein localization to membrane      
+GO:0006733    0.0351440         Inf    46.79408      50     50  oxidoreduction coenzyme metabolic process              
+GO:0009260    0.0351440         Inf    46.79408      50     50  ribonucleotide biosynthetic process                    
+GO:0006839    0.0351440         Inf    46.79408      50     50  mitochondrial transport                                
+GO:0009167    0.0376047         Inf    45.85820      49     49  purine ribonucleoside monophosphate metabolic process  
+GO:0019637    0.0385480    2.823784   110.16014     115    118  organophosphate metabolic process                      
+GO:0045333    0.0402366         Inf    44.92232      48     48  cellular respiration                                   
+GO:0006790    0.0453126    5.061224    68.31936      72     73  sulfur compound metabolic process                      
+GO:0009199    0.0460616         Inf    43.05055      46     46  ribonucleoside triphosphate metabolic process          
 
 </div>
 
@@ -1124,13 +1179,13 @@ if (exists("res.geneA") & exists("hgCondA") & exists("res.geneB") & exists("hgCo
 }
 ```
 Number of GO terms that were not significant with the conditional hypergeo test:  
-* for the causal genes - 122  
-* for the affected genes - 12  
+* for the causal genes - 91  
+* for the affected genes - 18  
 
 set of genes | Hypergeo | Conditional hypergeo
 -|-|-
-causal | 259 | 137
-affected | 28 | 16
+causal | 206 | 115
+affected | 43 | 25
 
 
 #### GO Enrichment Heatmap (-log10(pval))
@@ -1194,7 +1249,7 @@ abline(v = 20)
 
 ![](analysis_files/figure-html/unnamed-chunk-25-2.png)<!-- -->
 
-There are 3 genes that have more links going in than out in the causal genes.  
+There are 1 genes that have more links going in than out in the causal genes.  
 
 ### Conditional hypergeometric test with new subset of causal and affected genes
 
@@ -1268,6 +1323,54 @@ Albert FW, Bloom JS, Siegel J, Day L, Kruglyak L. 2018. Genetics of trans-regula
 ## get gene position
 
 
+```python
+# Sometimes breaks Rstudio, might be better to run it in a script/python console
+import os.path
+from os import path
+os.chdir("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/")
+
+if not path.isfile("results/gene_pos.gz"):
+  # The line below will be needed if you are running this script with python 2.
+  #from __future__ import print_function
+  # The following two lines will be needed in every python script:
+  from intermine.webservice import Service
+  yeastmineAPItoken_file = open('/Users/Carolina/Documents/GitHub/DegreeProject/code/2020-02-05/yeastmineAPI.txt', 'r')
+  yeastmineAPItoken = yeastmineAPItoken_file.readline().rstrip()
+  service = Service("https://yeastmine.yeastgenome.org/yeastmine/service", token = yeastmineAPItoken)
+  # Get a new query on the class (table) you will be querying:
+  query = service.new_query("Gene")
+  # The view specifies the output columns
+  query.add_view(
+      "secondaryIdentifier", "chromosomeLocation.strand",
+      "chromosomeLocation.start", "chromosomeLocation.end", "chromosome.primaryIdentifier"
+  )
+  # You can edit the constraint values below
+  query.add_constraint("Gene", "IN", "allgenes", code = "A")
+  terms = "gene", "chr.strand", "chr.start", "chr.end", "chr.id"
+  terms_query = ["secondaryIdentifier", "chromosomeLocation.strand", "chromosomeLocation.start", "chromosomeLocation.end", "chromosome.primaryIdentifier"]
+  with open("results/gene_pos.gz", "w") as file:
+    for term in terms[:-1]:
+      file.write(term)
+      file.write ("\t")
+    else:
+      file.write(terms[-1])
+    file.write('\n')
+    for row in query.rows():
+      for t in terms_query[:-1]:
+        if row[t] != None:
+          file.write(str(row[t]))
+          file.write("\t")
+        else:
+          file.write("NA")
+          file.write("\t")
+      if row[terms_query[-1]] != None:
+        file.write(row[terms_query[-1]])
+      else:
+        file.write("NA")
+      file.write("\n")
+```
+
+
 ### Plot affected genes x causal genes
 
 ```r
@@ -1282,22 +1385,21 @@ colnames(causal.pos.A) <- c("geneA", "geneB", "eqtl.A", "eqtl.B", "A->B", "B->A"
 causal.pos.B <- merge(causal.pos.A, genepos, by.x="geneB", by.y="gene", all.x=T)
 
 
-# Keep olnly columns with genes, start positions and chromosomes 
-causal.pos.B.2 <- unique(causal.pos.B[,.(geneA, geneB, start.A, chr.A, chr.start, chr.id)])
-colnames(causal.pos.B.2) <- c("geneA", "geneB", "start.A", "chr.A", "start.B", "chr.B")
+# Keep olnly columns with genes, start positions and chromosomes
+gene.location <- unique(causal.pos.B[,.(geneA, geneB, start.A,end.A, chr.A, chr.start,chr.end, chr.id, strand.A, chr.strand)])
+colnames(gene.location) <- c("geneA", "geneB", "start.A","end.A", "chr.A", "start.B","end.B", "chr.B", "strand.A", "strand.B")
 
 ## transform chromosome ids into numbers
 # remove "chr" part of the chromosome name
-causal.pos.B.2$chr.A <-gsub('chr', '', causal.pos.B.2$chr.A)
-causal.pos.B.2$chr.B <-gsub('chr', '', causal.pos.B.2$chr.B)
-colnames(causal.pos.B.2) <- c("geneA", "geneB", "start.A", "chr.A", "start.B", "chr.B")
+gene.location$chr.A <-gsub('chr', '', gene.location$chr.A)
+gene.location$chr.B <-gsub('chr', '', gene.location$chr.B)
 
 # convert roman chromosome numbers to numbers
-causal.pos.B.2$chr.A <- as.numeric(as.roman(causal.pos.B.2$chr.A))
-causal.pos.B.2$chr.B <- as.numeric(as.roman(causal.pos.B.2$chr.B))
+gene.location$chr.A <- as.numeric(as.roman(gene.location$chr.A))
+gene.location$chr.B <- as.numeric(as.roman(gene.location$chr.B))
 
 # order values
-causal.pos.B.2.order <- causal.pos.B.2[order(chr.A, start.A, chr.B, start.B)]
+gene.location.order <- gene.location[order(chr.A, start.A, chr.B, start.B)]
 
 
 # organize coordinates so that they are ordered by chromosome
@@ -1306,11 +1408,42 @@ vchr <- 1:16
 # how much space will be separating chromosomes
 separator <- 1e5
 
-coordinates_plot <- sort_by_chr(vchr = vchr, causal.pos.B.2.order, separator = separator)
+coordinates_plot.start <- sort_by_chr(vchr = vchr, gene.location.order, separator = separator)
+coordinates_plot.end <- sort_by_chr(vchr = vchr, gene.location.order, separator = separator, coordA = 4, coordB = 7 )
+
+coordinates_plot <- merge(coordinates_plot.start[,.(geneA, geneB, start.A, chr.A, start.B, chr.B, strand.A, strand.B)], 
+                          coordinates_plot.end[,.(geneA, geneB, end.A, end.B)], 
+                          by=c("geneA", "geneB"))
+setcolorder(coordinates_plot, c("geneA","geneB", "start.A", "end.A", "chr.A", "start.B", "end.B", "chr.B"))
+
 plot_sorted_coordinates(coordinates_plot, separator = separator)
 ```
 
 ![](analysis_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
+
+
+#### color by correlation value
+
+```r
+if (!exists("find.effects")){
+  find.effects <- fread("results/findeffects_all_newparams.gz")
+}
+#Create a function to generate a continuous color palette
+rbPal <- colorRampPalette(c('blue','red'))
+
+
+coordinates_plot_cor <- merge(coordinates_plot, find.effects[,.(geneA, geneB, cor)], by=c("geneA", "geneB"), all.x=T)
+coordinates_plot_cor$cor <- abs(coordinates_plot_cor$cor)
+coordinates_plot_cor <- coordinates_plot_cor[order(cor)]
+coordinates_plot_cor$col <- rbPal(100)[as.numeric(cut(coordinates_plot_cor$cor,breaks = 100))]
+
+plot_sorted_coordinates(coordinates_plot_cor, separator = separator, col = coordinates_plot_cor$col)
+gradientLegend(format(round(coordinates_plot_cor$cor, 3), nsmall = 3), rbPal(100), inside=F, side=3)
+```
+
+![Pairs of genes where the gene on the x-axis if affecting the gene on the y-axis. Colored by correlation value and sorted by chromosome and position](analysis_files/figure-html/unnamed-chunk-30-1.png)
+
+
 
 ### Which genes in the paper are also in my results   
 Table with the number of times a gene form the paper is the causal or the affected gene
@@ -1346,12 +1479,786 @@ mygenes_paper.count[order(-causal)]
 
 gene     causal   affected
 ------  -------  ---------
-GPA1         77         16
-ERC1         36          9
-STB5          8          1
-KRE33        NA          8
+GPA1         68         11
+ERC1         27          8
+STB5          7         NA
+KRE33        NA          6
 
 </div>
+
+
+# Focus on causal gene 12
+
+```r
+# coordinates_plot_cor[chr.A==12]
+plot_sorted_coordinates(coordinates_plot_cor[chr.A==12], separator = separator, col = coordinates_plot_cor[chr.A==12]$col)
+```
+
+![](analysis_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
+
+## Focus on the group of vertical bands
+Chromosome 3 seems to mostly be affected by the genes in the vertical bands so I'm going to look closer at chromosome 3
+
+```r
+# the first gene of chromosome 12 that affects chromosome 3
+lower_limit <- coordinates_plot_cor[chr.A==12 & chr.B==3][order(start.A)][1]$start.A
+# the last gene on chromosome 12 that affects chromosome 3 and that's in the band (there's an extra gene further away from the band)
+top_limit <- coordinates_plot_cor[chr.A==12 & chr.B==3][order(start.A)][nrow(coordinates_plot_cor[chr.A==12 & chr.B==3])-1]$start.A
+
+# plot chromosome 12 - the green lines are the limits of the group of vertical bands
+plot_sorted_coordinates(coordinates_plot_cor[chr.A==12], separator = separator, col = coordinates_plot_cor[chr.A==12]$col)
+abline(v = c(lower_limit-1500, top_limit+1500), col="green")
+```
+
+![](analysis_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
+
+
+there are 30 genes between the two green bands
+
+### get gene names for genes on chromosome 12
+
+```r
+if (!exists("genes_GO.bio")){
+  genes_GO.table <- fread("results/genelistwithGOterm.txt")
+  genes_GO.table <- unique(genes_GO.table)
+  genes_GO.bio   <- unique(genes_GO.table[GO.namespace=="biological_process"])
+}
+```
+
+
+```r
+genesA_start_order <- unique(coordinates_plot_cor[chr.A == 12 & chr.B == 3][order(start.A)][, .(geneA, start.A)])
+chr12_genenames_chr3 <- merge(genesA_start_order, unique(genes_GO.bio[,.(gene, symbol, gene.name, GO.term)]), by.x="geneA", by.y="gene")
+chr12_genenames <- merge(unique(coordinates_plot_cor[chr.A == 12][order(start.A)][, .(geneA, start.A)]), unique(genes_GO.bio[,.(gene, symbol, gene.name, GO.term)]), by.x="geneA", by.y="gene")
+```
+
+### Look at the first group
+
+```r
+# genes that are affecting chromosome 3 + positions
+band1.left <- min(genesA_start_order$start.A)
+band1.right <- 8323026
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col,
+  xlim = c(band1.left, top_limit)
+)
+abline(v=c(band1.left-1500, band1.right+1500), col="green")
+```
+
+![](analysis_files/figure-html/unnamed-chunk-36-1.png)<!-- -->
+
+There are 31 between the green lines
+
+
+```r
+# genes that are affecting chromosome 3 + positions
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col,
+  xlim=c(band1.left, band1.right)
+)
+abline(v=c(band1.left-100, band1.right+100), col="green")
+```
+
+![](analysis_files/figure-html/unnamed-chunk-37-1.png)<!-- -->
+
+#### genes on the first "band" of chromosome 12
+
+```r
+# gene names
+unique(chr12_genenames[between(start.A,band1.left, band1.right)]$gene.name)
+```
+
+```
+## [1] "Methionine AminoPeptidase"       "CytiDine Deaminase"             
+## [3] "Effect on Ras Function"          "Increased Recombination Centers"
+```
+
+```r
+# GO terms present
+unique(chr12_genenames[between(start.A,band1.left-100, band1.right+100)]$GO.term)
+```
+
+```
+##  [1] "proteolysis"                                                        
+##  [2] "negative regulation of gene expression"                             
+##  [3] "protein initiator methionine removal involved in protein maturation"
+##  [4] "protein initiator methionine removal"                               
+##  [5] "cytidine catabolic process"                                         
+##  [6] "deoxycytidine catabolic process"                                    
+##  [7] "pyrimidine-containing compound salvage"                             
+##  [8] "cytidine deamination"                                               
+##  [9] "protein targeting to membrane"                                      
+## [10] "peptidyl-L-cysteine S-palmitoylation"                               
+## [11] "protein palmitoylation"                                             
+## [12] "double-strand break repair via nonhomologous end joining"           
+## [13] "protein ubiquitination"                                             
+## [14] "double-strand break repair via synthesis-dependent strand annealing"
+```
+
+### Look at the second group
+
+```r
+band2.left <- 8360186
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col,
+  xlim = c(band2.left, top_limit)
+)
+abline(v=c(band2.left, top_limit+1000), col="green")
+```
+
+![](analysis_files/figure-html/unnamed-chunk-39-1.png)<!-- -->
+
+
+There are 26 genes between the green lines
+
+
+#### genes on the second band of chromsome 12
+
+```r
+# gene names
+unique(chr12_genenames[between(start.A,band2.left-1500, top_limit+1500)]$gene.name)
+```
+
+```
+##  [1] "Long-Chain Base"                                                                            
+##  [2] "Vacuolar Protein Sorting"                                                                   
+##  [3] "Yeast Protein Two"                                                                          
+##  [4] "REDuctional division"                                                                       
+##  [5] "Ribosomal Protein of the Small subunit"                                                     
+##  [6] "Nonhomologous End-Joining defective"                                                        
+##  [7] "SECretory"                                                                                  
+##  [8] "DeCapping Scavenger"                                                                        
+##  [9] "Protein Interacting with Gsy2p"                                                             
+## [10] NA                                                                                           
+## [11] "mitochondrial protein Related to Spastic paraplegia with Optic atrophy and neuropathy SPG55"
+## [12] "ChiTinaSe"                                                                                  
+## [13] "Mitosis Entry Checkpoint"                                                                   
+## [14] "General Control Derepressed"                                                                
+## [15] "ExtraCellular Mutant"                                                                       
+## [16] "EXo-1,3-beta-Glucanase"                                                                     
+## [17] "UBiquitin-Conjugating"                                                                      
+## [18] "AuTophaGy related"                                                                          
+## [19] "SPa2 Homolog"                                                                               
+## [20] "tRNA-specific Adenosine Deaminase"                                                          
+## [21] "PEroXisome related"                                                                         
+## [22] "Nicotinamide Mononucleotide Adenylyltransferase"                                            
+## [23] "CHitin Synthase-related"
+```
+
+```r
+# GO terms present
+unique(chr12_genenames[between(start.A,band2.left-1500, top_limit+1500)]$GO.term)
+```
+
+```
+##   [1] "lipid metabolic process"                                                                         
+##   [2] "sphingolipid metabolic process"                                                                  
+##   [3] "response to heat"                                                                                
+##   [4] "phosphorylation"                                                                                 
+##   [5] "calcium-mediated signaling"                                                                      
+##   [6] "lipid phosphorylation"                                                                           
+##   [7] "protein targeting to vacuole"                                                                    
+##   [8] "retrograde transport, vesicle recycling within Golgi"                                            
+##   [9] "intracellular protein transport"                                                                 
+##  [10] "retrograde vesicle-mediated transport, Golgi to endoplasmic reticulum"                           
+##  [11] "intra-Golgi vesicle-mediated transport"                                                          
+##  [12] "Golgi to endosome transport"                                                                     
+##  [13] "protein transport"                                                                               
+##  [14] "macroautophagy"                                                                                  
+##  [15] "cytoplasm to vacuole transport by the Cvt pathway"                                               
+##  [16] "Rab protein signal transduction"                                                                 
+##  [17] "protein localization to phagophore assembly site"                                                
+##  [18] "cellular protein-containing complex localization"                                                
+##  [19] "retrograde transport, endosome to Golgi"                                                         
+##  [20] "synaptonemal complex assembly"                                                                   
+##  [21] "reciprocal meiotic recombination"                                                                
+##  [22] "sporulation resulting in formation of a cellular spore"                                          
+##  [23] "positive regulation of catalytic activity"                                                       
+##  [24] "meiotic cell cycle"                                                                              
+##  [25] "meiotic recombination checkpoint"                                                                
+##  [26] "ribosomal small subunit assembly"                                                                
+##  [27] "cytoplasmic translation"                                                                         
+##  [28] "rRNA export from nucleus"                                                                        
+##  [29] "translation"                                                                                     
+##  [30] "maturation of SSU-rRNA"                                                                          
+##  [31] "positive regulation of nuclear-transcribed mRNA catabolic process, deadenylation-dependent decay"
+##  [32] "DNA repair"                                                                                      
+##  [33] "double-strand break repair"                                                                      
+##  [34] "double-strand break repair via nonhomologous end joining"                                        
+##  [35] "cellular response to DNA damage stimulus"                                                        
+##  [36] "homologous recombination"                                                                        
+##  [37] "double-strand break repair via single-strand annealing"                                          
+##  [38] "endoplasmic reticulum to Golgi vesicle-mediated transport"                                       
+##  [39] "vesicle fusion"                                                                                  
+##  [40] "vesicle-mediated transport"                                                                      
+##  [41] "vesicle fusion with endoplasmic reticulum"                                                       
+##  [42] "vesicle fusion with Golgi apparatus"                                                             
+##  [43] "deadenylation-dependent decapping of nuclear-transcribed mRNA"                                   
+##  [44] "cellular response to starvation"                                                                 
+##  [45] "nuclear-transcribed mRNA catabolic process, deadenylation-independent decay"                     
+##  [46] "positive regulation of exoribonuclease activity"                                                 
+##  [47] "glycogen biosynthetic process"                                                                   
+##  [48] "regulation of glycogen biosynthetic process"                                                     
+##  [49] "regulation of phosphoprotein phosphatase activity"                                               
+##  [50] "spliceosomal snRNP assembly"                                                                     
+##  [51] "mRNA processing"                                                                                 
+##  [52] "biological_process"                                                                              
+##  [53] "RNA splicing"                                                                                    
+##  [54] "translational termination"                                                                       
+##  [55] "polysaccharide catabolic process"                                                                
+##  [56] "septum digestion after cytokinesis"                                                              
+##  [57] "carbohydrate metabolic process"                                                                  
+##  [58] "chitin catabolic process"                                                                        
+##  [59] "metabolic process"                                                                               
+##  [60] "cell wall organization"                                                                          
+##  [61] "regulation of cell cycle"                                                                        
+##  [62] "DNA damage checkpoint"                                                                           
+##  [63] "telomere maintenance via recombination"                                                          
+##  [64] "telomere maintenance"                                                                            
+##  [65] "double-strand break repair via homologous recombination"                                         
+##  [66] "nucleotide-excision repair"                                                                      
+##  [67] "chromatin silencing at telomere"                                                                 
+##  [68] "cell cycle"                                                                                      
+##  [69] "intra-S DNA damage checkpoint"                                                                   
+##  [70] "mitotic DNA replication checkpoint"                                                              
+##  [71] "meiotic DNA integrity checkpoint"                                                                
+##  [72] "translational initiation"                                                                        
+##  [73] "regulation of translation"                                                                       
+##  [74] "regulation of translational initiation"                                                          
+##  [75] "cellular metabolic process"                                                                      
+##  [76] "regulation of catalytic activity"                                                                
+##  [77] "proteolysis"                                                                                     
+##  [78] "glutathione metabolic process"                                                                   
+##  [79] "glutathione catabolic process"                                                                   
+##  [80] "xenobiotic metabolic process"                                                                    
+##  [81] "cellular glucan metabolic process"                                                               
+##  [82] "glucan catabolic process"                                                                        
+##  [83] "fungal-type cell wall organization"                                                              
+##  [84] "protein ubiquitination"                                                                          
+##  [85] "protein neddylation"                                                                             
+##  [86] "autophagy"                                                                                       
+##  [87] "autophagy of nucleus"                                                                            
+##  [88] "reticulophagy"                                                                                   
+##  [89] "conjugation"                                                                                     
+##  [90] "bipolar cellular bud site selection"                                                             
+##  [91] "pseudohyphal growth"                                                                             
+##  [92] "regulation of cell shape"                                                                        
+##  [93] "mating projection formation"                                                                     
+##  [94] "invasive filamentous growth"                                                                     
+##  [95] "positive regulation of MAPK cascade"                                                             
+##  [96] "tRNA wobble adenosine to inosine editing"                                                        
+##  [97] "tRNA modification"                                                                               
+##  [98] "tRNA processing"                                                                                 
+##  [99] "peroxisome organization"                                                                         
+## [100] "ER-dependent peroxisome organization"                                                            
+## [101] "membrane tubulation"                                                                             
+## [102] "regulation of peroxisome organization"                                                           
+## [103] "biosynthetic process"                                                                            
+## [104] "NAD biosynthetic process"                                                                        
+## [105] "pyridine nucleotide biosynthetic process"                                                        
+## [106] "cellular bud site selection"                                                                     
+## [107] "conjugation with cellular fusion"                                                                
+## [108] "cell wall chitin catabolic process"                                                              
+## [109] "regulation of transcription, DNA-templated"                                                      
+## [110] "Golgi to plasma membrane transport"                                                              
+## [111] "ascospore wall assembly"
+```
+
+
+# Look at hotspots
+
+```r
+hotspot_data <- fread("data/SI_Data_08_hotspotTableForPaper_topGenes100_170420_page1.csv")
+```
+
+
+```r
+hotspot_data.interval <- hotspot_data[,.(hotspotMarker, chromosome, bootstrapIntervalLeft, bootstrapIntervalRight)]
+# remove "chr" part of the chromosome name
+hotspot_data.interval$chromosome <-gsub('chr', '', hotspot_data.interval$chromosome)
+
+# convert roman chromosome numbers to numbers
+hotspot_data.interval$chromosome <- as.numeric(as.roman(hotspot_data.interval$chromosome))
+```
+
+# Get hotspot locations ordered
+
+```r
+vchr <- unique(hotspot_data.interval$chromosome)
+hotspot_data.interval$left.map <- 0
+hotspot_data.interval$right.map <- 0
+for (i in 1:length(vchr)){
+  if (vchr[i] != 1) {
+    previous <- vchr[i-1]
+    hotspot_data.interval[chromosome == vchr[i]]$left.map <- max(coordinates_plot_cor[chr.A==previous]$start.A) + separator + hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalLeft
+    hotspot_data.interval[chromosome == vchr[i]]$right.map <- max(coordinates_plot_cor[chr.A==previous]$start.A) + separator + hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalRight
+  } else if (vchr[i] == 1){
+    hotspot_data.interval[chromosome == vchr[i]]$left.map <- hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalLeft
+    hotspot_data.interval[chromosome == vchr[i]]$right.map <- hotspot_data.interval[chromosome==vchr[i]]$bootstrapIntervalRight
+  }
+}
+```
+
+## Get genes that are inside the hotspots
+
+```r
+granges.A <- GRanges(seqnames = gene.location.order$chr.A,
+        ranges=IRanges(start=gene.location.order$start.A,
+                       end = gene.location.order$end.A),
+        strand= gene.location.order$strand.A)
+names(granges.A) <- gene.location.order$geneA
+granges.A <- unique(granges.A)
+
+granges.B <- GRanges(seqnames = gene.location.order$chr.B,
+                     ranges=IRanges(start=gene.location.order$start.B,
+                                    end = gene.location.order$end.B),
+                     strand= gene.location.order$strand.B)
+names(granges.B) <- gene.location.order$geneB
+granges.B <- unique(granges.B)
+
+
+granges.hotspots <- GRanges(seqnames = hotspot_data.interval$chromosome,
+                            ranges=IRanges(start=hotspot_data.interval$bootstrapIntervalLeft,
+                                           end=hotspot_data.interval$bootstrapIntervalRight))
+names(granges.hotspots) <- hotspot_data.interval$hotspotMarker
+
+
+# genes that are in hotspots
+overlapping_genesA <- subsetByOverlaps(granges.A, granges.hotspots)
+genes_in_hotspot <- unique(gene.location.order[geneA %in% names(overlapping_genesA)][,.(geneA, start.A, end.A, chr.A, strand.A)])
+
+overlap <- findOverlaps(granges.A, granges.hotspots, ignore.strand=T)
+genes_in_hotspot$hotspot <- names(granges.hotspots[subjectHits(overlap)])
+genes_in_hotspot_poshot <-  merge(genes_in_hotspot, hotspot_data.interval[,.(hotspotMarker, bootstrapIntervalLeft, bootstrapIntervalRight, left.map, right.map)], by.x="hotspot", by.y="hotspotMarker")
+genes_in_hotspot_pos <- unique(merge(genes_in_hotspot_poshot, coordinates_plot_cor[,.(geneA, start.A.map=start.A, end.A.map =end.A)],  by="geneA"))
+```
+
+Only 15.11% of the causal genes are in the hotspots.  
+Most of the causal genes were not located in the hotspots
+
+#### number of genes in hotspots and number of hotspots in each chromosome in and how many causal genes are in each hotspot
+
+```r
+# how many hotspots are in each chromosome and how many genes overlapping with hotspots are in each chromosome
+hotspot_genes_in_chr <- genes_in_hotspot_pos[,.N, by=chr.A]
+hotspots_in_chr <- hotspot_data.interval[,.N, by=chromosome]
+
+hotspots_per_chr <- merge(hotspot_genes_in_chr, hotspots_in_chr, by.x="chr.A", by.y="chromosome")
+setnames(hotspots_per_chr, c("chr", "n_genes", "n_hotspots"))
+head(hotspots_per_chr[order(-n_genes)])
+```
+
+<div class="kable-table">
+
+ chr   n_genes   n_hotspots
+----  --------  -----------
+   4        13           12
+   7        12            9
+  15        11           10
+  12         9            6
+  13         9            8
+  10         8            8
+
+</div>
+
+```r
+# how many causal genes are in the each hotspot (that contains causal genes) (ordered by number of genes)
+head(genes_in_hotspot[,.(n_genes=.N),  by=hotspot][order(-n_genes)])
+```
+
+<div class="kable-table">
+
+hotspot              n_genes
+------------------  --------
+chrIV:461656_A/G           8
+chrXII:848842_A/G          6
+chrII:619028_C/A           5
+chrVII:178509_T/C          5
+chrIX:105090_T/C           5
+chrVII:850923_T/C          4
+
+</div>
+
+### Plot number of hotspots that have a certain number of causal genes
+
+```r
+ngenes_hotspot <- genes_in_hotspot[,.(n_genes=.N),  by=hotspot]
+nhotspots_genes <- ngenes_hotspot[,.N, by=n_genes][order(n_genes)]
+bp <- barplot(nhotspots_genes$N, names.arg = nhotspots_genes$n_genes, xlab = "Number of genes in hotspot", ylab="Number of hotspots", ylim=c(0,max(nhotspots_genes$N)+2))
+text(bp, nhotspots_genes$N, labels=nhotspots_genes$N, pos = 3)
+```
+
+![](analysis_files/figure-html/unnamed-chunk-46-1.png)<!-- -->
+
+
+## comparison of found causal genes in hotspots with genes from paper in hotspots
+
+```r
+genes_hotspot_paper <- hotspot_data[,.(hotspotMarker, allGenesInInterval)]
+genes_in_hotspot.names <- merge(genes_in_hotspot, unique(genes_GO.bio[,.(gene, symbol, gene.name)]), by.x="geneA", by.y="gene")
+
+# genes_in_hotspot.names[geneA %in% unlist(strsplit(genes_hotspot_paper$allGenesInInterval, split = ";")) | symbol %in% unlist(strsplit(genes_hotspot_paper$allGenesInInterval, split = ";"))]
+
+if (all(genes_in_hotspot.names$geneA %in% unlist(strsplit(genes_hotspot_paper$allGenesInInterval, split = ";")) | genes_in_hotspot.names$symbol %in% unlist(strsplit(genes_hotspot_paper$allGenesInInterval, split = ";")))){
+  print("All the causal genes found in the hotspots have been reported by the paper")
+} else {
+  print("Some of the causal genes are not reported in the paper")
+}
+```
+
+```
+## [1] "All the causal genes found in the hotspots have been reported by the paper"
+```
+
+## Genes that are being affected by genes in a hotspot
+
+```r
+genes_affected_byhotspot <- unique(find.effects_TF[geneA %in% genes_in_hotspot$geneA][,.(geneA, geneB)])
+```
+In total, there are 1593 genes affected by genes in a hotspot
+
+
+```r
+genes_affected_byhotspotB <- unique(merge(unique(gene.location.order[geneA %in% names(overlapping_genesA)]), genes_in_hotspot[,.(geneA, hotspot)], by="geneA")[,.(geneB, start.B, end.B, chr.B, hotspot, chr.A)])
+toplot <- unique(genes_affected_byhotspotB[,.(chr.A,.N), hotspot][order(chr.A)])
+color = grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = T)]
+pal <- sample(color, length(unique(toplot$chr.A)))
+toplot$col <-pal[toplot$chr.A]
+barplot(
+  toplot$N,
+  names.arg = toplot$hotspot,
+  las = 2,
+  cex.names = 0.5,
+  col=toplot$col, 
+  main ="Number of genes each hotspot affects"
+)
+legend(x = "topright", legend = unique(toplot$chr.A), col = pal, pch=20, title="chr", cex = 0.7)
+```
+
+![](analysis_files/figure-html/unnamed-chunk-49-1.png)<!-- -->
+
+
+
+## Plot gene 12 with described hotspots
+
+```r
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A==12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col
+)
+
+
+nCol <- nrow(hotspot_data.interval[chromosome==12])
+col<- rep(1:nCol, each = 2)
+
+hotspots <- data.table(c(hotspot_data.interval[chromosome==12]$left.map, hotspot_data.interval[chromosome==12]$right.map))
+hotspots <- hotspots[order(V1)]
+abline(v=unlist(hotspots$V1), 
+       col=as.factor(col), lwd=1)
+```
+
+![](analysis_files/figure-html/unnamed-chunk-50-1.png)<!-- -->
+
+### closer look 
+
+```r
+# genes that are affecting chromosome 3 + positions
+# genes that are affecting chromosome 3 + positions
+band1.left <- min(genesA_start_order$start.A)
+band1.right <- 8525907
+plot_sorted_coordinates(
+  coordinates_plot_cor[chr.A == 12],
+  separator = separator,
+  col = coordinates_plot_cor[chr.A==12]$col,
+  xlim = c(min(genesA_start_order$start.A), top_limit)
+)
+# abline(v=c(band1.left-1500, band1.right+1500), col="green")
+abline(v=unlist(hotspots$V1), 
+       col=as.factor(col), lwd=1.5)
+```
+
+![](analysis_files/figure-html/unnamed-chunk-51-1.png)<!-- -->
+
+### genes in chromosome 12 that overlap with hotspots
+
+```r
+unique(chr12_genenames[chr12_genenames[, geneA %in% genes_in_hotspot_pos[chr.A==12]$geneA]][,.(geneA, start.A, symbol, gene.name)])
+```
+
+<div class="kable-table">
+
+geneA        start.A  symbol   gene.name                        
+----------  --------  -------  ---------------------------------
+YLL007C      7828644  LMO1     eLMO homolog                     
+YLR273C      8383425  PIG1     Protein Interacting with Gsy2p   
+YLR275W      8388720  SMD2     NA                               
+YLR361C-A    8543725  NA       NA                               
+YLR364W      8548404  GRX8     GlutaRedoXin                     
+YLR369W      8553894  SSQ1     Stress-Seventy subfamily Q       
+YLR371W      8557056  ROM2     RhO1 Multicopy suppressor        
+YLR375W      8566039  STP3     protein with similarity to Stp1p 
+YLR376C      8567168  PSY3     Platinum SensitivitY             
+
+</div>
+
+### All hotspots plotted
+
+```r
+plot_sorted_coordinates(
+  coordinates_plot_cor,
+  separator = separator,
+  col = coordinates_plot_cor$col
+)
+
+
+nCol <- nrow(hotspot_data.interval)
+col<- rep(1:nCol, each = 2)
+
+hotspots <- data.table(c(hotspot_data.interval$left.map, hotspot_data.interval$right.map))
+hotspots <- hotspots[order(V1)]
+abline(v=unlist(hotspots$V1), 
+       col=as.factor(col), lwd=0.5)
+```
+
+![](analysis_files/figure-html/unnamed-chunk-53-1.png)<!-- -->
+
+### Only hotspots that contain causal genes plotted
+
+```r
+plot_sorted_coordinates(
+  coordinates_plot_cor,
+  separator = separator,
+  col = coordinates_plot_cor$col
+)
+
+
+hotspots_causalgenes <- unique(genes_in_hotspot_pos[,.(hotspot, left.map, right.map)])
+nCol <- nrow(hotspots_causalgenes)
+col<- rep(1:nCol, each = 2)
+
+hotspots <- data.table(c(hotspots_causalgenes$left.map, hotspots_causalgenes$right.map))
+hotspots <- hotspots[order(V1)]
+abline(v=unlist(hotspots$V1), 
+       col=as.factor(col), lwd=0.5)
+```
+
+![](analysis_files/figure-html/unnamed-chunk-54-1.png)<!-- -->
+
+### Color the gene pairs where the causal gene overlaps an eQTL hotspot
+
+```r
+coordinates_plot_cor$hotspotcol <- "grey"
+coordinates_plot_cor[geneA %in% genes_in_hotspot_pos$geneA]$hotspotcol <- "red"
+
+plot_sorted_coordinates(
+  coordinates_plot_cor,
+  separator = separator,
+  col = coordinates_plot_cor$hotspotcol
+)
+```
+
+![](analysis_files/figure-html/unnamed-chunk-55-1.png)<!-- -->
+
+### Color the gene pairs where either the causal gene overlaps the hotspot, the marker overlaps the hotspot or both
+
+Color the plot if  
+* the causal gene overlaps the hotspot
+* the causal gene's eQTL overlaps the hotspot
+* the causal gene and its eQTL overlaps the hotspot
+
+
+```r
+colorbymarker <- unique(merge(find.effects_TF, unique(eqtl_results[,.(gene, pmarker, CI.l, CI.r)]), by.x=c("geneA", "eqtl.A"), by.y=c("gene", "pmarker")))
+
+colorbymarker <- separate(colorbymarker, col = CI.l, c("marker.chr", "marker.pos.l", "marker.other.l"), sep = "[:_]+", remove = F,
+         convert = T, extra = "warn", fill = "warn")
+colorbymarker <- separate(colorbymarker, col = CI.r, c("marker.chr.r", "marker.pos.r", "marker.other.r"), sep = "[:_]+", remove = F,
+                          convert = T, extra = "warn", fill = "warn")
+
+# remove extra columns
+colstoremove <-  c("CI.l", "CI.r", "marker.chr.r", "marker.other.l", "marker.other.r")
+colorbymarker[,(colstoremove):=NULL]
+
+## transform chromosome ids into numbers
+# remove "chr" part of the chromosome name
+colorbymarker$marker.chr <-gsub('chr', '', colorbymarker$marker.chr)
+
+
+colorbymarker$marker.chr <- as.numeric(as.roman(colorbymarker$marker.chr))
+
+colorbymarker_toGR <- unique(colorbymarker[,.(geneA, eqtl.A, marker.chr, marker.pos.l, marker.pos.r)])
+
+granges.marker <- GRanges(seqnames = colorbymarker_toGR$marker.chr,
+                     ranges=IRanges(start=colorbymarker_toGR$marker.pos.l,
+                                    end = colorbymarker_toGR$marker.pos.r))
+names(granges.marker) <- colorbymarker_toGR$eqtl.A
+
+granges.hotspots <- GRanges(seqnames = hotspot_data.interval$chromosome,
+                            ranges=IRanges(start=hotspot_data.interval$bootstrapIntervalLeft,
+                                           end=hotspot_data.interval$bootstrapIntervalRight))
+names(granges.hotspots) <- hotspot_data.interval$hotspotMarker
+
+
+# markers that are in hotspots
+overlapping_markers <- subsetByOverlaps(granges.marker, granges.hotspots)
+markers_in_hotspot <- colorbymarker_toGR[eqtl.A %in% names(overlapping_markers)]
+
+coordinates_plot_cor$hotspotcol <- "grey"
+# cases where the gene and the marker overlap the hotspot
+coordinates_plot_cor[geneA %in% markers_in_hotspot$geneA & geneA %in% genes_in_hotspot_pos$geneA]$hotspotcol <- "chartreuse4"
+# cases where the gene overlaps the hotspot but the marker doesn't
+coordinates_plot_cor[!geneA %in% markers_in_hotspot$geneA & geneA %in% genes_in_hotspot_pos$geneA]$hotspotcol <- "red"
+# cases where the marker overlaps the hotspot but the gene doesn't
+coordinates_plot_cor[geneA %in% markers_in_hotspot$geneA & !geneA %in% genes_in_hotspot_pos$geneA]$hotspotcol <- "cyan"
+
+
+plot_sorted_coordinates(
+  coordinates_plot_cor,
+  separator = separator,
+  col = coordinates_plot_cor$hotspotcol
+)
+add_legend("top", legend=c("gene and eQTL", "gene", "eqtl"), pch=20, 
+           col=c("chartreuse4", "red", "cyan"),,
+           horiz=TRUE, cex=0.8, title="Overlapping hotspot")
+```
+
+![](analysis_files/figure-html/unnamed-chunk-56-1.png)<!-- -->
+
+
+
+
+```r
+numlinks_from_gene.A <- find.effects_TF[, .(geneB, count.A=.N), by=geneA]
+numlinks_from_gene.B <- find.effects_TF[, .(count.B=.N), by=geneB]
+numlinks_from_gene <- merge(numlinks_from_gene.A, numlinks_from_gene.B, by="geneB", all=T)
+setcolorder(numlinks_from_gene, c("geneA", "geneB", "count.A", "count.B"))
+```
+
+
+
+```r
+hist(numlinks_from_gene$count.A, main = "Frequency of links going out of causal genes")
+```
+
+![](analysis_files/figure-html/unnamed-chunk-58-1.png)<!-- -->
+
+
+see which genes that have more than 200 links going out overlap with the hotspots
+# See overlap of genes that have > 200 links going out with the hotspots
+Add number of links going out to the coordinates table
+
+```r
+coordinates_plot_links <- merge(coordinates_plot_cor, unique(numlinks_from_gene[,.(geneA, count.A)])[order(-count.A)], by="geneA")
+```
+
+## Plot where causal genes have > 200 links going out and the existing hotspots in the chromosomes they are in
+
+```r
+coordinates_plot_links.200 <- coordinates_plot_links[count.A>=200]
+
+plot_sorted_coordinates(
+  coordinates_plot_links.200,
+  separator = separator,
+  col = coordinates_plot_links.200$col
+)
+
+chrom_to_plot <- unique(coordinates_plot_links.200$chr.A)
+
+nCol <- nrow(hotspot_data.interval)
+col<- rep(1:nCol, each = 2)
+
+hotspots <- data.table(c(hotspot_data.interval[chromosome %in% chrom_to_plot]$left.map, hotspot_data.interval[chromosome %in% chrom_to_plot]$right.map))
+hotspots <- hotspots[order(V1)]
+abline(v=unlist(hotspots$V1),
+       col=as.factor(col), lwd=1)
+```
+
+![](analysis_files/figure-html/unnamed-chunk-60-1.png)<!-- -->
+
+### How many genes that have more than 200 links going out overlap the hotspots
+
+```r
+genes_hotspot_links.200 <- genes_in_hotspot_pos[geneA %in% coordinates_plot_links.200$geneA]
+genes_hotspot_links.200.names <- unique(merge(genes_hotspot_links.200[,.(geneA, hotspot, chr.A)], genes_GO.bio[,.(gene, symbol, gene.name)], by.x="geneA", by.y="gene"))
+genes_hotspot_links.200.names
+```
+
+<div class="kable-table">
+
+geneA     hotspot              chr.A  symbol   gene.name                         
+--------  ------------------  ------  -------  ----------------------------------
+YLR273C   chrXII:694841_T/C       12  PIG1     Protein Interacting with Gsy2p    
+YLR275W   chrXII:694841_T/C       12  SMD2     NA                                
+YNL135C   chrXIV:372376_G/A       14  FPR1     Fk 506-sensitive Proline Rotamase 
+YOL082W   chrXV:171150_T/C        15  ATG19    AuTophaGy related                 
+
+</div>
+
+There are 4 genes overlapping 3 hotspots
+
+
+
+```r
+chrom_to_plot <- unique(genes_hotspot_links.200.names$chr.A)
+for (chr in unique(genes_hotspot_links.200.names$chr.A)){
+  plot_sorted_coordinates(
+    coordinates_plot_links.200[chr.A==chr],
+    separator = separator,
+    col = coordinates_plot_links.200[chr.A==chr]$col, 
+    main = paste("Overlap of genes on chr", chr,"with the hotspots" ,sep=" ")
+  )
+ 
+  chrom_to_plot <- unique(coordinates_plot_links.200$chr.A)
+  
+  nCol <- nrow(hotspot_data.interval)
+  col<- rep(1:nCol, each = 2)
+  
+  hotspots <- data.table(c(hotspot_data.interval[chromosome %in% chrom_to_plot]$left.map, hotspot_data.interval[chromosome %in% chrom_to_plot]$right.map))
+  hotspots <- hotspots[order(V1)]
+  abline(v=unlist(hotspots$V1), 
+         col=as.factor(col), lwd=1)
+  
+  print(genes_hotspot_links.200.names[chr.A== chr])
+}
+```
+
+![](analysis_files/figure-html/unnamed-chunk-62-1.png)<!-- -->
+
+```
+##      geneA           hotspot chr.A symbol                      gene.name
+## 1: YLR273C chrXII:694841_T/C    12   PIG1 Protein Interacting with Gsy2p
+## 2: YLR275W chrXII:694841_T/C    12   SMD2                           <NA>
+```
+
+![](analysis_files/figure-html/unnamed-chunk-62-2.png)<!-- -->
+
+```
+##      geneA           hotspot chr.A symbol                         gene.name
+## 1: YNL135C chrXIV:372376_G/A    14   FPR1 Fk 506-sensitive Proline Rotamase
+```
+
+![](analysis_files/figure-html/unnamed-chunk-62-3.png)<!-- -->
+
+```
+##      geneA          hotspot chr.A symbol         gene.name
+## 1: YOL082W chrXV:171150_T/C    15  ATG19 AuTophaGy related
+```
+
+
+
+
+
+
+
+
+
 
 # Others
 ### Get distance between gene and eqtl
@@ -1402,7 +2309,8 @@ legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), 
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
+![](analysis_files/figure-html/unnamed-chunk-63-1.png)<!-- -->
+
 ### Plot where (relative to the gene) the eqtls are located
 
 ```r
@@ -1430,18 +2338,25 @@ distB.before <- distance.B[start.B > eqtlB.pos][order(-dist.B)]
 # genes that have an eqtl after their end position
 distB.after <- distance.B[eqtlB.pos > end.B][order(-dist.B)]
 
+### sanity check
+comb.inside <- distA.inside %>% unite(gene_eqtl, geneA, eqtl.A, sep = "__")
+comb.before <- distA.before %>% unite(gene_eqtl, geneA, eqtl.A, sep = "__")
+comb.after <- distA.after %>% unite(gene_eqtl, geneA, eqtl.A, sep = "__")
+if(any(comb.inside %in% comb.before | comb.inside %in% comb.after | comb.before %in% comb.after)){
+  stop("Something's wrong with the gene-eqtl distance calculation")
+}
+###
 # Plot number of genes that have eqtls before the gene start site, within the gene or after the gene's end site
 toplotA <- c(before=nrow(distA.before), inside=nrow(distA.inside), after=nrow(distA.after))
 toplotB <- c(before=nrow(distB.before), inside=nrow(distB.inside), after=nrow(distB.after))
 
 toplotAB <- rbind(toplotA, toplotB)
-bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position relative to itself",
-        xlab="Number of Gears", col=c("darkblue","red"),
+bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position relative to itself", col=c("darkblue","red"),
         legend = c("causal genes", "affected genes"), beside=TRUE, ylim=c(0,max(toplotAB)+50))
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
+![](analysis_files/figure-html/unnamed-chunk-64-1.png)<!-- -->
 
 ```r
 # bpB <- barplot(toplotB, 
@@ -1455,6 +2370,25 @@ bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position
 text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-32-2.png)<!-- -->
+![](analysis_files/figure-html/unnamed-chunk-64-2.png)<!-- -->
 
 Most of the eqtls seem to be located before the gene.  
+
+### How many gene-eqtl pairs are not in the paper's reported pairs
+
+```r
+geneeqtlA.sub <- unique(find.effects_TF[,.(geneA, eqtl.A)])
+geneeqtlB.sub <- unique(find.effects_TF[,.(geneB, eqtl.B)])
+genepmarker.sub <- eqtl_results[,.(gene, pmarker)]
+
+combinegeneeqtlA <- geneeqtlA.sub %>% unite(gene_eqtl, geneA, eqtl.A, sep = "__")
+combinegeneeqtlB <- geneeqtlB.sub %>% unite(gene_eqtl, geneB, eqtl.B, sep = "__")
+combine_genepmarker <- genepmarker.sub %>% unite(gene_eqtl, gene, pmarker, sep = "__")
+
+
+geneA.eqtlA.notinpaper <- combinegeneeqtlA[which(!combinegeneeqtlA %in% combine_genepmarker)]
+geneB.eqtlB.notinpaper <- combinegeneeqtlB[which(!combinegeneeqtlB %in% combine_genepmarker)]
+```
+
+There are 1 gene-eqtl pairs for the causal genes not in the provided gene-eqtl table.  
+There are 1 gene-eqtl pairs for the affected genes not in the provided gene-eqtl table
