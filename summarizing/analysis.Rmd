@@ -1466,6 +1466,18 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=0.5)
 ```
 
+### Color the gene pairs where the causal gene overlaps an eQTL hotspot
+```{r}
+coordinates_plot_cor$hotspotcol <- "grey"
+coordinates_plot_cor[geneA %in% genes_in_hotspot_pos$geneA]$hotspotcol <- "red"
+
+plot_sorted_coordinates(
+  coordinates_plot_cor,
+  separator = separator,
+  col = coordinates_plot_cor$hotspotcol
+)
+```
+
 
 
 ```{r}
