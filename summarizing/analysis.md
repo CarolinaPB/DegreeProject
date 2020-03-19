@@ -4,7 +4,6 @@ author: "Carolina Pita Barros"
 date: "2020-03-19"
 output: 
   html_document: 
-    df_print: kable
     fig_caption: yes
     keep_md: yes
     number_sections: yes
