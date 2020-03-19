@@ -1478,6 +1478,68 @@ plot_sorted_coordinates(
 )
 ```
 
+### Color the gene pairs where either the causal gene overlaps the hotspot, the marker overlaps the hotspot or both
+
+Color the plot if  
+* the causal gene overlaps the hotspot
+* the causal gene's eQTL overlaps the hotspot
+* the causal gene and its eQTL overlaps the hotspot
+
+```{r}
+colorbymarker <- unique(merge(find.effects_TF, unique(eqtl_results[,.(gene, pmarker, CI.l, CI.r)]), by.x=c("geneA", "eqtl.A"), by.y=c("gene", "pmarker")))
+
+colorbymarker <- separate(colorbymarker, col = CI.l, c("marker.chr", "marker.pos.l", "marker.other.l"), sep = "[:_]+", remove = F,
+         convert = T, extra = "warn", fill = "warn")
+colorbymarker <- separate(colorbymarker, col = CI.r, c("marker.chr.r", "marker.pos.r", "marker.other.r"), sep = "[:_]+", remove = F,
+                          convert = T, extra = "warn", fill = "warn")
+
+# remove extra columns
+colstoremove <-  c("CI.l", "CI.r", "marker.chr.r", "marker.other.l", "marker.other.r")
+colorbymarker[,(colstoremove):=NULL]
+
+## transform chromosome ids into numbers
+# remove "chr" part of the chromosome name
+colorbymarker$marker.chr <-gsub('chr', '', colorbymarker$marker.chr)
+
+
+colorbymarker$marker.chr <- as.numeric(as.roman(colorbymarker$marker.chr))
+
+colorbymarker_toGR <- unique(colorbymarker[,.(geneA, eqtl.A, marker.chr, marker.pos.l, marker.pos.r)])
+
+granges.marker <- GRanges(seqnames = colorbymarker_toGR$marker.chr,
+                     ranges=IRanges(start=colorbymarker_toGR$marker.pos.l,
+                                    end = colorbymarker_toGR$marker.pos.r))
+names(granges.marker) <- colorbymarker_toGR$eqtl.A
+
+granges.hotspots <- GRanges(seqnames = hotspot_data.interval$chromosome,
+                            ranges=IRanges(start=hotspot_data.interval$bootstrapIntervalLeft,
+                                           end=hotspot_data.interval$bootstrapIntervalRight))
+names(granges.hotspots) <- hotspot_data.interval$hotspotMarker
+
+
+# markers that are in hotspots
+overlapping_markers <- subsetByOverlaps(granges.marker, granges.hotspots)
+markers_in_hotspot <- colorbymarker_toGR[eqtl.A %in% names(overlapping_markers)]
+
+coordinates_plot_cor$hotspotcol <- "grey"
+# cases where the gene and the marker overlap the hotspot
+coordinates_plot_cor[geneA %in% markers_in_hotspot$geneA & geneA %in% genes_in_hotspot_pos$geneA]$hotspotcol <- "chartreuse4"
+# cases where the gene overlaps the hotspot but the marker doesn't
+coordinates_plot_cor[!geneA %in% markers_in_hotspot$geneA & geneA %in% genes_in_hotspot_pos$geneA]$hotspotcol <- "red"
+# cases where the marker overlaps the hotspot but the gene doesn't
+coordinates_plot_cor[geneA %in% markers_in_hotspot$geneA & !geneA %in% genes_in_hotspot_pos$geneA]$hotspotcol <- "cyan"
+
+
+plot_sorted_coordinates(
+  coordinates_plot_cor,
+  separator = separator,
+  col = coordinates_plot_cor$hotspotcol
+)
+add_legend("top", legend=c("gene and eQTL", "gene", "eqtl"), pch=20, 
+           col=c("chartreuse4", "red", "cyan"),,
+           horiz=TRUE, cex=0.8, title="Overlapping hotspot")
+```
+
 
 
 ```{r}
