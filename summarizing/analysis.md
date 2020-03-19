@@ -601,18 +601,15 @@ setcolorder(numlinks_from_gene, c("geneA", "geneB", "count.A", "count.B"))
 head(numlinks_from_gene[order(-count.A, count.B)])
 ```
 
-<div class="kable-table">
-
-geneA     geneB      count.A   count.B
---------  --------  --------  --------
-YLR270W   YDR236C        836         2
-YLR270W   YGL193C        836         2
-YLR270W   YJL008C        836         2
-YLR270W   YJL193W        836         3
-YLR270W   YJL143W        836         4
-YLR270W   YLR179C        836         4
-
-</div>
+```
+##      geneA   geneB count.A count.B
+## 1: YLR270W YDR236C     836       2
+## 2: YLR270W YGL193C     836       2
+## 3: YLR270W YJL008C     836       2
+## 4: YLR270W YJL193W     836       3
+## 5: YLR270W YJL143W     836       4
+## 6: YLR270W YLR179C     836       4
+```
 
 ### number of times each geneA points to another gene + GO term
 
@@ -623,18 +620,29 @@ links_perGO_pergene <- merge(unique(genes_GO.bio.noevidence),
 head(links_perGO_pergene[order(-count.A), .(gene, GO.identifier, GO.term, count.A)])
 ```
 
-<div class="kable-table">
-
-gene      GO.identifier   GO.term                                                                        count.A
---------  --------------  ----------------------------------------------------------------------------  --------
-YLR270W   GO:0000290      deadenylation-dependent decapping of nuclear-transcribed mRNA                      836
-YLR270W   GO:0009267      cellular response to starvation                                                    836
-YLR270W   GO:0031086      nuclear-transcribed mRNA catabolic process, deadenylation-independent decay        836
-YLR270W   GO:1901919      positive regulation of exoribonuclease activity                                    836
-YLR264W   GO:0000028      ribosomal small subunit assembly                                                   806
-YLR264W   GO:0002181      cytoplasmic translation                                                            806
-
-</div>
+```
+##       gene GO.identifier
+## 1: YLR270W    GO:0000290
+## 2: YLR270W    GO:0009267
+## 3: YLR270W    GO:0031086
+## 4: YLR270W    GO:1901919
+## 5: YLR264W    GO:0000028
+## 6: YLR264W    GO:0002181
+##                                                                        GO.term
+## 1:               deadenylation-dependent decapping of nuclear-transcribed mRNA
+## 2:                                             cellular response to starvation
+## 3: nuclear-transcribed mRNA catabolic process, deadenylation-independent decay
+## 4:                             positive regulation of exoribonuclease activity
+## 5:                                            ribosomal small subunit assembly
+## 6:                                                     cytoplasmic translation
+##    count.A
+## 1:     836
+## 2:     836
+## 3:     836
+## 4:     836
+## 5:     806
+## 6:     806
+```
 
 
 ```r
@@ -650,18 +658,22 @@ links_perGO_transfactor <- links_perGO[(grepl(" transcription ",GO.term, fixed =
 head(links_perGO_transfactor[order(-gocount)][,.(GO.term, gocount)])
 ```
 
-<div class="kable-table">
-
-GO.term                                                                            gocount
---------------------------------------------------------------------------------  --------
-positive regulation of transcription by RNA polymerase II                              493
-negative regulation of transcription by RNA polymerase II                              433
-negative regulation of transcription by transcription factor localization              109
-positive regulation of transcription elongation from RNA polymerase II promoter        107
-positive regulation of transcription initiation from RNA polymerase II promoter         86
-positive regulation of transcription by RNA polymerase I                                33
-
-</div>
+```
+##                                                                            GO.term
+## 1:                       positive regulation of transcription by RNA polymerase II
+## 2:                       negative regulation of transcription by RNA polymerase II
+## 3:       negative regulation of transcription by transcription factor localization
+## 4: positive regulation of transcription elongation from RNA polymerase II promoter
+## 5: positive regulation of transcription initiation from RNA polymerase II promoter
+## 6:                        positive regulation of transcription by RNA polymerase I
+##    gocount
+## 1:     493
+## 2:     433
+## 3:     109
+## 4:     107
+## 5:      86
+## 6:      33
+```
 There are 65 different terms with "transcription" and "regulation" or "transcription factor" in their name
 
 
@@ -704,13 +716,10 @@ hist(links_perGO_transfactor[order(-gocount)]$gocount,
 data.table(links_perGO[(grepl(" transcription ",GO.term, fixed = F) & grepl(" regulation ",GO.term, fixed = F)) | grepl("transcription factor",GO.term, fixed = F) , .(sum_trans=sum(gocount, na.rm = T))], links_perGO[!((grepl(" transcription ",GO.term, fixed = F) & grepl(" regulation ",GO.term, fixed = F)) | grepl("transcription factor",GO.term, fixed = F)) , .(sum_others=sum(gocount, na.rm = T))])
 ```
 
-<div class="kable-table">
-
- sum_trans   sum_others
-----------  -----------
-      1432       149730
-
-</div>
+```
+##    sum_trans sum_others
+## 1:      1432     149730
+```
 
 ### Num of links having "transcription" and "regulation" or "transcription factor" in the description
 (with outliers)
@@ -988,163 +997,93 @@ hgCondB
 hgCondA.dt
 ```
 
-<div class="kable-table">
-
-GOBPID           Pvalue   OddsRatio      ExpCount   Count   Size  Term                                                                              
------------  ----------  ----------  ------------  ------  -----  ----------------------------------------------------------------------------------
-GO:0015074    0.0000033    6.690476     8.2120838      20     27  DNA integration                                                                   
-GO:2000112    0.0000294    1.883809    58.2262997      84    196  regulation of cellular macromolecule biosynthetic process                         
-GO:0009889    0.0000479    1.825424    61.4006143      87    207  regulation of biosynthetic process                                                
-GO:0031328    0.0000545    1.831857    59.9177970      85    197  positive regulation of cellular biosynthetic process                              
-GO:0032774    0.0000606    1.653361    91.2453761     121    300  RNA biosynthetic process                                                          
-GO:0080090    0.0000759    1.669385    84.6262093     113    283  regulation of primary metabolic process                                           
-GO:0006351    0.0000839    1.641275    90.0287711     119    296  transcription, DNA-templated                                                      
-GO:0010557    0.0000925    1.810992    58.0928894      82    191  positive regulation of macromolecule biosynthetic process                         
-GO:0010628    0.0001103    1.803870    57.4845869      81    189  positive regulation of gene expression                                            
-GO:0006278    0.0002131    3.427669    11.2535964      22     37  RNA-dependent DNA biosynthetic process                                            
-GO:0018130    0.0002211    1.473873   142.6469379     175    469  heterocycle biosynthetic process                                                  
-GO:0006310    0.0002433    2.525737    19.3488372      33     64  DNA recombination                                                                 
-GO:0019438    0.0002936    1.465007   140.5178792     172    462  aromatic compound biosynthetic process                                            
-GO:0031323    0.0002937    1.617189    78.9813167     104    265  regulation of cellular metabolic process                                          
-GO:0050789    0.0003480    1.506967   115.4398321     144    391  regulation of biological process                                                  
-GO:1901362    0.0005162    1.426117   152.0756268     183    500  organic cyclic compound biosynthetic process                                      
-GO:0051254    0.0006350    1.717006    52.3140156      72    172  positive regulation of RNA metabolic process                                      
-GO:0006449    0.0007805         Inf     1.8249075       6      6  regulation of translational termination                                           
-GO:0045944    0.0009824    1.751615    44.4060830      62    146  positive regulation of transcription by RNA polymerase II                         
-GO:0006508    0.0009953    1.625763    60.8302507      81    200  proteolysis                                                                       
-GO:1903508    0.0010438    1.691951    50.4891081      69    166  positive regulation of nucleic acid-templated transcription                       
-GO:0051173    0.0010664    1.619066    60.9272954      81    202  positive regulation of nitrogen compound metabolic process                        
-GO:0044271    0.0011298    1.354018   199.5232224     231    656  cellular nitrogen compound biosynthetic process                                   
-GO:0048522    0.0015723    1.529220    74.9325127      96    249  positive regulation of cellular process                                           
-GO:0009890    0.0015979    1.686259    46.8392931      64    154  negative regulation of biosynthetic process                                       
-GO:0032197    0.0017845    2.717895    11.8618989      21     39  transposition, RNA-mediated                                                       
-GO:0006139    0.0019659    1.314026   238.7587341     270    785  nucleobase-containing compound metabolic process                                  
-GO:0090305    0.0020440    1.898887    28.5902178      42     94  nucleic acid phosphodiester bond hydrolysis                                       
-GO:2000113    0.0020722    1.690126    43.7977805      60    144  negative regulation of cellular macromolecule biosynthetic process                
-GO:0044260    0.0022341    1.322285   229.2397661     259    784  cellular macromolecule metabolic process                                          
-GO:1903507    0.0026994    1.742159    36.4981504      51    120  negative regulation of nucleic acid-templated transcription                       
-GO:0006974    0.0030499    1.698192    39.2355117      54    129  cellular response to DNA damage stimulus                                          
-GO:0007059    0.0030749    1.990156    22.5071928      34     74  chromosome segregation                                                            
-GO:0090502    0.0032152    2.331006    14.5992602      24     48  RNA phosphodiester bond hydrolysis, endonucleolytic                               
-GO:0031929    0.0035390    4.242570     5.1705713      11     17  TOR signaling                                                                     
-GO:1903047    0.0039370    1.705524    36.1939992      50    119  mitotic cell cycle process                                                        
-GO:0007165    0.0044264    1.609291    45.0143855      60    148  signal transduction                                                               
-GO:0031146    0.0046075    8.074352     2.7373613       7      9  SCF-dependent proteasomal ubiquitin-dependent protein catabolic process           
-GO:0071704    0.0051567    1.274064   472.6510481     501   1554  organic substance metabolic process                                               
-GO:1903008    0.0058136    2.630337     9.7328401      17     32  organelle disassembly                                                             
-GO:0051253    0.0060545    1.642643    37.7147554      51    124  negative regulation of RNA metabolic process                                      
-GO:0016070    0.0061015    1.452213    70.5594901      88    243  RNA metabolic process                                                             
-GO:0043624    0.0079486    3.009491     6.9954788      13     23  cellular protein complex disassembly                                              
-GO:0043007    0.0085095         Inf     1.2166050       4      4  maintenance of rDNA                                                               
-GO:0045143    0.0089690    4.156498     4.2581176       9     14  homologous chromosome segregation                                                 
-GO:0140013    0.0091864    2.130803    13.9909577      22     46  meiotic nuclear division                                                          
-GO:0006950    0.0093778    1.353247   100.0657624     119    329  response to stress                                                                
-GO:0016042    0.0098089    2.211640    12.4702014      20     41  lipid catabolic process                                                           
-GO:0034250    0.0103783    2.701332     7.9079326      14     26  positive regulation of cellular amide metabolic process                           
-GO:0006817    0.0113429    5.379718     3.0415125       7     10  phosphate ion transport                                                           
-GO:0006928    0.0113429    5.379718     3.0415125       7     10  movement of cell or subcellular component                                         
-GO:0051171    0.0114562    2.046312    14.1465433      22     49  regulation of nitrogen compound metabolic process                                 
-GO:0046686    0.0115678   11.510204     1.8249075       5      6  response to cadmium ion                                                           
-GO:0000122    0.0120761    1.776702    22.5071928      32     74  negative regulation of transcription by RNA polymerase II                         
-GO:0000819    0.0124401    2.044345    14.2951089      22     47  sister chromatid segregation                                                      
-GO:0010608    0.0127158    1.749293    23.4196465      33     77  posttranscriptional regulation of gene expression                                 
-GO:0051716    0.0131314    1.350248    89.8730853     107    302  cellular response to stimulus                                                     
-GO:0000086    0.0137669    3.299413     5.1705713      10     17  G2/M transition of mitotic cell cycle                                             
-GO:0031324    0.0150198    1.433615    56.2679819      70    185  negative regulation of cellular metabolic process                                 
-GO:0001302    0.0153214    2.774176     6.6913276      12     22  replicative cell aging                                                            
-GO:0048519    0.0160641    1.343835    85.7706535     102    282  negative regulation of biological process                                         
-GO:1903506    0.0165833    2.031746    12.9411765      20     44  regulation of nucleic acid-templated transcription                                
-GO:0007049    0.0184123    1.342701    81.5125360      97    268  cell cycle                                                                        
-GO:0010629    0.0194304    1.423026    53.2264694      66    175  negative regulation of gene expression                                            
-GO:0006357    0.0203374    2.065833    11.5498008      18     39  regulation of transcription by RNA polymerase II                                  
-GO:0051172    0.0222357    1.405315    54.4430744      67    179  negative regulation of nitrogen compound metabolic process                        
-GO:0040008    0.0226889    2.885274     5.4747226      10     18  regulation of growth                                                              
-GO:0032270    0.0230816    1.742987    19.1615290      27     63  positive regulation of cellular protein metabolic process                         
-GO:0006448    0.0230875    4.032401     3.3456638       7     11  regulation of translational elongation                                            
-GO:1903432    0.0230875    4.032401     3.3456638       7     11  regulation of TORC1 signaling                                                     
-GO:0033043    0.0233562    1.480462    39.2355117      50    129  regulation of organelle organization                                              
-GO:0071824    0.0241908    1.712744    20.0739827      28     66  protein-DNA complex subunit organization                                          
-GO:0051246    0.0249559    1.420677    48.3600493      60    159  regulation of protein metabolic process                                           
-GO:0006511    0.0270639    1.553656    28.8943691      38     95  ubiquitin-dependent protein catabolic process                                     
-GO:0007568    0.0278380    2.310867     7.9079326      13     26  aging                                                                             
-GO:0006384    0.0280570         Inf     0.9124538       3      3  transcription initiation from RNA polymerase III promoter                         
-GO:0051446    0.0280570         Inf     0.9124538       3      3  positive regulation of meiotic cell cycle                                         
-GO:0071168    0.0280570         Inf     0.9124538       3      3  protein localization to chromatin                                                 
-GO:0051228    0.0280570         Inf     0.9124538       3      3  mitotic spindle disassembly                                                       
-GO:0120174    0.0280570         Inf     0.9124538       3      3  stress-induced homeostatically regulated protein degradation pathway              
-GO:1903711    0.0280570         Inf     0.9124538       3      3  spermidine transmembrane transport                                                
-GO:0002949    0.0280570         Inf     0.9124538       3      3  tRNA threonylcarbamoyladenosine modification                                      
-GO:0005980    0.0280570         Inf     0.9124538       3      3  glycogen catabolic process                                                        
-GO:0006333    0.0286217    2.539506     6.3871763      11     21  chromatin assembly or disassembly                                                 
-GO:0009059    0.0286478    1.299873    87.4954955     102    304  macromolecule biosynthetic process                                                
-GO:0051252    0.0295680    1.827077    14.4104545      21     49  regulation of RNA metabolic process                                               
-GO:0060237    0.0303689    5.751701     2.1290588       5      7  regulation of fungal-type cell wall organization                                  
-GO:0030705    0.0303689    5.751701     2.1290588       5      7  cytoskeleton-dependent intracellular transport                                    
-GO:0042908    0.0303689    5.751701     2.1290588       5      7  xenobiotic transport                                                              
-GO:0046015    0.0303689    5.751701     2.1290588       5      7  regulation of transcription by glucose                                            
-GO:2000104    0.0322337    9.195652     1.5207563       4      5  negative regulation of DNA-dependent DNA replication                              
-GO:0010603    0.0322337    9.195652     1.5207563       4      5  regulation of cytoplasmic mRNA processing body assembly                           
-GO:0045903    0.0322337    9.195652     1.5207563       4      5  positive regulation of translational fidelity                                     
-GO:0000076    0.0322337    9.195652     1.5207563       4      5  DNA replication checkpoint                                                        
-GO:0015828    0.0322337    9.195652     1.5207563       4      5  tyrosine transport                                                                
-GO:0016567    0.0327043    1.706088    17.9449240      25     59  protein ubiquitination                                                            
-GO:0009057    0.0330338    1.360520    56.3147460      68    186  macromolecule catabolic process                                                   
-GO:0051276    0.0333557    1.379491    50.8420168      62    169  chromosome organization                                                           
-GO:0043632    0.0335749    1.492959    31.9358816      41    105  modification-dependent macromolecule catabolic process                            
-GO:0070192    0.0337030    3.072860     4.2581176       8     14  chromosome organization involved in meiotic cell cycle                            
-GO:0043618    0.0391539    2.144527     8.2120838      13     27  regulation of transcription from RNA polymerase II promoter in response to stress 
-GO:0006855    0.0391539    2.144527     8.2120838      13     27  drug transmembrane transport                                                      
-GO:0051130    0.0396372    1.565493    23.4196465      31     77  positive regulation of cellular component organization                            
-GO:0048869    0.0402661    1.444229    34.9773942      44    115  cellular developmental process                                                    
-GO:0035601    0.0411058    3.224011     3.6498150       7     12  protein deacylation                                                               
-GO:0000272    0.0411058    3.224011     3.6498150       7     12  polysaccharide catabolic process                                                  
-GO:0044089    0.0423795    1.736787    14.9034114      21     49  positive regulation of cellular component biogenesis                              
-GO:1905268    0.0432545    2.593194     5.1705713       9     17  negative regulation of chromatin organization                                     
-GO:0008608    0.0432545    2.593194     5.1705713       9     17  attachment of spindle microtubules to kinetochore                                 
-GO:0006259    0.0467712    1.419733    35.2630231      44    119  DNA metabolic process                                                             
-GO:0000226    0.0479839    2.130177     7.6037813      12     25  microtubule cytoskeleton organization                                             
-GO:0000725    0.0479839    2.130177     7.6037813      12     25  recombinational repair                                                            
-GO:0006665    0.0479839    2.130177     7.6037813      12     25  sphingolipid metabolic process                                                    
-GO:0010498    0.0493973    1.609363    18.5532265      25     61  proteasomal protein catabolic process                                             
-GO:0048285    0.0495738    1.490192    26.4611591      34     87  organelle fission                                                                 
-
-</div>
+```
+##          GOBPID       Pvalue OddsRatio  ExpCount Count Size
+##   1: GO:0015074 3.291787e-06  6.690476  8.212084    20   27
+##   2: GO:2000112 2.941805e-05  1.883809 58.226300    84  196
+##   3: GO:0009889 4.789903e-05  1.825424 61.400614    87  207
+##   4: GO:0031328 5.450836e-05  1.831857 59.917797    85  197
+##   5: GO:0032774 6.061814e-05  1.653361 91.245376   121  300
+##  ---                                                       
+## 111: GO:0000226 4.798390e-02  2.130178  7.603781    12   25
+## 112: GO:0000725 4.798390e-02  2.130178  7.603781    12   25
+## 113: GO:0006665 4.798390e-02  2.130178  7.603781    12   25
+## 114: GO:0010498 4.939734e-02  1.609363 18.553226    25   61
+## 115: GO:0048285 4.957381e-02  1.490192 26.461159    34   87
+##                                                           Term
+##   1:                                           DNA integration
+##   2: regulation of cellular macromolecule biosynthetic process
+##   3:                        regulation of biosynthetic process
+##   4:      positive regulation of cellular biosynthetic process
+##   5:                                  RNA biosynthetic process
+##  ---                                                          
+## 111:                     microtubule cytoskeleton organization
+## 112:                                    recombinational repair
+## 113:                            sphingolipid metabolic process
+## 114:                     proteasomal protein catabolic process
+## 115:                                         organelle fission
+```
 
 ```r
 hgCondB.dt
 ```
 
-<div class="kable-table">
-
-GOBPID           Pvalue   OddsRatio    ExpCount   Count   Size  Term                                                   
------------  ----------  ----------  ----------  ------  -----  -------------------------------------------------------
-GO:0055086    0.0005735   10.464135   135.70284     144    145  nucleobase-containing small molecule metabolic process 
-GO:0044283    0.0009677    4.643028   180.62515     190    193  small molecule biosynthetic process                    
-GO:0055114    0.0010395    3.921512   203.08631     213    217  oxidation-reduction process                            
-GO:0009117    0.0014825    9.308659   121.66461     129    130  nucleotide metabolic process                           
-GO:0051186    0.0017890    9.079498   118.85697     126    127  cofactor metabolic process                             
-GO:0032787    0.0032288         Inf    79.54994      85     85  monocarboxylic acid metabolic process                  
-GO:0019693    0.0032288         Inf    79.54994      85     85  ribose phosphate metabolic process                     
-GO:1901293    0.0042496         Inf    75.80641      81     81  nucleoside phosphate biosynthetic process              
-GO:0046394    0.0042567    8.018476   105.75462     112    113  carboxylic acid biosynthetic process                   
-GO:0072521    0.0052201         Inf    72.99877      78     78  purine-containing compound metabolic process           
-GO:0043436    0.0066456    2.673797   211.50925     220    226  oxoacid metabolic process                              
-GO:1901566    0.0093448    1.815680   424.89026     436    454  organonitrogen compound biosynthetic process           
-GO:0017144    0.0096272    4.434742   117.92109     124    126  drug metabolic process                                 
-GO:0009123    0.0118536         Inf    61.76819      66     66  nucleoside monophosphate metabolic process             
-GO:0009150    0.0126896         Inf    60.83231      65     65  purine ribonucleotide metabolic process                
-GO:1901607    0.0135841         Inf    59.89642      64     64  alpha-amino acid biosynthetic process                  
-GO:0090150    0.0268015         Inf    50.53761      54     54  establishment of protein localization to membrane      
-GO:0006733    0.0351440         Inf    46.79408      50     50  oxidoreduction coenzyme metabolic process              
-GO:0009260    0.0351440         Inf    46.79408      50     50  ribonucleotide biosynthetic process                    
-GO:0006839    0.0351440         Inf    46.79408      50     50  mitochondrial transport                                
-GO:0009167    0.0376047         Inf    45.85820      49     49  purine ribonucleoside monophosphate metabolic process  
-GO:0019637    0.0385480    2.823784   110.16014     115    118  organophosphate metabolic process                      
-GO:0045333    0.0402366         Inf    44.92232      48     48  cellular respiration                                   
-GO:0006790    0.0453126    5.061224    68.31936      72     73  sulfur compound metabolic process                      
-GO:0009199    0.0460616         Inf    43.05055      46     46  ribonucleoside triphosphate metabolic process          
-
-</div>
+```
+##         GOBPID       Pvalue OddsRatio  ExpCount Count Size
+##  1: GO:0055086 0.0005734747 10.464135 135.70284   144  145
+##  2: GO:0044283 0.0009677004  4.643028 180.62515   190  193
+##  3: GO:0055114 0.0010395437  3.921512 203.08631   213  217
+##  4: GO:0009117 0.0014825419  9.308659 121.66461   129  130
+##  5: GO:0051186 0.0017889801  9.079498 118.85697   126  127
+##  6: GO:0032787 0.0032288288       Inf  79.54994    85   85
+##  7: GO:0019693 0.0032288288       Inf  79.54994    85   85
+##  8: GO:1901293 0.0042495577       Inf  75.80641    81   81
+##  9: GO:0046394 0.0042566814  8.018476 105.75462   112  113
+## 10: GO:0072521 0.0052201147       Inf  72.99877    78   78
+## 11: GO:0043436 0.0066455698  2.673797 211.50925   220  226
+## 12: GO:1901566 0.0093448271  1.815680 424.89026   436  454
+## 13: GO:0017144 0.0096272266  4.434742 117.92109   124  126
+## 14: GO:0009123 0.0118536341       Inf  61.76819    66   66
+## 15: GO:0009150 0.0126896047       Inf  60.83231    65   65
+## 16: GO:1901607 0.0135841272       Inf  59.89642    64   64
+## 17: GO:0090150 0.0268015315       Inf  50.53761    54   54
+## 18: GO:0006733 0.0351440322       Inf  46.79408    50   50
+## 19: GO:0009260 0.0351440322       Inf  46.79408    50   50
+## 20: GO:0006839 0.0351440322       Inf  46.79408    50   50
+## 21: GO:0009167 0.0376047454       Inf  45.85820    49   49
+## 22: GO:0019637 0.0385480380  2.823784 110.16014   115  118
+## 23: GO:0045333 0.0402365714       Inf  44.92232    48   48
+## 24: GO:0006790 0.0453126289  5.061224  68.31936    72   73
+## 25: GO:0009199 0.0460616395       Inf  43.05055    46   46
+##         GOBPID       Pvalue OddsRatio  ExpCount Count Size
+##                                                       Term
+##  1: nucleobase-containing small molecule metabolic process
+##  2:                    small molecule biosynthetic process
+##  3:                            oxidation-reduction process
+##  4:                           nucleotide metabolic process
+##  5:                             cofactor metabolic process
+##  6:                  monocarboxylic acid metabolic process
+##  7:                     ribose phosphate metabolic process
+##  8:              nucleoside phosphate biosynthetic process
+##  9:                   carboxylic acid biosynthetic process
+## 10:           purine-containing compound metabolic process
+## 11:                              oxoacid metabolic process
+## 12:           organonitrogen compound biosynthetic process
+## 13:                                 drug metabolic process
+## 14:             nucleoside monophosphate metabolic process
+## 15:                purine ribonucleotide metabolic process
+## 16:                  alpha-amino acid biosynthetic process
+## 17:      establishment of protein localization to membrane
+## 18:              oxidoreduction coenzyme metabolic process
+## 19:                    ribonucleotide biosynthetic process
+## 20:                                mitochondrial transport
+## 21:  purine ribonucleoside monophosphate metabolic process
+## 22:                      organophosphate metabolic process
+## 23:                                   cellular respiration
+## 24:                      sulfur compound metabolic process
+## 25:          ribonucleoside triphosphate metabolic process
+##                                                       Term
+```
 
 > to filter the results, the following parameters can be added to the "summary()" call:  
 Optional arguments pvalue and categorySize allow specification of maximum p-value and minimum categorySize
@@ -1474,16 +1413,13 @@ setnames(mygenes_paper.count, c("gene", "causal", "affected"))
 mygenes_paper.count[order(-causal)]
 ```
 
-<div class="kable-table">
-
-gene     causal   affected
-------  -------  ---------
-GPA1         68         11
-ERC1         27          8
-STB5          7         NA
-KRE33        NA          6
-
-</div>
+```
+##     gene causal affected
+## 1:  GPA1     68       11
+## 2:  ERC1     27        8
+## 3:  STB5      7       NA
+## 4: KRE33     NA        6
+```
 
 
 # Focus on causal gene 12
@@ -1853,36 +1789,30 @@ setnames(hotspots_per_chr, c("chr", "n_genes", "n_hotspots"))
 head(hotspots_per_chr[order(-n_genes)])
 ```
 
-<div class="kable-table">
-
- chr   n_genes   n_hotspots
-----  --------  -----------
-   4        13           12
-   7        12            9
-  15        11           10
-  12         9            6
-  13         9            8
-  10         8            8
-
-</div>
+```
+##    chr n_genes n_hotspots
+## 1:   4      13         12
+## 2:   7      12          9
+## 3:  15      11         10
+## 4:  12       9          6
+## 5:  13       9          8
+## 6:  10       8          8
+```
 
 ```r
 # how many causal genes are in the each hotspot (that contains causal genes) (ordered by number of genes)
 head(genes_in_hotspot[,.(n_genes=.N),  by=hotspot][order(-n_genes)])
 ```
 
-<div class="kable-table">
-
-hotspot              n_genes
-------------------  --------
-chrIV:461656_A/G           8
-chrXII:848842_A/G          6
-chrII:619028_C/A           5
-chrVII:178509_T/C          5
-chrIX:105090_T/C           5
-chrVII:850923_T/C          4
-
-</div>
+```
+##              hotspot n_genes
+## 1:  chrIV:461656_A/G       8
+## 2: chrXII:848842_A/G       6
+## 3:  chrII:619028_C/A       5
+## 4: chrVII:178509_T/C       5
+## 5:  chrIX:105090_T/C       5
+## 6: chrVII:850923_T/C       4
+```
 
 ### Plot number of hotspots that have a certain number of causal genes
 
@@ -1991,21 +1921,18 @@ abline(v=unlist(hotspots$V1),
 unique(chr12_genenames[chr12_genenames[, geneA %in% genes_in_hotspot_pos[chr.A==12]$geneA]][,.(geneA, start.A, symbol, gene.name)])
 ```
 
-<div class="kable-table">
-
-geneA        start.A  symbol   gene.name                        
-----------  --------  -------  ---------------------------------
-YLL007C      7828644  LMO1     eLMO homolog                     
-YLR273C      8383425  PIG1     Protein Interacting with Gsy2p   
-YLR275W      8388720  SMD2     NA                               
-YLR361C-A    8543725  NA       NA                               
-YLR364W      8548404  GRX8     GlutaRedoXin                     
-YLR369W      8553894  SSQ1     Stress-Seventy subfamily Q       
-YLR371W      8557056  ROM2     RhO1 Multicopy suppressor        
-YLR375W      8566039  STP3     protein with similarity to Stp1p 
-YLR376C      8567168  PSY3     Platinum SensitivitY             
-
-</div>
+```
+##        geneA start.A symbol                        gene.name
+## 1:   YLL007C 7828644   LMO1                     eLMO homolog
+## 2:   YLR273C 8383425   PIG1   Protein Interacting with Gsy2p
+## 3:   YLR275W 8388720   SMD2                             <NA>
+## 4: YLR361C-A 8543725   <NA>                             <NA>
+## 5:   YLR364W 8548404   GRX8                     GlutaRedoXin
+## 6:   YLR369W 8553894   SSQ1       Stress-Seventy subfamily Q
+## 7:   YLR371W 8557056   ROM2        RhO1 Multicopy suppressor
+## 8:   YLR375W 8566039   STP3 protein with similarity to Stp1p
+## 9:   YLR376C 8567168   PSY3             Platinum SensitivitY
+```
 
 ### All hotspots plotted
 
@@ -2189,16 +2116,13 @@ genes_hotspot_links.200.names <- unique(merge(genes_hotspot_links.200[,.(geneA, 
 genes_hotspot_links.200.names
 ```
 
-<div class="kable-table">
-
-geneA     hotspot              chr.A  symbol   gene.name                         
---------  ------------------  ------  -------  ----------------------------------
-YLR273C   chrXII:694841_T/C       12  PIG1     Protein Interacting with Gsy2p    
-YLR275W   chrXII:694841_T/C       12  SMD2     NA                                
-YNL135C   chrXIV:372376_G/A       14  FPR1     Fk 506-sensitive Proline Rotamase 
-YOL082W   chrXV:171150_T/C        15  ATG19    AuTophaGy related                 
-
-</div>
+```
+##      geneA           hotspot chr.A symbol                         gene.name
+## 1: YLR273C chrXII:694841_T/C    12   PIG1    Protein Interacting with Gsy2p
+## 2: YLR275W chrXII:694841_T/C    12   SMD2                              <NA>
+## 3: YNL135C chrXIV:372376_G/A    14   FPR1 Fk 506-sensitive Proline Rotamase
+## 4: YOL082W  chrXV:171150_T/C    15  ATG19                 AuTophaGy related
+```
 
 There are 4 genes overlapping 3 hotspots
 
@@ -2252,7 +2176,11 @@ for (chr in unique(genes_hotspot_links.200.names$chr.A)){
 
 
 
+## Values
+Only 15.11% of the causal genes are in the hotspots.  
+Most of the causal genes were not located in the hotspots
 
+In total, there are 1593 genes affected by genes in a hotspot
 
 
 
