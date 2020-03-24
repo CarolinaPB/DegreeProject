@@ -1,7 +1,7 @@
 library(data.table)
 path <- "/Users/Carolina/Documents/GitHub/DegreeProject/"
 respath <- "/Users/Carolina/Documents/GitHub/DegreeProject/results/"
-effects_table.cor <- fread(paste0(path, "results/2020-01-10/effectstable.gz"))
+load(paste0(path, "results/2020-01-10/effectstable.Rdata"))
 
 source(paste0(path, "code/myfunctions.R"))
 

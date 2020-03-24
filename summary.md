@@ -71,7 +71,7 @@ effects_table.anova <- fread(paste0(path, "results/2020-01-09/09_01_2020_anovata
 
 Got correlation between all the genes and added it to the table with the anova results
 ```r
-effects_table.cor <- fread(paste0(path, "results/2020-01-10/effectstable.gz"))
+load(paste0(path, "results/2020-01-10/effectstable.Rdata"))
 ```
 
 ## Inferring causality

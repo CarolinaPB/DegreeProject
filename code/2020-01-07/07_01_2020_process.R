@@ -129,7 +129,7 @@ setnames(cor_matr, old=c("row","column", "pval"), new=c("geneA","geneB", "cor.pv
 effects_table.cor <- merge(effects_table.anova, cor_matr, by=c("geneA","geneB"), all.x=T)
 
 #fwrite(effects_table.cor, paste0(path, "results/2020-01-10/effectstable.gz"), na=NA)
-effects_table.cor <- fread(paste0(path, "results/2020-01-10/effectstable.gz"))
+load(paste0(path, "results/2020-01-10/effectstable.Rdata"))
 
 ######
 

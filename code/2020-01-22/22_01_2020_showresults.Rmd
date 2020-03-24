@@ -28,7 +28,7 @@ snp.pval.nsign <- as.numeric(1e-5)
 
 corr.pval <-  0.05/(nGenes*nGenes)
 
-effects_table.cor <- fread(paste0(path, "results/2020-01-10/effectstable.gz"))
+load(paste0(path, "results/2020-01-10/effectstable.Rdata"))
 ```
 
 

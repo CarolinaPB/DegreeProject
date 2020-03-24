@@ -7,7 +7,7 @@ path <- "/Users/Carolina/Documents/GitHub/DegreeProject/" # use with own compute
 # path <- "/home/carolina/DegreeProject/" # use with diprotodon
 # respath <- "/home/carolina/DegreeProject/results/"
 
-effects_table.cor <- fread(paste0(path, "results/2020-01-10/effectstable.gz"))
+load(paste0(path, "results/2020-01-10/effectstable.Rdata"))
 
 source(paste0(path, "code/myfunctions.R"))
 
