@@ -1,7 +1,7 @@
 ---
 title: "Causality in Coexpression"
 author: "Carolina Pita Barros"
-date: "2020-03-19"
+date: "2020-03-27"
 output: 
   html_document: 
     fig_caption: yes
@@ -2260,6 +2260,78 @@ Most of the causal genes were not located in the hotspots
 In total, there are 1593 genes affected by genes in a hotspot
 
 
+# Read counts
+
+```r
+load("data/counts.RData")
+# matrix where 1 if the gene is absent in that individual (if the field's value is zero), 0 if it's present
+# For all genes
+getzeros <- apply(counts$pheno, 1, function(x) {ifelse(x==0, 1, 0)})
+# sum the number of individuals that don't have that gene
+howmany <- colSums(getzeros)
+# How many samples each gene has missing
+count_missinggene <- data.table(gene=names(howmany), nsamples_missing =howmany)
+count_missinggene <- count_missinggene[order(-nsamples_missing)]
+
+# How many samples each *causal* gene has missing
+causalgenes_counts <- merge(unique(find.effects_TF[,.(geneA, eqtl.A)]), count_missinggene, by.x="geneA", by.y="gene")
+causalgenes_counts <- causalgenes_counts[order(-nsamples_missing)]
+
+# add coordinates and chromosome
+causalgenes_counts.coord <- unique(merge(causalgenes_counts, coordinates_plot_cor[,.(geneA, start.A, end.A, chr.A)], by="geneA"))
+
+# keep the genes that are in chromosome 12, 14 or 15 - chromosomes that show the strongest bands
+causalgenes_counts.coord.bands <- causalgenes_counts.coord[chr.A %in% c(12,14, 15)][order(-nsamples_missing)]
+
+# transform counts$pheno into dt and transposing
+counts_pheno.dt <- data.table(t(counts$pheno), keep.rownames = T)
+```
+
+## Violin plot of read counts for all causal genes in chr 12, 14 and 15
+
+```r
+genes_to_plot.causal <- causalgenes_counts.coord.bands$geneA
+counts_genes_to_plot.causal <- counts_pheno.dt[,..genes_to_plot.causal]
+
+res <- data.table(NULL)
+for (gene in names(counts_genes_to_plot.causal)){
+  res <- rbind(res, data.table(gene, unlist(counts_pheno.dt[,..gene]), "causal", causalgenes_counts.coord.bands[geneA==gene]$chr.A))
+}
+setnames(res, c("gene", "counts", "causal", "chr"))
+
+
+p <- ggplot(res, aes(x=gene, y=counts, fill=as.factor(chr))) + 
+  geom_violin() + 
+  labs(title="Counts distribution for causal genes in chr 12, 14 and 15")
+p + theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+```
+
+![](analysis_files/figure-html/unnamed-chunk-64-1.png)<!-- -->
+
+## Violin plot of read counts for causal genes in chr 12, 14 and 15 that have one or more individuals missing
+
+```r
+# causal genes that genes that are in chr 12, 14 or 15 and are missing in at least one individual
+genes_to_plot.causal <- causalgenes_counts.coord.bands[nsamples_missing>0]$geneA
+
+# get read counts for those genes
+counts_genes_to_plot.causal <- counts_pheno.dt[,..genes_to_plot.causal]
+
+res.sub <- data.table(NULL)
+for (gene in names(counts_genes_to_plot.causal)){
+  res.sub <- rbind(res.sub, data.table(gene, unlist(counts_pheno.dt[,..gene]), "causal", causalgenes_counts.coord.bands[geneA==gene]$chr.A))
+}
+setnames(res.sub, c("gene", "counts", "causal", "chr"))
+
+
+p.sub <- ggplot(res.sub, aes(x=gene, y=counts, fill=as.factor(chr))) + 
+  geom_violin() + 
+  ylim(0,200) +
+  labs(title="Counts distribution for causal genes in chr 12, 14 and 15 where the gene is missing \n in at least one sample")
+p.sub + theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+```
+
+![](analysis_files/figure-html/unnamed-chunk-65-1.png)<!-- -->
 
 
 
@@ -2313,7 +2385,7 @@ legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), 
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-63-1.png)<!-- -->
+![](analysis_files/figure-html/unnamed-chunk-66-1.png)<!-- -->
 
 ### Plot where (relative to the gene) the eqtls are located
 
@@ -2360,7 +2432,7 @@ bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-64-1.png)<!-- -->
+![](analysis_files/figure-html/unnamed-chunk-67-1.png)<!-- -->
 
 ```r
 # bpB <- barplot(toplotB, 
@@ -2374,7 +2446,7 @@ bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position
 text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-64-2.png)<!-- -->
+![](analysis_files/figure-html/unnamed-chunk-67-2.png)<!-- -->
 
 Most of the eqtls seem to be located before the gene.  
 
