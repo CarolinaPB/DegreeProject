@@ -278,7 +278,7 @@ sort_by_chr <- function(vchr, genepairs_pos, separator, coordA=3, coordB=6){
   # start.B - position of geneB
   # chr.A - chromosome of geneA
   # chr.B - chromosome of geneB
-  # interval between genes (for plotting purposes)
+  # interval between chromosomes (for plotting purposes)
   # coordA and coordB is the number of the columns to order
   
   res <- data.table(genepairs_pos)
@@ -403,4 +403,19 @@ add_legend <- function(...) {
   on.exit(par(opar))
   plot(0, 0, type='n', bty='n', xaxt='n', yaxt='n')
   legend(...)
+}
+
+get_readcounts_toplot <- function(genes_to_plot, causal="causal", chr, counts_pheno=counts_pheno.dt){
+  # creates table with all gene counts in a vertical format to be plotted 
+  # columns: gene, counts, causal, chr
+  # causal is if the gene has a causal effect
+  
+  
+  res <- data.table(NULL)
+  for (num in 1:nrow(genes_to_plot)){
+    gene <- genes_to_plot[[num,1]]
+    res <- rbind(res, data.table(gene, unlist(counts_pheno[,..gene]), causal, genes_to_plot[num,2], band=ifelse("band" %in% names(genes_to_plot.chr7.all_bands), genes_to_plot$band[num], NA)))
+  }
+  setnames(res, c("gene", "counts", "causal", "chr", "band"))
+  return(res)
 }
