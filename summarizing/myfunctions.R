@@ -268,7 +268,7 @@ plot_enrichment_heatmap <- function(dt, ...){
   
 }
 
-sort_by_chr <- function(vchr, genepairs_pos, separator, coordA=3, coordB=6){
+sort_by_chr <- function(vchr, genepairs_pos, separator=1e5, coordA=3, coordB=6){
   # Sorts genes' chromosome positions to be plotted
   # takes a numeric vector of chromosome numbers (should be ordered by the order you want to plot by)
   # takes a table where there must be the following columns:
@@ -414,7 +414,7 @@ get_readcounts_toplot <- function(genes_to_plot, causal="causal", chr, counts_ph
   res <- data.table(NULL)
   for (num in 1:nrow(genes_to_plot)){
     gene <- genes_to_plot[[num,1]]
-    res <- rbind(res, data.table(gene, unlist(counts_pheno[,..gene]), causal, genes_to_plot[num,2], band=ifelse("band" %in% names(genes_to_plot.chr7.all_bands), genes_to_plot$band[num], NA)))
+    res <- rbind(res, data.table(gene, unlist(counts_pheno[,..gene]), causal, genes_to_plot[num,2], band=ifelse("band" %in% names(genes_to_plot), genes_to_plot$band[num], NA)))
   }
   setnames(res, c("gene", "counts", "causal", "chr", "band"))
   return(res)
