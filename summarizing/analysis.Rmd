@@ -575,6 +575,7 @@ GO_transc_reg <- unique(genes_GO.bio.noevidence[(grepl(" transcription ",GO.term
 numlinks_from_gene.A <- find.effects_TF[, .(geneB, count.A=.N), by=geneA]
 numlinks_from_gene.B <- find.effects_TF[, .(count.B=.N), by=geneB]
 numlinks_from_gene <- merge(numlinks_from_gene.A, numlinks_from_gene.B, by="geneB", all=T)
+# save(numlinks_from_gene, file = "results/numlinks_from_gene.Rdata")
 setcolorder(numlinks_from_gene, c("geneA", "geneB", "count.A", "count.B"))
 head(numlinks_from_gene[order(-count.A, count.B)])
 ```
@@ -1127,6 +1128,7 @@ coordinates_plot_cor$cor <- abs(coordinates_plot_cor$cor)
 coordinates_plot_cor <- coordinates_plot_cor[order(cor)]
 coordinates_plot_cor$col <- rbPal(100)[as.numeric(cut(coordinates_plot_cor$cor,breaks = 100))]
 
+#save(coordinates_plot_cor, file="results/coordinates_plot_cor.Rdata")
 plot_sorted_coordinates(coordinates_plot_cor, separator = separator, col = coordinates_plot_cor$col)
 gradientLegend(format(round(coordinates_plot_cor$cor, 3), nsmall = 3), rbPal(100), inside=F, side=3)
 ```
@@ -1543,10 +1545,12 @@ add_legend("top", legend=c("gene and eQTL", "gene", "eqtl"), pch=20,
 
 
 ```{r}
-numlinks_from_gene.A <- find.effects_TF[, .(geneB, count.A=.N), by=geneA]
-numlinks_from_gene.B <- find.effects_TF[, .(count.B=.N), by=geneB]
-numlinks_from_gene <- merge(numlinks_from_gene.A, numlinks_from_gene.B, by="geneB", all=T)
-setcolorder(numlinks_from_gene, c("geneA", "geneB", "count.A", "count.B"))
+if (!exists("numlinks_from_gene")){
+  numlinks_from_gene.A <- find.effects_TF[, .(geneB, count.A=.N), by=geneA]
+  numlinks_from_gene.B <- find.effects_TF[, .(count.B=.N), by=geneB]
+  numlinks_from_gene <- merge(numlinks_from_gene.A, numlinks_from_gene.B, by="geneB", all=T)
+  setcolorder(numlinks_from_gene, c("geneA", "geneB", "count.A", "count.B"))
+}
 ```
 
 
