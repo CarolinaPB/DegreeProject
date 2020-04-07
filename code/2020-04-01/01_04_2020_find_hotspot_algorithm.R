@@ -42,19 +42,24 @@ separator <- 1e5
 # pdf(file = "results/figures/my_causal_hotspots.pdf", onefile = T)
 plot_sorted_coordinates(coordinates_plot_cor, separator = separator, col = coordinates_plot_cor[chr.A==chr]$col)
 
+
+lim <- 10
 for(i in 1:length(rle.res.list)){
   tab <- rle.res.list[[i]]
-  if (nrow(tab[values==T & lengths>10])>0){
+  if (nrow(tab[values==T & lengths> lim])>0){
     print(i)
-    print(tab[values==T & lengths>10])
+    print(tab[values==T & lengths> lim])
     chr <- i
     plot_sorted_coordinates(coordinates_plot_cor[chr.A==chr], separator = separator, col = coordinates_plot_cor[chr.A==chr]$col)
-    id <- tab[values==T & lengths>10]$idx
-    getrows <- (sum(tab[idx<=id-1]$lengths)+1):sum(tab[idx<=id]$lengths)
-    print(causalgenes.pos.count[chr.A==chr][getrows,])
     
-    abline(v=c(min(causalgenes.pos.count[chr.A==chr][getrows,]$start.A), 
-               max(causalgenes.pos.count[chr.A==chr][getrows,]$end.A)), col="orange")
+    for (id in tab[values==T & lengths> lim]$idx){
+      # id <- tab[values==T & lengths> lim]$idx
+      getrows <- (sum(tab[idx<=id-1]$lengths)+1):sum(tab[idx<=id]$lengths)
+      print(causalgenes.pos.count[chr.A==chr][getrows,])
+      
+      abline(v=c(min(causalgenes.pos.count[chr.A==chr][getrows,]$start.A), 
+                 max(causalgenes.pos.count[chr.A==chr][getrows,]$end.A)), col=id)
+    }
   }
 }
 # dev.off()
