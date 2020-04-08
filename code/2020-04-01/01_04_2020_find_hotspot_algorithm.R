@@ -36,32 +36,42 @@ for (chr in unique(causalgenes.pos.count$chr.A)){
   rle.res.list[[chr]] <- rle.res.dt
 }
 
-separator <- 1e5
 
 # find hotspots and plot them
 # pdf(file = "results/figures/my_causal_hotspots.pdf", onefile = T)
 plot_sorted_coordinates(coordinates_plot_cor, separator = separator, col = coordinates_plot_cor[chr.A==chr]$col)
 
-
 lim <- 10
-for(i in 1:length(rle.res.list)){
+separator <- 1e5
+hot <- data.table(chr=numeric(), start=numeric(), end=numeric())
+for(i in 1:length(rle.res.list)) {
   tab <- rle.res.list[[i]]
-  if (nrow(tab[values==T & lengths> lim])>0){
-    print(i)
-    print(tab[values==T & lengths> lim])
+  if (nrow(tab[values == T & lengths > lim]) > 0) {
+    # print(i)
+    # print(tab[values == T & lengths > lim])
     chr <- i
-    plot_sorted_coordinates(coordinates_plot_cor[chr.A==chr], separator = separator, col = coordinates_plot_cor[chr.A==chr]$col)
+    plot_sorted_coordinates(coordinates_plot_cor[chr.A == chr],
+                            separator = separator,
+                            col = coordinates_plot_cor[chr.A == chr]$col)
     
-    for (id in tab[values==T & lengths> lim]$idx){
-      # id <- tab[values==T & lengths> lim]$idx
-      getrows <- (sum(tab[idx<=id-1]$lengths)+1):sum(tab[idx<=id]$lengths)
-      print(causalgenes.pos.count[chr.A==chr][getrows,])
+    for (id in tab[values == T & lengths > lim]$idx) {
+      getrows <- (sum(tab[idx <= id - 1]$lengths) + 1):sum(tab[idx <= id]$lengths)
+      # print(causalgenes.pos.count[chr.A == chr][getrows, ])
       
-      abline(v=c(min(causalgenes.pos.count[chr.A==chr][getrows,]$start.A), 
-                 max(causalgenes.pos.count[chr.A==chr][getrows,]$end.A)), col=id)
+      abline(v = c(
+        min(causalgenes.pos.count[chr.A == chr][getrows, ]$start.A),
+        max(causalgenes.pos.count[chr.A == chr][getrows, ]$end.A)), col = id)
+      
+      add <- data.table(chr=chr, start=min(causalgenes.pos.count[chr.A == chr][getrows, ]$start.A), 
+                        end=max(causalgenes.pos.count[chr.A == chr][getrows, ]$end.A))
+      hot <- rbind(hot, add)
+      
     }
   }
 }
 # dev.off()
 
-
+# save the hotspot intervals in a grange object (also available in a table)
+granges_myhotspots <- GRanges(seqnames = hot$chr,
+                            ranges=IRanges(start=hot$start,
+                                           end=hot$end))
