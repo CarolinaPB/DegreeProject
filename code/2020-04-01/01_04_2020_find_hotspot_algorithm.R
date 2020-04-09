@@ -28,47 +28,15 @@ causalgenes.pos.count <- causalgenes.pos.count[order(chr.A, start.A, end.A)]
 
 # create list of tables - one for each chr
 # each table has the runs for the condition count.A>10
-rle.res.list <- list()
-for (chr in unique(causalgenes.pos.count$chr.A)){
-  cond <- causalgenes.pos.count[chr.A == chr]$count.A >= 10
-  rle.res <- rle(cond)
-  rle.res.dt <- data.table(idx=1:length(rle.res$lengths),lengths=rle.res$lengths, values=rle.res$values)
-  rle.res.list[[chr]] <- rle.res.dt
-}
+
+rle.res.list <- rle_causalgenes(causalgenes.pos.count, lim = 10)
 
 
 # find hotspots and plot them
 # pdf(file = "results/figures/my_causal_hotspots.pdf", onefile = T)
 plot_sorted_coordinates(coordinates_plot_cor, separator = separator, col = coordinates_plot_cor[chr.A==chr]$col)
 
-lim <- 10
-separator <- 1e5
-hot <- data.table(chr=numeric(), start=numeric(), end=numeric())
-for(i in 1:length(rle.res.list)) {
-  tab <- rle.res.list[[i]]
-  if (nrow(tab[values == T & lengths > lim]) > 0) {
-    # print(i)
-    # print(tab[values == T & lengths > lim])
-    chr <- i
-    plot_sorted_coordinates(coordinates_plot_cor[chr.A == chr],
-                            separator = separator,
-                            col = coordinates_plot_cor[chr.A == chr]$col)
-    
-    for (id in tab[values == T & lengths > lim]$idx) {
-      getrows <- (sum(tab[idx <= id - 1]$lengths) + 1):sum(tab[idx <= id]$lengths)
-      # print(causalgenes.pos.count[chr.A == chr][getrows, ])
-      
-      abline(v = c(
-        min(causalgenes.pos.count[chr.A == chr][getrows, ]$start.A),
-        max(causalgenes.pos.count[chr.A == chr][getrows, ]$end.A)), col = id)
-      
-      add <- data.table(chr=chr, start=min(causalgenes.pos.count[chr.A == chr][getrows, ]$start.A), 
-                        end=max(causalgenes.pos.count[chr.A == chr][getrows, ]$end.A))
-      hot <- rbind(hot, add)
-      
-    }
-  }
-}
+hot <- find_hotspots(rle.list = rle.res.list, coordinates_plot = coordinates_plot_cor, causalgenes = causalgenes.pos.count, lim = 10, plt = T)
 # dev.off()
 
 # save the hotspot intervals in a grange object (also available in a table)

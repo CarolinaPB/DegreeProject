@@ -419,3 +419,64 @@ get_readcounts_toplot <- function(genes_to_plot, causal="causal", chr, counts_ph
   setnames(res, c("gene", "counts", "causal", "chr", "band"))
   return(res)
 }
+
+rle_causalgenes <- function(causalgenes, lim=10){
+  # rle of causal genes affecting >= lim other genes
+  # causalgenes - table with at least 4 columns: gene, chr, start position for the gene, end position and number of genes it affects (in this order)
+  # lim - minimum number of genes a certain gene has to affect to be considered in a hotspot
+  
+  rle.res.list <- list()
+  for (chr in unique(causalgenes$chr.A)){
+    cond <- causalgenes[causalgenes[[2]] == chr][[5]] >= lim
+    rle.res <- rle(cond)
+    rle.res.dt <- data.table(idx=1:length(rle.res$lengths),lengths=rle.res$lengths, values=rle.res$values)
+    rle.res.list[[chr]] <- rle.res.dt
+  }
+  return(rle.res.list)
+}
+
+find_hotspots <- function(rle.list, coordinates_plot, causalgenes, lim=10, separator=1e5, plt=T){
+  # function to find the causal hotspots
+  
+  # rle.list - list of tables where each table corresponds to the rle results for one chromosome
+  # coordinates_plot - table with gene coordinates to plot
+  # causalgenes - table with at least 4 columns: gene, chr, start position for the gene, end position and number of genes it affects (in this order)
+  # lim - how many genes have to be "together" for us to say that this is a hotspot
+  # separator - same as the one used to created the sorted coordinates (for plotting purposes)
+  # plt - T/F if you want to plot the hotspots or not
+  
+  # where the hospot info will be stored
+  hot <- data.table(chr=numeric(), start=numeric(), end=numeric())
+  
+  # for each chromosome
+  for(i in 1:length(rle.list)) {
+    tab <- rle.list[[i]]
+    
+    # if there are more than "lim" genes in a row affecting a certain number of genes(defined when rle is ran)
+    if (nrow(tab[tab[[3]] == T & tab[[2]] > lim]) > 0) {
+      chr <- i
+      
+      if (plt==T){
+        plot_sorted_coordinates(coordinates_plot[chr.A == chr],
+                                separator = separator,
+                                col = coordinates_plot[chr.A == chr]$col)
+      }
+      
+      for (id in tab[tab[[3]] == T & tab[[2]] > lim][[1]]) {
+        getrows <- (sum(tab[tab[[1]] <= id - 1][[2]]) + 1):sum(tab[tab[[1]] <= id][[2]])
+        
+        if (plt==T){
+          abline(v = c(
+            min(causalgenes[causalgenes[[2]] == chr][getrows, ][[3]]),
+            max(causalgenes[causalgenes[[2]] == chr][getrows, ][[4]])), col = id)
+        }
+        
+        add <- data.table(chr=chr, start=min(causalgenes[causalgenes[[2]] == chr][getrows, ][[3]]), 
+                          end=max(causalgenes[causalgenes[[2]] == chr][getrows, ][[4]]))
+        hot <- rbind(hot, add)
+      }
+    }
+  }
+  # return the table with the hotspot limits
+  return(hot)
+}
