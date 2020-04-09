@@ -22,12 +22,12 @@ causalgenes.pos.count <- merge(causalgenes.pos.count1, allgenes.location, by.x=c
 causalgenes.pos.count <- causalgenes.pos.count[order(chr.A, start.A, end.A)]
 
 # For each chromosome get the sequence of values that follow a certain condition
-# condition == count.A>10
-# True - causal genes affect 10 or more genes
-# False - causal genes affect less than 10 genes
+# condition == count.A>lim
+# True - causal genes affect "lim" or more genes
+# False - causal genes affect less than "lim" genes
 
 # create list of tables - one for each chr
-# each table has the runs for the condition count.A>10
+# each table has the runs for the condition count.A>lim
 
 rle.res.list <- rle_causalgenes(causalgenes.pos.count, lim = 10)
 

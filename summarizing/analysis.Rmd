@@ -1697,6 +1697,45 @@ p.sub <- ggplot(res.sub, aes(x=gene, y=counts, fill=as.factor(chr))) +
 p.sub + theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
 ```
 
+## Algorithm to find hotspots
+```{r}
+causalgenes.pos.count1 <- unique(coordinates_plot_links[order(chr.A,start.A)][,.(geneA, start.A, end.A, chr.A, count.A)])
+
+allgenes.location <- genepos
+
+## transform chromosome ids into numbers
+# remove "chr" part of the chromosome name
+allgenes.location$chr.id <- gsub('chr', '', allgenes.location$chr.id)
+# convert roman chromosome numbers to numbers
+allgenes.location$chr.id <- as.numeric(as.roman(allgenes.location$chr.id))
+# geneA with counts, sorted position and original position
+causalgenes.pos.count <- merge(causalgenes.pos.count1, allgenes.location, by.x=c("geneA", "chr.A"), by.y=c("gene", "chr.id"))
+causalgenes.pos.count <- causalgenes.pos.count[order(chr.A, start.A, end.A)]
+
+# For each chromosome get the sequence of values that follow a certain condition
+# condition == count.A>lim
+# True - causal genes affect "lim" or more genes
+# False - causal genes affect less than "lim" genes
+
+# create list of tables - one for each chr
+# each table has the runs for the condition count.A>lim
+
+rle.res.list <- rle_causalgenes(causalgenes.pos.count, lim = 10)
+
+
+# find hotspots and plot them
+# pdf(file = "results/figures/my_causal_hotspots.pdf", onefile = T)
+plot_sorted_coordinates(coordinates_plot_cor, separator = separator, col = coordinates_plot_cor[chr.A==chr]$col)
+
+hot <- find_hotspots(rle.list = rle.res.list, coordinates_plot = coordinates_plot_cor, causalgenes = causalgenes.pos.count, lim = 10, plt = T)
+# dev.off()
+
+# save the hotspot intervals in a grange object (also available in a table)
+granges_myhotspots <- GRanges(seqnames = hot$chr,
+                            ranges=IRanges(start=hot$start,
+                                           end=hot$end))
+```
+
 
 
 
