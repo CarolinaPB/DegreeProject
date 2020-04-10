@@ -1698,7 +1698,7 @@ p.sub + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 ## Algorithm to find hotspots
-```{r}
+```{r warning=FALSE}
 causalgenes.pos.count1 <- unique(coordinates_plot_links[order(chr.A,start.A)][,.(geneA, start.A, end.A, chr.A, count.A)])
 
 allgenes.location <- genepos
@@ -1734,6 +1734,32 @@ hot <- find_hotspots(rle.list = rle.res.list, coordinates_plot = coordinates_plo
 granges_myhotspots <- GRanges(seqnames = hot$chr,
                             ranges=IRanges(start=hot$start,
                                            end=hot$end))
+granges_myhotspots.original <- GRanges(seqnames = hot$chr,
+                                       ranges=IRanges(start=hot$start_original,
+                                                      end=hot$end_original))
+```
+
+# Get genes in hotstpot
+Get genes in hotspot with causal effect and genes wthout causal effect
+```{r}
+# get granges for all the genes
+allgenes.location[is.na(chr.id)]$chr.id <- 17
+granges_allgenes <- GRanges(seqnames = allgenes.location$chr.id, 
+                            ranges = IRanges(start=allgenes.location$chr.start, 
+                                             end=allgenes.location$chr.end))
+names(granges_allgenes) <- allgenes.location$gene
+
+# get granges that define hotspots
+granges_myhotspots.original <- GRanges(seqnames = hot$chr,
+                                       ranges=IRanges(start=hot$start_original,
+                                                      end=hot$end_original))
+
+# granges for genes that are in a hotspot
+granges_genesinhotspot <- subsetByOverlaps(granges_allgenes, granges_myhotspots.original)
+genesinhotspot <- allgenes.location[gene %in% names(granges_genesinhotspot)]
+genesinhotspot_notcausal <- genesinhotspot[!gene %in% causalgenes.pos.count$geneA]
+# granges for causal genes in a hotspot
+causalgenes_in_hotspot <- causalgenes.pos.count[geneA %in% genesinhotspot$gene]
 ```
 
 
