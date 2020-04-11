@@ -1,7 +1,7 @@
 ---
 title: "Causality in Coexpression"
 author: "Carolina Pita Barros"
-date: "2020-03-27"
+date: "2020-04-11"
 output: 
   html_document: 
     fig_caption: yes
@@ -280,7 +280,10 @@ for (p in cor.pvals){
 }
 ```
 
-![Number of unique gene pairs found when using different cutoffs. Each pannel corresponds to a different correlation p-value cutff. X-axis is the -log(pvalue) (for the effect to be significant) and differenc colors represent different values for the non-significant p-value (for the effect to be considered non-significant)](analysis_files/figure-html/unnamed-chunk-2-1.png)
+<div class="figure">
+<img src="analysis_files/figure-html/unnamed-chunk-2-1.png" alt="Number of unique gene pairs found when using different cutoffs. Each pannel corresponds to a different correlation p-value cutff. X-axis is the -log(pvalue) (for the effect to be significant) and differenc colors represent different values for the non-significant p-value (for the effect to be considered non-significant)" width="940px" height="529px" />
+<p class="caption">Number of unique gene pairs found when using different cutoffs. Each pannel corresponds to a different correlation p-value cutff. X-axis is the -log(pvalue) (for the effect to be significant) and differenc colors represent different values for the non-significant p-value (for the effect to be considered non-significant)</p>
+</div>
 
 
 ```r
@@ -300,7 +303,10 @@ for (i in 1:length(unique(res_table$nonsign.p))){
 legend(x=20, yrange[2], unique(res_table$nonsign.p), col=colors, lty=linetype, cex=0.8)
 ```
 
-![Number of unique gene pairs found when using different cutoffs. X-axis is the -log(pvalue) (for the effect to be significant) and differenc colors represent different values for the non-significant p-value (for the effect to be considered non-significant)](analysis_files/figure-html/unnamed-chunk-3-1.png)
+<div class="figure">
+<img src="analysis_files/figure-html/unnamed-chunk-3-1.png" alt="Number of unique gene pairs found when using different cutoffs. X-axis is the -log(pvalue) (for the effect to be significant) and differenc colors represent different values for the non-significant p-value (for the effect to be considered non-significant)" width="940px" height="529px" />
+<p class="caption">Number of unique gene pairs found when using different cutoffs. X-axis is the -log(pvalue) (for the effect to be significant) and differenc colors represent different values for the non-significant p-value (for the effect to be considered non-significant)</p>
+</div>
 
 
 # Inferring causality with new parameters
@@ -412,7 +418,7 @@ text(bp,numpairs.table[order(-numpairs)]$numpairs,
      labels=numpairs.table[order(-numpairs)]$numpairs, cex=1, pos=3)
 ```
 
-![](analysis_files/figure-html/plot the number of times a gene pair appears-1.png)<!-- -->
+<img src="analysis_files/figure-html/plot the number of times a gene pair appears-1.png" width="940px" height="529px" />
 
 ### Plot the number of times a gene-eqtl pair appears
 
@@ -431,7 +437,7 @@ numpairs.table2 <- numpairs.table2[order(N)]
 hist(find.effects_TF.geneeqtl.A.plot$N, main = "Frequency of gene-eqtl pairs", xlab = "# times gene-eqtl pairs appear",labels = T, ylim = c(0,780))
 ```
 
-![](analysis_files/figure-html/histogram gene-eqtl pairs-1.png)<!-- -->
+<img src="analysis_files/figure-html/histogram gene-eqtl pairs-1.png" width="940px" height="529px" />
 
 ```r
 # the majority of gene-eqtl pairs appear between 0-100 times
@@ -598,6 +604,7 @@ GO_transc_reg <- unique(genes_GO.bio.noevidence[(grepl(" transcription ",GO.term
 numlinks_from_gene.A <- find.effects_TF[, .(geneB, count.A=.N), by=geneA]
 numlinks_from_gene.B <- find.effects_TF[, .(count.B=.N), by=geneB]
 numlinks_from_gene <- merge(numlinks_from_gene.A, numlinks_from_gene.B, by="geneB", all=T)
+# save(numlinks_from_gene, file = "results/numlinks_from_gene.Rdata")
 setcolorder(numlinks_from_gene, c("geneA", "geneB", "count.A", "count.B"))
 head(numlinks_from_gene[order(-count.A, count.B)])
 ```
@@ -689,14 +696,20 @@ text(
 )
 ```
 
-![Number of links going out of causal genes that have terms with 'transcription factor' or 'transcription' and 'regulation'](analysis_files/figure-html/unnamed-chunk-15-1.png)
+<div class="figure">
+<img src="analysis_files/figure-html/unnamed-chunk-15-1.png" alt="Number of links going out of causal genes that have terms with 'transcription factor' or 'transcription' and 'regulation'" width="940px" height="529px" />
+<p class="caption">Number of links going out of causal genes that have terms with 'transcription factor' or 'transcription' and 'regulation'</p>
+</div>
 
 ```r
 hist(links_perGO_transfactor[order(-gocount)]$gocount, 
      main = "# causal links \n GO is regulating transcription or a transcription factor")
 ```
 
-![Number of links going out of causal genes that have terms with 'transcription factor' or 'transcription' and 'regulation'](analysis_files/figure-html/unnamed-chunk-15-2.png)
+<div class="figure">
+<img src="analysis_files/figure-html/unnamed-chunk-15-2.png" alt="Number of links going out of causal genes that have terms with 'transcription factor' or 'transcription' and 'regulation'" width="940px" height="529px" />
+<p class="caption">Number of links going out of causal genes that have terms with 'transcription factor' or 'transcription' and 'regulation'</p>
+</div>
 
 
 ### Num of links going out of genes with "transcription" "regulation" or "transcription factor" as its GO term and number of links going out of genes with other descriptions
@@ -751,7 +764,7 @@ text(1:length(bp_tfactor_reg$n),
   pos = 4)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-17-1.png" width="50%" /><img src="analysis_files/figure-html/unnamed-chunk-17-2.png" width="50%" />
+<img src="analysis_files/figure-html/unnamed-chunk-17-1.png" width="50%" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-17-2.png" width="50%" height="529px" />
 would make sense for there to be an enrichment of transcription regulators/factors in the genes A
 
 ### Num of links having "transcription" and "regulation" or "transcription factor" in the description
@@ -782,7 +795,7 @@ text(
 )
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-18-1.png" width="940px" height="529px" />
 
 ### 10 most represented GO categories
 
@@ -795,7 +808,10 @@ pie(mytable, labels = nms,
     main = "Top 10 most represented GO categories \n (in causal genes)")
 ```
 
-![Most represented GO categories in the causal genes](analysis_files/figure-html/unnamed-chunk-19-1.png)
+<div class="figure">
+<img src="analysis_files/figure-html/unnamed-chunk-19-1.png" alt="Most represented GO categories in the causal genes" width="940px" height="529px" />
+<p class="caption">Most represented GO categories in the causal genes</p>
+</div>
 According to [EBI](https://www.ebi.ac.uk/QuickGO/term/GO:0050789), the GO term "biological process" is "any process that modulates the frequency, rate or extent of a biological process" it's usually used when the actual function of the gene is not known.  
 
 High values might be because there are many genes associated with a certain term or because the genes that are associated with that term have many "arrows" going out (they affect many other genes)
@@ -1218,7 +1234,7 @@ if (exists("hgCondA.dt") & exists("hgCondB.dt")){
 }
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-24-1.png" width="940px" height="529px" />
 
 
 ## Using a subset of the causal and the affected genes
@@ -1240,14 +1256,14 @@ genes_nlinks <-merge( merge_lin, numlinks_from_geneB, by.x = "genes", by.y = "ge
 plot(genes_nlinks[, .(l_out, l_in)], main = "How many links each gene has going in or out", pch =".")
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-25-1.png" width="940px" height="529px" />
 
 ```r
 plot(genes_nlinks[, .(l_out, l_in)], xlim = c(0, 200), pch = ".")
 abline(v = 20)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-25-2.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-25-2.png" width="940px" height="529px" />
 
 There are 1 genes that have more links going in than out in the causal genes.  
 
@@ -1298,7 +1314,7 @@ if (!file.exists("results/figures/heatmap_enrichmentpvals_geneslinks_c20.pdf") |
 }
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-26-1.png" width="940px" height="529px" />
 
 
 #### Plot of the p-values of enrichment of all terms for all genes 
@@ -1315,7 +1331,7 @@ pvalsmerge <- merge(hgCondA.nopvallim.dt[,.(GOBPID, Term, Pvalue)], hgCondB.nopv
 plot(-log10(pvalsmerge$Pvalue.x), -log10(pvalsmerge$Pvalue.y), pch=".")
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-27-1.png" width="940px" height="529px" />
 
 # Plot similar to the one from the paper
 Albert FW, Bloom JS, Siegel J, Day L, Kruglyak L. 2018. Genetics of trans-regulatory variation in gene expression. eLife 7: 1–39.
@@ -1419,7 +1435,7 @@ setcolorder(coordinates_plot, c("geneA","geneB", "start.A", "end.A", "chr.A", "s
 plot_sorted_coordinates(coordinates_plot, separator = separator)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-29-1.png" width="940px" height="529px" />
 
 
 #### color by correlation value
@@ -1437,11 +1453,15 @@ coordinates_plot_cor$cor <- abs(coordinates_plot_cor$cor)
 coordinates_plot_cor <- coordinates_plot_cor[order(cor)]
 coordinates_plot_cor$col <- rbPal(100)[as.numeric(cut(coordinates_plot_cor$cor,breaks = 100))]
 
+#save(coordinates_plot_cor, file="results/coordinates_plot_cor.Rdata")
 plot_sorted_coordinates(coordinates_plot_cor, separator = separator, col = coordinates_plot_cor$col)
 gradientLegend(format(round(coordinates_plot_cor$cor, 3), nsmall = 3), rbPal(100), inside=F, side=3)
 ```
 
-![Pairs of genes where the gene on the x-axis if affecting the gene on the y-axis. Colored by correlation value and sorted by chromosome and position](analysis_files/figure-html/unnamed-chunk-30-1.png)
+<div class="figure">
+<img src="analysis_files/figure-html/unnamed-chunk-30-1.png" alt="Pairs of genes where the gene on the x-axis if affecting the gene on the y-axis. Colored by correlation value and sorted by chromosome and position" width="940px" height="529px" />
+<p class="caption">Pairs of genes where the gene on the x-axis if affecting the gene on the y-axis. Colored by correlation value and sorted by chromosome and position</p>
+</div>
 
 
 
@@ -1494,7 +1514,7 @@ KRE33        NA          6
 plot_sorted_coordinates(coordinates_plot_cor[chr.A==12], separator = separator, col = coordinates_plot_cor[chr.A==12]$col)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-32-1.png" width="940px" height="529px" />
 
 ## Focus on the group of vertical bands
 Chromosome 3 seems to mostly be affected by the genes in the vertical bands so I'm going to look closer at chromosome 3
@@ -1510,7 +1530,7 @@ plot_sorted_coordinates(coordinates_plot_cor[chr.A==12], separator = separator, 
 abline(v = c(lower_limit-1500, top_limit+1500), col="green")
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-33-1.png" width="940px" height="529px" />
 
 
 there are 30 genes between the two green bands
@@ -1547,7 +1567,7 @@ plot_sorted_coordinates(
 abline(v=c(band1.left-1500, band1.right+1500), col="green")
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-36-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-36-1.png" width="940px" height="529px" />
 
 There are 31 between the green lines
 
@@ -1563,7 +1583,7 @@ plot_sorted_coordinates(
 abline(v=c(band1.left-100, band1.right+100), col="green")
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-37-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-37-1.png" width="940px" height="529px" />
 
 #### genes on the first "band" of chromosome 12
 
@@ -1612,7 +1632,7 @@ plot_sorted_coordinates(
 abline(v=c(band2.left, top_limit+1000), col="green")
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-39-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-39-1.png" width="940px" height="529px" />
 
 
 There are 26 genes between the green lines
@@ -1894,7 +1914,7 @@ bp <- barplot(nhotspots_genes$N, names.arg = nhotspots_genes$n_genes, xlab = "Nu
 text(bp, nhotspots_genes$N, labels=nhotspots_genes$N, pos = 3)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-46-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-46-1.png" width="940px" height="529px" />
 
 
 ## comparison of found causal genes in hotspots with genes from paper in hotspots
@@ -1941,7 +1961,7 @@ barplot(
 legend(x = "topright", legend = unique(toplot$chr.A), col = pal, pch=20, title="chr", cex = 0.7)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-49-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-49-1.png" width="940px" height="529px" />
 
 
 
@@ -1964,7 +1984,7 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=1)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-50-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-50-1.png" width="940px" height="529px" />
 
 ### closer look 
 
@@ -1984,7 +2004,7 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=1.5)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-51-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-51-1.png" width="940px" height="529px" />
 
 ### genes in chromosome 12 that overlap with hotspots
 
@@ -2027,7 +2047,7 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=0.5)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-53-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-53-1.png" width="940px" height="529px" />
 
 ### Only hotspots that contain causal genes plotted
 
@@ -2049,7 +2069,7 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=0.5)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-54-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-54-1.png" width="940px" height="529px" />
 
 ### Color the gene pairs where the causal gene overlaps an eQTL hotspot
 
@@ -2064,7 +2084,7 @@ plot_sorted_coordinates(
 )
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-55-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-55-1.png" width="940px" height="529px" />
 
 ### Color the gene pairs where either the causal gene overlaps the hotspot, the marker overlaps the hotspot or both
 
@@ -2129,16 +2149,18 @@ add_legend("top", legend=c("gene and eQTL", "gene", "eqtl"), pch=20,
            horiz=TRUE, cex=0.8, title="Overlapping hotspot")
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-56-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-56-1.png" width="940px" height="529px" />
 
 
 
 
 ```r
-numlinks_from_gene.A <- find.effects_TF[, .(geneB, count.A=.N), by=geneA]
-numlinks_from_gene.B <- find.effects_TF[, .(count.B=.N), by=geneB]
-numlinks_from_gene <- merge(numlinks_from_gene.A, numlinks_from_gene.B, by="geneB", all=T)
-setcolorder(numlinks_from_gene, c("geneA", "geneB", "count.A", "count.B"))
+if (!exists("numlinks_from_gene")){
+  numlinks_from_gene.A <- find.effects_TF[, .(geneB, count.A=.N), by=geneA]
+  numlinks_from_gene.B <- find.effects_TF[, .(count.B=.N), by=geneB]
+  numlinks_from_gene <- merge(numlinks_from_gene.A, numlinks_from_gene.B, by="geneB", all=T)
+  setcolorder(numlinks_from_gene, c("geneA", "geneB", "count.A", "count.B"))
+}
 ```
 
 
@@ -2147,7 +2169,7 @@ setcolorder(numlinks_from_gene, c("geneA", "geneB", "count.A", "count.B"))
 hist(numlinks_from_gene$count.A, main = "Frequency of links going out of causal genes")
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-58-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-58-1.png" width="940px" height="529px" />
 
 
 see which genes that have more than 200 links going out overlap with the hotspots
@@ -2180,7 +2202,7 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=1)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-60-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-60-1.png" width="940px" height="529px" />
 
 ### How many genes that have more than 200 links going out overlap the hotspots
 
@@ -2229,7 +2251,7 @@ for (chr in unique(genes_hotspot_links.200.names$chr.A)){
 }
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-62-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-62-1.png" width="940px" height="529px" />
 
 ```
 ##      geneA           hotspot chr.A symbol                      gene.name
@@ -2237,14 +2259,14 @@ for (chr in unique(genes_hotspot_links.200.names$chr.A)){
 ## 2: YLR275W chrXII:694841_T/C    12   SMD2                           <NA>
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-62-2.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-62-2.png" width="940px" height="529px" />
 
 ```
 ##      geneA           hotspot chr.A symbol                         gene.name
 ## 1: YNL135C chrXIV:372376_G/A    14   FPR1 Fk 506-sensitive Proline Rotamase
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-62-3.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-62-3.png" width="940px" height="529px" />
 
 ```
 ##      geneA          hotspot chr.A symbol         gene.name
@@ -2306,7 +2328,7 @@ p <- ggplot(res, aes(x=gene, y=counts, fill=as.factor(chr))) +
 p + theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-64-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-64-1.png" width="940px" height="529px" />
 
 ## Violin plot of read counts for causal genes in chr 12, 14 and 15 that have one or more individuals missing
 
@@ -2331,8 +2353,108 @@ p.sub <- ggplot(res.sub, aes(x=gene, y=counts, fill=as.factor(chr))) +
 p.sub + theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-65-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-65-1.png" width="940px" height="529px" />
 
+## Algorithm to find hotspots
+
+```r
+causalgenes.pos.count1 <- unique(coordinates_plot_links[order(chr.A,start.A)][,.(geneA, start.A, end.A, chr.A, count.A)])
+
+allgenes.location <- genepos
+
+## transform chromosome ids into numbers
+# remove "chr" part of the chromosome name
+allgenes.location$chr.id <- gsub('chr', '', allgenes.location$chr.id)
+# convert roman chromosome numbers to numbers
+allgenes.location$chr.id <- as.numeric(as.roman(allgenes.location$chr.id))
+# geneA with counts, sorted position and original position
+causalgenes.pos.count <- merge(causalgenes.pos.count1, allgenes.location, by.x=c("geneA", "chr.A"), by.y=c("gene", "chr.id"))
+causalgenes.pos.count <- causalgenes.pos.count[order(chr.A, start.A, end.A)]
+
+# For each chromosome get the sequence of values that follow a certain condition
+# condition == count.A>lim
+# True - causal genes affect "lim" or more genes
+# False - causal genes affect less than "lim" genes
+
+# create list of tables - one for each chr
+# each table has the runs for the condition count.A>lim
+
+rle.res.list <- rle_causalgenes(causalgenes.pos.count, lim = 10)
+
+
+# find hotspots and plot them
+# pdf(file = "results/figures/my_causal_hotspots.pdf", onefile = T)
+plot_sorted_coordinates(coordinates_plot_cor, separator = separator, col = coordinates_plot_cor[chr.A==chr]$col)
+```
+
+<img src="analysis_files/figure-html/unnamed-chunk-66-1.png" width="940px" height="529px" />
+
+```r
+hot <- find_hotspots(rle.list = rle.res.list, coordinates_plot = coordinates_plot_cor, causalgenes = causalgenes.pos.count, lim = 10, plt = T)
+```
+
+<img src="analysis_files/figure-html/unnamed-chunk-66-2.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-66-3.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-66-4.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-66-5.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-66-6.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-66-7.png" width="940px" height="529px" />
+
+```r
+# dev.off()
+
+# save the hotspot intervals in a grange object (also available in a table)
+granges_myhotspots <- GRanges(seqnames = hot$chr,
+                            ranges=IRanges(start=hot$start,
+                                           end=hot$end))
+granges_myhotspots.original <- GRanges(seqnames = hot$chr,
+                                       ranges=IRanges(start=hot$start_original,
+                                                      end=hot$end_original))
+```
+
+### Get genes in hotstpot
+Get genes in hotspot with causal effect and genes wthout causal effect
+
+```r
+# get granges for all the genes
+allgenes.location[is.na(chr.id)]$chr.id <- 17
+granges_allgenes <- GRanges(seqnames = allgenes.location$chr.id, 
+                            ranges = IRanges(start=allgenes.location$chr.start, 
+                                             end=allgenes.location$chr.end))
+names(granges_allgenes) <- allgenes.location$gene
+
+# get granges that define hotspots
+granges_myhotspots.original <- GRanges(seqnames = hot$chr,
+                                       ranges=IRanges(start=hot$start_original,
+                                                      end=hot$end_original))
+
+# granges for genes that are in a hotspot
+granges_genesinhotspot <- subsetByOverlaps(granges_allgenes, granges_myhotspots.original)
+genesinhotspot <- allgenes.location[gene %in% names(granges_genesinhotspot)]
+genesinhotspot_notcausal <- genesinhotspot[!gene %in% causalgenes.pos.count$geneA]
+# granges for causal genes in a hotspot
+causalgenes_in_hotspot <- causalgenes.pos.count[geneA %in% genesinhotspot$gene]
+```
+
+### Compare all genes in hotspots to random genes not in hotspots (read counts)
+
+```r
+genes_to_plot.all <- genesinhotspot$gene
+counts_genes_to_plot.all <- counts_pheno.dt[,..genes_to_plot.all]
+
+res <- data.table(NULL)
+for (ngene in names(counts_genes_to_plot.all)){
+  res <- rbind(res, data.table(ngene, unlist(counts_pheno.dt[,..ngene]), ifelse(ngene %in% causalgenes_in_hotspot$geneA, "causal", "not causal"), genesinhotspot[gene==ngene]$chr.id))
+}
+setnames(res, c("gene", "counts", "causal", "chr"))
+res <- res[order(chr)]
+
+for (ch in unique(res$chr)){
+  p <- ggplot(res[chr==ch], aes(x=gene, y=counts)) + 
+    geom_violin() + 
+    facet_grid(~causal, scales = "free_x") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+    labs(title=paste0("Counts distribution for all genes in hotspots - chr", ch))
+  print(p)
+}
+```
+
+<img src="analysis_files/figure-html/unnamed-chunk-68-1.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-68-2.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-68-3.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-68-4.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-68-5.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-68-6.png" width="940px" height="529px" />
 
 
 
@@ -2385,7 +2507,7 @@ legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), 
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-66-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-69-1.png" width="940px" height="529px" />
 
 ### Plot where (relative to the gene) the eqtls are located
 
@@ -2432,7 +2554,7 @@ bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-67-1.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-70-1.png" width="940px" height="529px" />
 
 ```r
 # bpB <- barplot(toplotB, 
@@ -2446,7 +2568,7 @@ bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position
 text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
-![](analysis_files/figure-html/unnamed-chunk-67-2.png)<!-- -->
+<img src="analysis_files/figure-html/unnamed-chunk-70-2.png" width="940px" height="529px" />
 
 Most of the eqtls seem to be located before the gene.  
 

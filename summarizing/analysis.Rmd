@@ -16,12 +16,14 @@ output:
 ---
 
 ```{r setup, include=FALSE}
+library(knitr)
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set('python', engine.path = '/usr/local/bin/python3')
 knitr::opts_chunk$set(python.reticulate = T)
 
 knitr::opts_knit$set(root.dir = normalizePath("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/")) 
 options(tinytex.verbose = TRUE)
+opts_chunk$set(fig.width=8, fig.height=4.5, dpi=300, out.width="940px", out.height="529px")
 ```
 
 
@@ -1672,7 +1674,6 @@ p <- ggplot(res, aes(x=gene, y=counts, fill=as.factor(chr))) +
   geom_violin() + 
   labs(title="Counts distribution for causal genes in chr 12, 14 and 15")
 p + theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
-
 ```
 
 ## Violin plot of read counts for causal genes in chr 12, 14 and 15 that have one or more individuals missing
@@ -1739,7 +1740,7 @@ granges_myhotspots.original <- GRanges(seqnames = hot$chr,
                                                       end=hot$end_original))
 ```
 
-# Get genes in hotstpot
+### Get genes in hotstpot
 Get genes in hotspot with causal effect and genes wthout causal effect
 ```{r}
 # get granges for all the genes
@@ -1762,6 +1763,27 @@ genesinhotspot_notcausal <- genesinhotspot[!gene %in% causalgenes.pos.count$gene
 causalgenes_in_hotspot <- causalgenes.pos.count[geneA %in% genesinhotspot$gene]
 ```
 
+### Compare all genes in hotspots to random genes not in hotspots (read counts)
+```{r}
+genes_to_plot.all <- genesinhotspot$gene
+counts_genes_to_plot.all <- counts_pheno.dt[,..genes_to_plot.all]
+
+res <- data.table(NULL)
+for (ngene in names(counts_genes_to_plot.all)){
+  res <- rbind(res, data.table(ngene, unlist(counts_pheno.dt[,..ngene]), ifelse(ngene %in% causalgenes_in_hotspot$geneA, "causal", "not causal"), genesinhotspot[gene==ngene]$chr.id))
+}
+setnames(res, c("gene", "counts", "causal", "chr"))
+res <- res[order(chr)]
+
+for (ch in unique(res$chr)){
+  p <- ggplot(res[chr==ch], aes(x=gene, y=counts)) + 
+    geom_violin() + 
+    facet_grid(~causal, scales = "free_x") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+    labs(title=paste0("Counts distribution for all genes in hotspots - chr", ch))
+  print(p)
+}
+```
 
 
 
