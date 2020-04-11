@@ -2439,7 +2439,7 @@ counts_genes_to_plot.all <- counts_pheno.dt[,..genes_to_plot.all]
 
 res <- data.table(NULL)
 for (ngene in names(counts_genes_to_plot.all)){
-  res <- rbind(res, data.table(ngene, unlist(counts_pheno.dt[,..ngene]), ifelse(ngene %in% causalgenes_in_hotspot$geneA, "causal", "not causal"), genesinhotspot[gene==ngene]$chr.id))
+  res <- rbind(res, data.table(ngene, unlist(counts_pheno.dt[,..ngene]), ifelse(ngene %in% causalgenes_in_hotspot$geneA, "causal in hotspot", "not causal in hotspot"), genesinhotspot[gene==ngene]$chr.id))
 }
 setnames(res, c("gene", "counts", "causal", "chr"))
 
@@ -2452,16 +2452,17 @@ counts_notinhotspots <- counts_pheno.dt[,..cond]
 
 # get random 10 genes that are not in hotspots or causal
 set.seed(1)
-random_genes_nothotspots <- sample(names(counts_notinhotspots), 10)
+random_genes_nothotspots <- sample(names(counts_notinhotspots), 30)
 
+res.rand <- res
 for (ngene in random_genes_nothotspots){
-  res <- rbind(res, data.table(gene=ngene, counts=unlist(counts_pheno.dt[,..ngene]), causal="random", chr=allgenes.location[gene==ngene]$chr.id))
+  res.rand <- rbind(res.rand, data.table(gene=ngene, counts=unlist(counts_pheno.dt[,..ngene]), causal="random", chr=allgenes.location[gene==ngene]$chr.id))
 }
 
-res <- res[order(chr)]
+res.rand <- res.rand[order(chr)]
 
-for (ch in unique(res[causal != "random"]$chr)){
-  p <- ggplot(res[chr==ch | causal=="random"], aes(x=gene, y=counts)) + 
+for (ch in unique(res.rand[causal != "random"]$chr)){
+  p <- ggplot(res.rand[chr==ch | causal=="random"], aes(x=gene, y=counts)) + 
     geom_violin() + 
     facet_grid(~causal, scales = "free_x") +
     theme(axis.text.x = element_text(angle = 90, hjust = 1))+
@@ -2471,6 +2472,79 @@ for (ch in unique(res[causal != "random"]$chr)){
 ```
 
 <img src="analysis_files/figure-html/unnamed-chunk-68-1.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-68-2.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-68-3.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-68-4.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-68-5.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-68-6.png" width="940px" height="529px" />
+
+#### Count distribution of 60 random genes (not causal and not in hotspots) 
+
+```r
+set.seed(1)
+random_genes_nothotspots <- sample(names(counts_notinhotspots), 60)
+
+res.rand <- res
+for (ngene in random_genes_nothotspots){
+  res.rand <- rbind(res.rand, data.table(gene=ngene, counts=unlist(counts_pheno.dt[,..ngene]), causal="random", chr=allgenes.location[gene==ngene]$chr.id))
+}
+
+res.rand <- res.rand[order(chr)]
+
+
+p <- ggplot(res.rand[causal=="random"], aes(x=gene, y=counts)) + 
+    geom_violin() + 
+    facet_grid(~causal, scales = "free_x") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+    labs(title="Counts distribution for 60 random genes")
+print(p)
+```
+
+#### Count distribution causal genes in hotspots
+
+```r
+for (ch in unique(res.rand[causal == "causal in hotspot"]$chr)){
+  p <- ggplot(res.rand[(chr==ch & causal=="causal in hotspot") |   causal =="random"], aes(x=gene, y=counts)) + 
+    geom_violin() + 
+    facet_grid(~causal, scales = "free_x") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+    labs(title=paste0("Counts distribution for causal genes in hotspots - chr", ch))
+  print(p)
+}
+```
+
+<img src="analysis_files/figure-html/unnamed-chunk-70-1.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-70-2.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-70-3.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-70-4.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-70-5.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-70-6.png" width="940px" height="529px" />
+
+#### Count distribution causal genes in hotspots vs causal genes not in hotspots (by chr)
+
+```r
+causalgenes_notin_hotspot <- causalgenes.pos.count[!geneA %in% genesinhotspot$gene]
+
+res.causal <- res
+for (ngene in unique(causalgenes_notin_hotspot$geneA)){
+  res.causal <- rbind(res.causal, data.table(gene=ngene, counts=unlist(counts_pheno.dt[,..ngene]), causal="causal_not_hot", chr=allgenes.location[gene==ngene]$chr.id))
+}
+res.causal <- res.causal[order(chr)]
+
+for (ch in unique(res.causal[causal=="causal in hotspot"]$chr)){
+  p <- ggplot(res.causal[chr==ch & causal %in% c("causal in hotspot", "causal not in hotspot")], aes(x=gene, y=counts)) + 
+    geom_violin() + 
+    facet_grid(~causal, scales = "free_x") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+    labs(title=paste0("Counts distribution for causal genes in hotspots - chr", ch))
+  print(p)
+}
+```
+
+<img src="analysis_files/figure-html/unnamed-chunk-71-1.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-71-2.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-71-3.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-71-4.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-71-5.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-71-6.png" width="940px" height="529px" />
+
+#### Count distribution causal genes in hotspots vs causal genes not in hotspots
+
+```r
+p <- ggplot(res.causal[causal %in% c("causal in hotspot", "causal not in hotspot")], aes(x=gene, y=counts)) + 
+  geom_violin() + 
+  facet_grid(~causal, scales = "free_x") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+  labs(title="Counts distribution for causal genes in hotspots vs not in hotspots")
+print(p)
+```
+
+<img src="analysis_files/figure-html/unnamed-chunk-72-1.png" width="940px" height="529px" />
 
 
 
@@ -2523,7 +2597,7 @@ legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), 
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-69-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-73-1.png" width="940px" height="529px" />
 
 ### Plot where (relative to the gene) the eqtls are located
 
@@ -2570,7 +2644,7 @@ bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-70-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-74-1.png" width="940px" height="529px" />
 
 ```r
 # bpB <- barplot(toplotB, 
@@ -2584,7 +2658,7 @@ bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position
 text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-70-2.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-74-2.png" width="940px" height="529px" />
 
 Most of the eqtls seem to be located before the gene.  
 
