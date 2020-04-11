@@ -2408,7 +2408,7 @@ granges_myhotspots.original <- GRanges(seqnames = hot$chr,
 ```
 
 ### Get genes in hotstpot
-Get genes in hotspot with causal effect and genes wthout causal effect
+Get genes in hotspot with causal effect and genes without causal effect
 
 ```r
 # get granges for all the genes
@@ -2442,10 +2442,26 @@ for (ngene in names(counts_genes_to_plot.all)){
   res <- rbind(res, data.table(ngene, unlist(counts_pheno.dt[,..ngene]), ifelse(ngene %in% causalgenes_in_hotspot$geneA, "causal", "not causal"), genesinhotspot[gene==ngene]$chr.id))
 }
 setnames(res, c("gene", "counts", "causal", "chr"))
+
+# genes not in hotspots and not causal & not a causal gene
+cond1  <- data.table(genes = names(counts_pheno.dt[,2:ncol(counts_pheno.dt)]))
+# in the dataset genes & not in a hotspot 
+cond <- unlist(cond1[genes %in% allgenes.location$gene][!genes %in% genesinhotspot$gene][!genes %in% causalgenes.pos.count$geneA])
+
+counts_notinhotspots <- counts_pheno.dt[,..cond]
+
+# get random 10 genes that are not in hotspots or causal
+set.seed(1)
+random_genes_nothotspots <- sample(names(counts_notinhotspots), 10)
+
+for (ngene in random_genes_nothotspots){
+  res <- rbind(res, data.table(gene=ngene, counts=unlist(counts_pheno.dt[,..ngene]), causal="random", chr=allgenes.location[gene==ngene]$chr.id))
+}
+
 res <- res[order(chr)]
 
-for (ch in unique(res$chr)){
-  p <- ggplot(res[chr==ch], aes(x=gene, y=counts)) + 
+for (ch in unique(res[causal != "random"]$chr)){
+  p <- ggplot(res[chr==ch | causal=="random"], aes(x=gene, y=counts)) + 
     geom_violin() + 
     facet_grid(~causal, scales = "free_x") +
     theme(axis.text.x = element_text(angle = 90, hjust = 1))+
