@@ -1757,6 +1757,9 @@ granges_myhotspots.original <- GRanges(seqnames = hot$chr,
 
 # granges for genes that are in a hotspot
 granges_genesinhotspot <- subsetByOverlaps(granges_allgenes, granges_myhotspots.original)
+# name hotspots
+names(granges_myhotspots.original) <- paste0("h_", seqnames(granges_myhotspots.original), "_", ranges(granges_myhotspots.original))
+
 genesinhotspot <- allgenes.location[gene %in% names(granges_genesinhotspot)]
 genesinhotspot_notcausal <- genesinhotspot[!gene %in% causalgenes.pos.count$geneA]
 # granges for causal genes in a hotspot
@@ -1841,7 +1844,7 @@ causalgenes_notin_hotspot <- causalgenes.pos.count[!geneA %in% genesinhotspot$ge
 
 res.causal <- res
 for (ngene in unique(causalgenes_notin_hotspot$geneA)){
-  res.causal <- rbind(res.causal, data.table(gene=ngene, counts=unlist(counts_pheno.dt[,..ngene]), causal="causal_not_hot", chr=allgenes.location[gene==ngene]$chr.id))
+  res.causal <- rbind(res.causal, data.table(gene=ngene, counts=unlist(counts_pheno.dt[,..ngene]), causal="causal not in hotspot", chr=allgenes.location[gene==ngene]$chr.id))
 }
 res.causal <- res.causal[order(chr)]
 
@@ -1865,7 +1868,43 @@ p <- ggplot(res.causal[causal %in% c("causal in hotspot", "causal not in hotspot
 print(p)
 ```
 
+### Get hotspot name for each causal gene in hotspot
+```{r}
+# get grange for causal genes in hotspots
+causalgenes_in_hotspot.grange <- granges_genesinhotspot[names(granges_genesinhotspot) %in% causalgenes_in_hotspot$geneA] 
 
+hot_overlaps <- findOverlaps(causalgenes_in_hotspot.grange, granges_myhotspots.original)
+hot_overlaps.dt <- data.table(query=queryHits(hot_overlaps), subject=subjectHits(hot_overlaps))
+hot_overlaps.dt$gnames <- names(causalgenes_in_hotspot.grange)[queryHits(hot_overlaps)]
+
+# Add hotspot name to causal genes in hotspot
+causalgenes_in_hotspot.hotspot <- merge(causalgenes_in_hotspot, hot_overlaps.dt, by.x="geneA", by.y="gnames")
+causalgenes_in_hotspot.hotspot$hotspot <- names(granges_myhotspots.original)[causalgenes_in_hotspot.hotspot$subject]
+
+causalgenes_in_hotspot.hotspot[geneA %in% hot_overlaps.dt$gnames]$hotspot <- names(granges_myhotspots.original[hot_overlaps.dt$subject])
+causalgenes_in_hotspot.hotspot[,c("query", "subject"):=NULL]
+```
+
+### Plot number of links out of each hotspot 
+```{r}
+n_affectedby_hotspot <- causalgenes_in_hotspot.hotspot[, sum(count.A), by=hotspot]
+g.ramp <- gray.colors(length(n_affectedby_hotspot$hotspot), start = 0, end = 1)
+bp <- barplot(n_affectedby_hotspot$V1, 
+        col = g.ramp, 
+        names.arg = n_affectedby_hotspot$hotspot, 
+        las=2, 
+        cex.names = 0.5, 
+        main="Num of links out of each hotspot", 
+        ylim=c(0,max(n_affectedby_hotspot$V1)+700))
+# add numbers on top of the bars
+text(
+  bp,
+  n_affectedby_hotspot$V1,
+  n_affectedby_hotspot$V1,
+  pos = 3
+)
+```
+The number of links might be higher than the number of genes in the dataset since several genes in the same hotspot might be affecting the same gene, which the plot does not take into account
 
 # Others
 ### Get distance between gene and eqtl
