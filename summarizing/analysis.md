@@ -1,7 +1,7 @@
 ---
 title: "Causality in Coexpression"
 author: "Carolina Pita Barros"
-date: "2020-04-12"
+date: "2020-04-13"
 output: 
   html_document: 
     fig_caption: yes
@@ -2563,7 +2563,7 @@ hot_overlaps.dt$gnames <- names(causalgenes_in_hotspot.grange)[queryHits(hot_ove
 causalgenes_in_hotspot.hotspot <- merge(causalgenes_in_hotspot, hot_overlaps.dt, by.x="geneA", by.y="gnames")
 causalgenes_in_hotspot.hotspot$hotspot <- names(granges_myhotspots.original)[causalgenes_in_hotspot.hotspot$subject]
 
-causalgenes_in_hotspot.hotspot[geneA %in% hot_overlaps.dt$gnames]$hotspot <- names(granges_myhotspots.original[hot_overlaps.dt$subject])
+# causalgenes_in_hotspot.hotspot[geneA %in% hot_overlaps.dt$gnames]$hotspot <- names(granges_myhotspots.original[hot_overlaps.dt$subject])
 causalgenes_in_hotspot.hotspot[,c("query", "subject"):=NULL]
 ```
 
@@ -2578,7 +2578,7 @@ bp <- barplot(n_affectedby_hotspot$V1,
         las=2, 
         cex.names = 0.5, 
         main="Num of links out of each hotspot", 
-        ylim=c(0,max(n_affectedby_hotspot$V1)+700))
+        ylim=c(0,max(n_affectedby_hotspot$V1)+1500))
 # add numbers on top of the bars
 text(
   bp,
@@ -2590,6 +2590,33 @@ text(
 
 <img src="analysis_files/figure-html/unnamed-chunk-74-1.png" width="940px" height="529px" />
 The number of links might be higher than the number of genes in the dataset since several genes in the same hotspot might be affecting the same gene, which the plot does not take into account
+
+#### Get number of different genes and eqtls in each hotspot
+
+```r
+causalgenes_in_hotspot.hot.eqtl <- merge(unique(find.effects_TF[,.(geneA, eqtl.A)]), causalgenes_in_hotspot.hotspot, by="geneA")
+
+num_eqtls_hotspot <-unique(causalgenes_in_hotspot.hot.eqtl[,.(eqtl.A, hotspot)])[,.N, by=hotspot]
+num_genes_hotspot <-causalgenes_in_hotspot.hot.eqtl[,.(geneA, hotspot)][,.N, by=hotspot]
+
+num_genes_eqtls_hotspot <- merge(num_eqtls_hotspot, num_genes_hotspot, by="hotspot")
+colnames(num_genes_eqtls_hotspot) <- c("hotspot", "num.eqtls", "num.genes") 
+num_genes_eqtls_hotspot
+```
+
+<div class="kable-table">
+
+hotspot               num.eqtls   num.genes
+-------------------  ----------  ----------
+h_12_570776-830364           32          37
+h_13_264541-390732           18          19
+h_14_220659-669591           28          30
+h_15_70325-240094            15          15
+h_7_53787-191806             18          18
+h_8_51111-211978             27          30
+
+</div>
+
 
 # Others
 ### Get distance between gene and eqtl
@@ -2640,7 +2667,7 @@ legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), 
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-75-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-76-1.png" width="940px" height="529px" />
 
 ### Plot where (relative to the gene) the eqtls are located
 
@@ -2687,7 +2714,7 @@ bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-76-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-77-1.png" width="940px" height="529px" />
 
 ```r
 # bpB <- barplot(toplotB, 
@@ -2701,7 +2728,7 @@ bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position
 text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-76-2.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-77-2.png" width="940px" height="529px" />
 
 Most of the eqtls seem to be located before the gene.  
 

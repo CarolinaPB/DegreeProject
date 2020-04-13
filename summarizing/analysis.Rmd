@@ -1881,7 +1881,7 @@ hot_overlaps.dt$gnames <- names(causalgenes_in_hotspot.grange)[queryHits(hot_ove
 causalgenes_in_hotspot.hotspot <- merge(causalgenes_in_hotspot, hot_overlaps.dt, by.x="geneA", by.y="gnames")
 causalgenes_in_hotspot.hotspot$hotspot <- names(granges_myhotspots.original)[causalgenes_in_hotspot.hotspot$subject]
 
-causalgenes_in_hotspot.hotspot[geneA %in% hot_overlaps.dt$gnames]$hotspot <- names(granges_myhotspots.original[hot_overlaps.dt$subject])
+# causalgenes_in_hotspot.hotspot[geneA %in% hot_overlaps.dt$gnames]$hotspot <- names(granges_myhotspots.original[hot_overlaps.dt$subject])
 causalgenes_in_hotspot.hotspot[,c("query", "subject"):=NULL]
 ```
 
@@ -1895,7 +1895,7 @@ bp <- barplot(n_affectedby_hotspot$V1,
         las=2, 
         cex.names = 0.5, 
         main="Num of links out of each hotspot", 
-        ylim=c(0,max(n_affectedby_hotspot$V1)+700))
+        ylim=c(0,max(n_affectedby_hotspot$V1)+1500))
 # add numbers on top of the bars
 text(
   bp,
@@ -1905,6 +1905,19 @@ text(
 )
 ```
 The number of links might be higher than the number of genes in the dataset since several genes in the same hotspot might be affecting the same gene, which the plot does not take into account
+
+#### Get number of different genes and eqtls in each hotspot
+```{r}
+causalgenes_in_hotspot.hot.eqtl <- merge(unique(find.effects_TF[,.(geneA, eqtl.A)]), causalgenes_in_hotspot.hotspot, by="geneA")
+
+num_eqtls_hotspot <-unique(causalgenes_in_hotspot.hot.eqtl[,.(eqtl.A, hotspot)])[,.N, by=hotspot]
+num_genes_hotspot <-causalgenes_in_hotspot.hot.eqtl[,.(geneA, hotspot)][,.N, by=hotspot]
+
+num_genes_eqtls_hotspot <- merge(num_eqtls_hotspot, num_genes_hotspot, by="hotspot")
+colnames(num_genes_eqtls_hotspot) <- c("hotspot", "num.eqtls", "num.genes") 
+num_genes_eqtls_hotspot
+```
+
 
 # Others
 ### Get distance between gene and eqtl
