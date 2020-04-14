@@ -435,7 +435,7 @@ rle_causalgenes <- function(causalgenes, lim=10){
   return(rle.res.list)
 }
 
-find_hotspots <- function(rle.list, coordinates_plot, causalgenes, lim=10, separator=1e5, plt=T){
+find_hotspots <- function(rle.list, coordinates_plot, causalgenes, lim=10, separator=1e5, plt=T, ...){
   # function to find the causal hotspots
   
   # rle.list - list of tables where each table corresponds to the rle results for one chromosome
@@ -446,7 +446,7 @@ find_hotspots <- function(rle.list, coordinates_plot, causalgenes, lim=10, separ
   # plt - T/F if you want to plot the hotspots or not
   
   # where the hospot info will be stored
-  hot <- data.table(chr=numeric(), start=numeric(), end=numeric())
+  hot <- data.table(chr=numeric(), start=numeric(), end=numeric(), start_original=numeric(), end_original=numeric())
   
   # for each chromosome
   for(i in 1:length(rle.list)) {
@@ -459,7 +459,13 @@ find_hotspots <- function(rle.list, coordinates_plot, causalgenes, lim=10, separ
       if (plt==T){
         plot_sorted_coordinates(coordinates_plot[chr.A == chr],
                                 separator = separator,
-                                col = coordinates_plot[chr.A == chr]$col)
+                                col = coordinates_plot[chr.A == chr]$col, ...)
+        
+        labs <- unique(coordinates_plot[chr.A == chr]$start.A)[seq(1, length(unique(coordinates_plot[chr.A == chr]$start.A)), 5)]
+        text(cex=0.5, x=labs, y=-10, 
+             labels = labs, 
+             xpd=TRUE, srt=45, pos = 1)
+        
       }
       
       for (id in tab[tab[[3]] == T & tab[[2]] > lim][[1]]) {
@@ -472,7 +478,10 @@ find_hotspots <- function(rle.list, coordinates_plot, causalgenes, lim=10, separ
         }
         
         add <- data.table(chr=chr, start=min(causalgenes[causalgenes[[2]] == chr][getrows, ][[3]]), 
-                          end=max(causalgenes[causalgenes[[2]] == chr][getrows, ][[4]]))
+                          end=max(causalgenes[causalgenes[[2]] == chr][getrows, ][[4]]), 
+                          start_original=min(causalgenes[causalgenes[[2]] == chr][getrows, ][[7]]), 
+                          end_original=max(causalgenes[causalgenes[[2]] == chr][getrows, ][[8]]))
+        
         hot <- rbind(hot, add)
       }
     }

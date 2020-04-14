@@ -1918,6 +1918,34 @@ colnames(num_genes_eqtls_hotspot) <- c("hotspot", "num.eqtls", "num.genes")
 num_genes_eqtls_hotspot
 ```
 
+## GO enrichment for causal genes in hotspots
+which universe - causal genes + affected genes or only causal genes?
+
+```{r}
+if (!exists("genes_GO.bio")){
+  genes_GO.table <- fread("results/genelistwithGOterm.txt")
+  genes_GO.table <- unique(genes_GO.table)
+  genes_GO.bio   <- unique(genes_GO.table[GO.namespace=="biological_process"])
+}
+
+# create geneset
+goframeData <- unique(genes_GO.bio[,.(GO.identifier, evidence, gene)])
+gs <- getgeneset(goframeData)
+
+
+causal.hotspot <- unlist(unique(causalgenes_in_hotspot.hot.eqtl$geneA))
+
+# universe is genes involved in causality
+universe <- unique(find.effects_TF$geneA)
+universe <- unique(c(find.effects_TF$geneA, find.effects_TF$geneB))
+
+# get enrichment for genesA
+res.causalhotspot <- getenrichment(gs, universe = universe, interestinggenes = causal.hotspot, cond = T)
+res.causalhotspot.dt <- data.table(summary(res.causalhotspot))
+res.causalhotspot.dt
+```
+
+
 
 # Others
 ### Get distance between gene and eqtl

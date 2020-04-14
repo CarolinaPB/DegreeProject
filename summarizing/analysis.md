@@ -1,7 +1,7 @@
 ---
 title: "Causality in Coexpression"
 author: "Carolina Pita Barros"
-date: "2020-04-13"
+date: "2020-04-14"
 output: 
   html_document: 
     fig_caption: yes
@@ -2617,6 +2617,159 @@ h_8_51111-211978             27          30
 
 </div>
 
+## GO enrichment for causal genes in hotspots
+which universe - causal genes + affected genes or only causal genes?
+
+
+```r
+if (!exists("genes_GO.bio")){
+  genes_GO.table <- fread("results/genelistwithGOterm.txt")
+  genes_GO.table <- unique(genes_GO.table)
+  genes_GO.bio   <- unique(genes_GO.table[GO.namespace=="biological_process"])
+}
+
+# create geneset
+goframeData <- unique(genes_GO.bio[,.(GO.identifier, evidence, gene)])
+gs <- getgeneset(goframeData)
+```
+
+```
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+
+## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
+## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
+```
+
+```r
+causal.hotspot <- unlist(unique(causalgenes_in_hotspot.hot.eqtl$geneA))
+
+# universe is genes involved in causality
+universe <- unique(find.effects_TF$geneA)
+universe <- unique(c(find.effects_TF$geneA, find.effects_TF$geneB))
+
+# get enrichment for genesA
+res.causalhotspot <- getenrichment(gs, universe = universe, interestinggenes = causal.hotspot, cond = T)
+res.causalhotspot.dt <- data.table(summary(res.causalhotspot))
+res.causalhotspot.dt
+```
+
+<div class="kable-table">
+
+GOBPID           Pvalue   OddsRatio     ExpCount   Count   Size  Term                                                                
+-----------  ----------  ----------  -----------  ------  -----  --------------------------------------------------------------------
+GO:0048869    0.0036080    2.444776    7.0427456      15    115  cellular developmental process                                      
+GO:0046688    0.0037269         Inf    0.1224825       2      2  response to copper ion                                              
+GO:0032482    0.0065644   11.712329    0.4286889       3      7  Rab protein signal transduction                                     
+GO:0035825    0.0090705    4.630311    1.3473079       5     22  homologous recombination                                            
+GO:0007049    0.0098659    1.783646   16.4126593      26    268  cell cycle                                                          
+GO:0006032    0.0107298   31.061225    0.1837238       2      3  chitin catabolic process                                            
+GO:0046348    0.0107298   31.061225    0.1837238       2      3  amino sugar catabolic process                                       
+GO:0006281    0.0111363    2.251977    6.4915742      13    106  DNA repair                                                          
+GO:0034293    0.0123384    3.167606    2.5721332       7     42  sexual sporulation                                                  
+GO:0007165    0.0164184    1.961267    9.0637074      16    148  signal transduction                                                 
+GO:1903046    0.0175392    2.506704    4.0449251       9     68  meiotic cell cycle process                                          
+GO:0045132    0.0185921    3.741733    1.5922729       5     26  meiotic chromosome segregation                                      
+GO:0000712    0.0205989   15.523810    0.2449651       2      4  resolution of meiotic recombination intermediates                   
+GO:0045116    0.0205989   15.523810    0.2449651       2      4  protein neddylation                                                 
+GO:0030435    0.0208933    2.424334    4.1644061       9     68  sporulation resulting in formation of a cellular spore              
+GO:0009653    0.0209187    2.422993    4.1645308       9     69  anatomical structure morphogenesis                                  
+GO:0000003    0.0210568    1.858722   10.1048089      17    165  reproduction                                                        
+GO:0050789    0.0220923    1.459015   41.6440608      53    680  regulation of biological process                                    
+GO:0008360    0.0258120    5.845890    0.6736539       3     11  regulation of cell shape                                            
+GO:0044703    0.0292953    2.266326    4.4093711       9     72  multi-organism reproductive process                                 
+GO:0007264    0.0324516    2.776635    2.4496506       6     40  small GTPase mediated signal transduction                           
+GO:0000272    0.0329018    5.194064    0.7348952       3     12  polysaccharide catabolic process                                    
+GO:0000917    0.0329018    5.194064    0.7348952       3     12  division septum assembly                                            
+GO:0046475    0.0329612   10.344671    0.3062063       2      5  glycerophospholipid catabolic process                               
+GO:0006895    0.0329612   10.344671    0.3062063       2      5  Golgi to endosome transport                                         
+GO:0034765    0.0329612   10.344671    0.3062063       2      5  regulation of ion transmembrane transport                           
+GO:0006560    0.0329612   10.344671    0.3062063       2      5  proline metabolic process                                           
+GO:0033313    0.0329612   10.344671    0.3062063       2      5  meiotic cell cycle checkpoint                                       
+GO:0061014    0.0329612   10.344671    0.3062063       2      5  positive regulation of mRNA catabolic process                       
+GO:0035335    0.0329612   10.344671    0.3062063       2      5  peptidyl-tyrosine dephosphorylation                                 
+GO:0000076    0.0329612   10.344671    0.3062063       2      5  DNA replication checkpoint                                          
+GO:0006333    0.0357252    3.678702    1.2860666       4     21  chromatin assembly or disassembly                                   
+GO:0030010    0.0357252    3.678702    1.2860666       4     21  establishment of cell polarity                                      
+GO:0030437    0.0361592    2.696104    2.5108919       6     41  ascospore formation                                                 
+GO:0051301    0.0381178    1.912993    6.8590218      12    112  cell division                                                       
+GO:0050896    0.0387948    1.429679   32.7028360      42    534  response to stimulus                                                
+GO:0006310    0.0433974    2.201396    4.0016591       8     67  DNA recombination                                                   
+GO:0051276    0.0467898    1.597974   13.5955610      20    222  chromosome organization                                             
+GO:0045003    0.0474786    7.755102    0.3674476       2      6  double-strand break repair via synthesis-dependent strand annealing 
+GO:0000741    0.0474786    7.755102    0.3674476       2      6  karyogamy                                                           
+GO:0006474    0.0474786    7.755102    0.3674476       2      6  N-terminal protein amino acid acetylation                           
+GO:0046834    0.0474786    7.755102    0.3674476       2      6  lipid phosphorylation                                               
+GO:0030473    0.0474786    7.755102    0.3674476       2      6  nuclear migration along microtubule                                 
+GO:0051647    0.0474786    7.755102    0.3674476       2      6  nucleus localization                                                
+GO:0007018    0.0474786    7.755102    0.3674476       2      6  microtubule-based movement                                          
+GO:0010970    0.0474786    7.755102    0.3674476       2      6  transport along microtubule                                         
+GO:0035435    0.0474786    7.755102    0.3674476       2      6  phosphate ion transmembrane transport                               
+GO:0000492    0.0474786    7.755102    0.3674476       2      6  box C/D snoRNP assembly                                             
+GO:0007346    0.0492007    2.139680    4.1031648       8     67  regulation of mitotic cell cycle                                    
+GO:0000902    0.0497748    4.245953    0.8573777       3     14  cell morphogenesis                                                  
+GO:0022603    0.0497748    4.245953    0.8573777       3     14  regulation of anatomical structure morphogenesis                    
+
+</div>
+
+
 
 # Others
 ### Get distance between gene and eqtl
@@ -2667,7 +2820,7 @@ legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), 
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-76-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-77-1.png" width="940px" height="529px" />
 
 ### Plot where (relative to the gene) the eqtls are located
 
@@ -2714,7 +2867,7 @@ bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-77-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-78-1.png" width="940px" height="529px" />
 
 ```r
 # bpB <- barplot(toplotB, 
@@ -2728,7 +2881,7 @@ bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position
 text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-77-2.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-78-2.png" width="940px" height="529px" />
 
 Most of the eqtls seem to be located before the gene.  
 
