@@ -907,7 +907,7 @@ affected | `r nrow(res.geneB.dt)` | `r nrow(hgCondB.dt)`
 ```{r}
 if (exists("hgCondA.dt") & exists("hgCondB.dt")){
   tocombine.A <- data.table(-log10(hgCondA.dt$Pvalue), hgCondA.dt$Term)
-  tocombine.B <- data.table(-log(hgCondB.dt$Pvalue), hgCondB.dt$Term)
+  tocombine.B <- data.table(-log10(hgCondB.dt$Pvalue), hgCondB.dt$Term)
   combined <- merge(tocombine.A, tocombine.B, by="V2", all=T)
   colnames(combined) <- c("term", "Causal", "Affected")
   
@@ -932,6 +932,34 @@ if (exists("hgCondA.dt") & exists("hgCondB.dt")){
 }
 ```
 
+#### GO Enrichment Heatmap (-log10(pval)) subsetting by p-val
+```{r}
+if (exists("hgCondA.dt") & exists("hgCondB.dt")){
+  tocombine.A <- data.table(-log10(hgCondA.dt$Pvalue), hgCondA.dt$Term)
+  tocombine.B <- data.table(-log10(hgCondB.dt$Pvalue), hgCondB.dt$Term)
+  combined <- merge(tocombine.A, tocombine.B, by="V2", all=T)
+  colnames(combined) <- c("term", "Causal", "Affected")
+  
+  # Causal <- combined$Causal
+  # Affected <- combined$Affected
+
+  if (!file.exists("results/figures/heatmap_enrichmentpvals_0.01pval.pdf") | update_genelist){
+    
+    pdf("results/figures/heatmap_enrichmentpvals_0.01pval.pdf")
+    combined[is.na(Causal)]$Causal <- 0
+    combined[is.na(Affected)]$Affected <- 0
+    plot_enrichment_heatmap(combined[Causal > -log10(0.01) | Affected > -log10(0.01)])
+    dev.off()
+    plot_enrichment_heatmap(combined[Causal > -log10(0.01) | Affected > -log10(0.01)])
+  } else {
+    combined[is.na(Causal)]$Causal <- 0
+    combined[is.na(Affected)]$Affected <- 0
+    plot_enrichment_heatmap(combined[Causal > -log10(0.01) | Affected > -log10(0.01)])
+  }
+} else {
+  stop("Please perform the conditional hypergeometric test")
+}
+```
 
 ## Using a subset of the causal and the affected genes
 ```{r, fig.keep='high'}
@@ -1921,7 +1949,7 @@ num_genes_eqtls_hotspot
 ## GO enrichment for causal genes in hotspots
 which universe - causal genes + affected genes or only causal genes?
 
-```{r}
+```{r warning=FALSE}
 if (!exists("genes_GO.bio")){
   genes_GO.table <- fread("results/genelistwithGOterm.txt")
   genes_GO.table <- unique(genes_GO.table)
@@ -1944,8 +1972,6 @@ res.causalhotspot <- getenrichment(gs, universe = universe, interestinggenes = c
 res.causalhotspot.dt <- data.table(summary(res.causalhotspot))
 res.causalhotspot.dt
 ```
-
-
 
 # Others
 ### Get distance between gene and eqtl

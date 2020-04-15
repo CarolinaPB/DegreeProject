@@ -2770,6 +2770,15 @@ GO:0022603    0.0497748    4.245953    0.8573777       3     14  regulation of a
 </div>
 
 
+```r
+knitr::include_graphics("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/output.pdf")
+```
+
+<div class="figure">
+<img src="/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/output.pdf" alt="A caption" width="100%" height="100%" />
+<p class="caption">A caption</p>
+</div>
+
 
 # Others
 ### Get distance between gene and eqtl
@@ -2820,7 +2829,7 @@ legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), 
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-77-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-78-1.png" width="940px" height="529px" />
 
 ### Plot where (relative to the gene) the eqtls are located
 
@@ -2867,7 +2876,7 @@ bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-78-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-79-1.png" width="940px" height="529px" />
 
 ```r
 # bpB <- barplot(toplotB, 
@@ -2881,7 +2890,7 @@ bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position
 text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-78-2.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-79-2.png" width="940px" height="529px" />
 
 Most of the eqtls seem to be located before the gene.  
 
