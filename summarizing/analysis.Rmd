@@ -1727,6 +1727,8 @@ p.sub + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 ## Algorithm to find hotspots
+1. Find genes that are affecting at least 10 other genes
+2. Hotspot where there are 10 or more genes in a row that are affecting 10 other genes
 ```{r warning=FALSE}
 causalgenes.pos.count1 <- unique(coordinates_plot_links[order(chr.A,start.A)][,.(geneA, start.A, end.A, chr.A, count.A)])
 
@@ -1973,6 +1975,47 @@ res.causalhotspot.dt <- data.table(summary(res.causalhotspot))
 res.causalhotspot.dt
 ```
 
+# Some comparisons with paper
+
+## which genes from the paper have causal effects
+(not testing all for now)
+```{r}
+causalgenes.pos.count.name <- merge(causalgenes.pos.count, unique(genes_GO.bio[,.(gene, symbol, gene.name)]), by.x="geneA", by.y="gene", all.x=T)
+causalgenes.pos.count.name[symbol %in% c("ERC1", "STB5", "KRE33")]
+```
+
+## which genes are in a causal hotspot
+```{r}
+causalgenes_in_hotspot.hot.eqtl[geneA %in% causalgenes.pos.count.name[symbol %in% c("ERC1", "STB5", "KRE33")]$geneA]
+```
+
+```{r}
+find.effects_TF.names <- merge(unique(find.effects_TF[,.(geneA, geneB)]), unique(genes_GO.bio[,.(gene, symbol, gene.name, GO.identifier, GO.term)]), by.x="geneB", by.y="gene", allow.cartesian=T)
+setnames(find.effects_TF.names, old=c("symbol", "gene.name", "GO.identifier", "GO.term"), new=c("symbol.B", "gene.name.B", "GO.identifier.B", "GO.term.B"))
+find.effects_TF.names <- merge(find.effects_TF.names, unique(genes_GO.bio[,.(gene, symbol, gene.name, GO.identifier, GO.term)]), by.x="geneA", by.y="gene", allow.cartesian=T)
+setcolorder(find.effects_TF.names, neworder = c("geneA", "geneB", "symbol", "symbol.B", "gene.name", "GO.identifier", "GO.term"))
+
+# find.effects_TF.names[symbol=="ERC1"]
+```
+
+The paper mentions that "the ERC1 frameshift variant is linked to reduced mean expression levels of multiple genes in the methionine biosynthesis pathway"
+Is ERC1 affecting any gene involved in the methionine biosynthesis pathway?
+```{r}
+find.effects_TF.names[symbol=="ERC1" & grepl("methionine",GO.term.B, fixed = F)]
+```
+ERC1 is affecting `r length(unique(find.effects_TF.names[symbol=="ERC1" & grepl("methionine",GO.term.B, fixed = F)]$geneB))` genes that have a GO term associated with the methionine pathway. The genes are `r unique(find.effects_TF.names[symbol=="ERC1" & grepl("methionine",GO.term.B, fixed = F)]$geneB)` (`r unique(find.effects_TF.names[symbol=="ERC1" & grepl("methionine",GO.term.B, fixed = F)]$symbol.B)`)  
+
+
+The paper mentions that the most known causal variants underlying yeast eQTL hotspots are coding. Genes -> HAP1, MKT1, GPA1, AMN1, SSY1
+
+```{r}
+# with causal effect
+causalgenes.pos.count.name[symbol %in% c("HAP1", "MKT1", "GPA1", "AMN1","SSY1")]
+# in hotspot
+causalgenes_in_hotspot.hot.eqtl[geneA %in% causalgenes.pos.count.name[symbol %in% c("HAP1", "MKT1", "GPA1", "AMN1","SSY1")]$geneA]
+```
+
+
 # Others
 ### Get distance between gene and eqtl
 ```{r warning=FALSE}
@@ -2093,4 +2136,5 @@ geneB.eqtlB.notinpaper <- combinegeneeqtlB[which(!combinegeneeqtlB %in% combine_
 ```
 
 There are `r nrow(geneA.eqtlA.notinpaper)` gene-eqtl pairs for the causal genes not in the provided gene-eqtl table.  
-There are `r nrow(geneB.eqtlB.notinpaper)` gene-eqtl pairs for the affected genes not in the provided gene-eqtl table
+There are `r nrow(geneB.eqtlB.notinpaper)` gene-eqtl pairs for the affected genes not in the provided gene-eqtl table  
+

@@ -1,7 +1,7 @@
 ---
 title: "Causality in Coexpression"
 author: "Carolina Pita Barros"
-date: "2020-04-14"
+date: "2020-04-17"
 output: 
   html_document: 
     fig_caption: yes
@@ -1209,7 +1209,7 @@ affected | 43 | 25
 ```r
 if (exists("hgCondA.dt") & exists("hgCondB.dt")){
   tocombine.A <- data.table(-log10(hgCondA.dt$Pvalue), hgCondA.dt$Term)
-  tocombine.B <- data.table(-log(hgCondB.dt$Pvalue), hgCondB.dt$Term)
+  tocombine.B <- data.table(-log10(hgCondB.dt$Pvalue), hgCondB.dt$Term)
   combined <- merge(tocombine.A, tocombine.B, by="V2", all=T)
   colnames(combined) <- c("term", "Causal", "Affected")
   
@@ -1236,6 +1236,37 @@ if (exists("hgCondA.dt") & exists("hgCondB.dt")){
 
 <img src="analysis_files/figure-html/unnamed-chunk-24-1.png" width="940px" height="529px" />
 
+#### GO Enrichment Heatmap (-log10(pval)) subsetting by p-val
+
+```r
+if (exists("hgCondA.dt") & exists("hgCondB.dt")){
+  tocombine.A <- data.table(-log10(hgCondA.dt$Pvalue), hgCondA.dt$Term)
+  tocombine.B <- data.table(-log10(hgCondB.dt$Pvalue), hgCondB.dt$Term)
+  combined <- merge(tocombine.A, tocombine.B, by="V2", all=T)
+  colnames(combined) <- c("term", "Causal", "Affected")
+  
+  # Causal <- combined$Causal
+  # Affected <- combined$Affected
+
+  if (!file.exists("results/figures/heatmap_enrichmentpvals_0.01pval.pdf") | update_genelist){
+    
+    pdf("results/figures/heatmap_enrichmentpvals_0.01pval.pdf")
+    combined[is.na(Causal)]$Causal <- 0
+    combined[is.na(Affected)]$Affected <- 0
+    plot_enrichment_heatmap(combined[Causal > -log10(0.01) | Affected > -log10(0.01)])
+    dev.off()
+    plot_enrichment_heatmap(combined[Causal > -log10(0.01) | Affected > -log10(0.01)])
+  } else {
+    combined[is.na(Causal)]$Causal <- 0
+    combined[is.na(Affected)]$Affected <- 0
+    plot_enrichment_heatmap(combined[Causal > -log10(0.01) | Affected > -log10(0.01)])
+  }
+} else {
+  stop("Please perform the conditional hypergeometric test")
+}
+```
+
+<img src="analysis_files/figure-html/unnamed-chunk-25-1.png" width="940px" height="529px" />
 
 ## Using a subset of the causal and the affected genes
 
@@ -1256,14 +1287,14 @@ genes_nlinks <-merge( merge_lin, numlinks_from_geneB, by.x = "genes", by.y = "ge
 plot(genes_nlinks[, .(l_out, l_in)], main = "How many links each gene has going in or out", pch =".")
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-25-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-26-1.png" width="940px" height="529px" />
 
 ```r
 plot(genes_nlinks[, .(l_out, l_in)], xlim = c(0, 200), pch = ".")
 abline(v = 20)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-25-2.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-26-2.png" width="940px" height="529px" />
 
 There are 1 genes that have more links going in than out in the causal genes.  
 
@@ -1314,7 +1345,7 @@ if (!file.exists("results/figures/heatmap_enrichmentpvals_geneslinks_c20.pdf") |
 }
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-26-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-27-1.png" width="940px" height="529px" />
 
 
 #### Plot of the p-values of enrichment of all terms for all genes 
@@ -1331,7 +1362,7 @@ pvalsmerge <- merge(hgCondA.nopvallim.dt[,.(GOBPID, Term, Pvalue)], hgCondB.nopv
 plot(-log10(pvalsmerge$Pvalue.x), -log10(pvalsmerge$Pvalue.y), pch=".")
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-27-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-28-1.png" width="940px" height="529px" />
 
 # Plot similar to the one from the paper
 Albert FW, Bloom JS, Siegel J, Day L, Kruglyak L. 2018. Genetics of trans-regulatory variation in gene expression. eLife 7: 1–39.
@@ -1435,7 +1466,7 @@ setcolorder(coordinates_plot, c("geneA","geneB", "start.A", "end.A", "chr.A", "s
 plot_sorted_coordinates(coordinates_plot, separator = separator)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-29-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-30-1.png" width="940px" height="529px" />
 
 
 #### color by correlation value
@@ -1459,7 +1490,7 @@ gradientLegend(format(round(coordinates_plot_cor$cor, 3), nsmall = 3), rbPal(100
 ```
 
 <div class="figure">
-<img src="analysis_files/figure-html/unnamed-chunk-30-1.png" alt="Pairs of genes where the gene on the x-axis if affecting the gene on the y-axis. Colored by correlation value and sorted by chromosome and position" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-31-1.png" alt="Pairs of genes where the gene on the x-axis if affecting the gene on the y-axis. Colored by correlation value and sorted by chromosome and position" width="940px" height="529px" />
 <p class="caption">Pairs of genes where the gene on the x-axis if affecting the gene on the y-axis. Colored by correlation value and sorted by chromosome and position</p>
 </div>
 
@@ -1514,7 +1545,7 @@ KRE33        NA          6
 plot_sorted_coordinates(coordinates_plot_cor[chr.A==12], separator = separator, col = coordinates_plot_cor[chr.A==12]$col)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-32-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-33-1.png" width="940px" height="529px" />
 
 ## Focus on the group of vertical bands
 Chromosome 3 seems to mostly be affected by the genes in the vertical bands so I'm going to look closer at chromosome 3
@@ -1530,7 +1561,7 @@ plot_sorted_coordinates(coordinates_plot_cor[chr.A==12], separator = separator, 
 abline(v = c(lower_limit-1500, top_limit+1500), col="green")
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-33-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-34-1.png" width="940px" height="529px" />
 
 
 there are 30 genes between the two green bands
@@ -1567,7 +1598,7 @@ plot_sorted_coordinates(
 abline(v=c(band1.left-1500, band1.right+1500), col="green")
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-36-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-37-1.png" width="940px" height="529px" />
 
 There are 31 between the green lines
 
@@ -1583,7 +1614,7 @@ plot_sorted_coordinates(
 abline(v=c(band1.left-100, band1.right+100), col="green")
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-37-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-38-1.png" width="940px" height="529px" />
 
 #### genes on the first "band" of chromosome 12
 
@@ -1632,7 +1663,7 @@ plot_sorted_coordinates(
 abline(v=c(band2.left, top_limit+1000), col="green")
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-39-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-40-1.png" width="940px" height="529px" />
 
 
 There are 26 genes between the green lines
@@ -1914,7 +1945,7 @@ bp <- barplot(nhotspots_genes$N, names.arg = nhotspots_genes$n_genes, xlab = "Nu
 text(bp, nhotspots_genes$N, labels=nhotspots_genes$N, pos = 3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-46-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-47-1.png" width="940px" height="529px" />
 
 
 ## comparison of found causal genes in hotspots with genes from paper in hotspots
@@ -1961,7 +1992,7 @@ barplot(
 legend(x = "topright", legend = unique(toplot$chr.A), col = pal, pch=20, title="chr", cex = 0.7)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-49-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-50-1.png" width="940px" height="529px" />
 
 
 
@@ -1984,7 +2015,7 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=1)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-50-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-51-1.png" width="940px" height="529px" />
 
 ### closer look 
 
@@ -2004,7 +2035,7 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=1.5)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-51-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-52-1.png" width="940px" height="529px" />
 
 ### genes in chromosome 12 that overlap with hotspots
 
@@ -2047,7 +2078,7 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=0.5)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-53-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-54-1.png" width="940px" height="529px" />
 
 ### Only hotspots that contain causal genes plotted
 
@@ -2069,7 +2100,7 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=0.5)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-54-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-55-1.png" width="940px" height="529px" />
 
 ### Color the gene pairs where the causal gene overlaps an eQTL hotspot
 
@@ -2084,7 +2115,7 @@ plot_sorted_coordinates(
 )
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-55-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-56-1.png" width="940px" height="529px" />
 
 ### Color the gene pairs where either the causal gene overlaps the hotspot, the marker overlaps the hotspot or both
 
@@ -2149,7 +2180,7 @@ add_legend("top", legend=c("gene and eQTL", "gene", "eqtl"), pch=20,
            horiz=TRUE, cex=0.8, title="Overlapping hotspot")
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-56-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-57-1.png" width="940px" height="529px" />
 
 
 
@@ -2169,7 +2200,7 @@ if (!exists("numlinks_from_gene")){
 hist(numlinks_from_gene$count.A, main = "Frequency of links going out of causal genes")
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-58-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-59-1.png" width="940px" height="529px" />
 
 
 see which genes that have more than 200 links going out overlap with the hotspots
@@ -2202,7 +2233,7 @@ abline(v=unlist(hotspots$V1),
        col=as.factor(col), lwd=1)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-60-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-61-1.png" width="940px" height="529px" />
 
 ### How many genes that have more than 200 links going out overlap the hotspots
 
@@ -2251,7 +2282,7 @@ for (chr in unique(genes_hotspot_links.200.names$chr.A)){
 }
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-62-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-63-1.png" width="940px" height="529px" />
 
 ```
 ##      geneA           hotspot chr.A symbol                      gene.name
@@ -2259,14 +2290,14 @@ for (chr in unique(genes_hotspot_links.200.names$chr.A)){
 ## 2: YLR275W chrXII:694841_T/C    12   SMD2                           <NA>
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-62-2.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-63-2.png" width="940px" height="529px" />
 
 ```
 ##      geneA           hotspot chr.A symbol                         gene.name
 ## 1: YNL135C chrXIV:372376_G/A    14   FPR1 Fk 506-sensitive Proline Rotamase
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-62-3.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-63-3.png" width="940px" height="529px" />
 
 ```
 ##      geneA          hotspot chr.A symbol         gene.name
@@ -2328,7 +2359,7 @@ p <- ggplot(res, aes(x=gene, y=counts, fill=as.factor(chr))) +
 p + theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-64-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-65-1.png" width="940px" height="529px" />
 
 ## Violin plot of read counts for causal genes in chr 12, 14 and 15 that have one or more individuals missing
 
@@ -2353,9 +2384,11 @@ p.sub <- ggplot(res.sub, aes(x=gene, y=counts, fill=as.factor(chr))) +
 p.sub + theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-65-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-66-1.png" width="940px" height="529px" />
 
 ## Algorithm to find hotspots
+1. Find genes that are affecting at least 10 other genes
+2. Hotspot where there are 10 or more genes in a row that are affecting 10 other genes
 
 ```r
 causalgenes.pos.count1 <- unique(coordinates_plot_links[order(chr.A,start.A)][,.(geneA, start.A, end.A, chr.A, count.A)])
@@ -2387,13 +2420,13 @@ rle.res.list <- rle_causalgenes(causalgenes.pos.count, lim = 10)
 plot_sorted_coordinates(coordinates_plot_cor, separator = separator, col = coordinates_plot_cor[chr.A==chr]$col)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-66-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-67-1.png" width="940px" height="529px" />
 
 ```r
 hot <- find_hotspots(rle.list = rle.res.list, coordinates_plot = coordinates_plot_cor, causalgenes = causalgenes.pos.count, lim = 10, plt = T)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-66-2.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-66-3.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-66-4.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-66-5.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-66-6.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-66-7.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-67-2.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-67-3.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-67-4.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-67-5.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-67-6.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-67-7.png" width="940px" height="529px" />
 
 ```r
 # dev.off()
@@ -2474,7 +2507,7 @@ for (ch in unique(res.rand[causal != "random"]$chr)){
 }
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-68-1.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-68-2.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-68-3.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-68-4.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-68-5.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-68-6.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-69-1.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-69-2.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-69-3.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-69-4.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-69-5.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-69-6.png" width="940px" height="529px" />
 
 #### Count distribution of 60 random genes (not causal and not in hotspots) 
 
@@ -2511,7 +2544,7 @@ for (ch in unique(res.rand[causal == "causal in hotspot"]$chr)){
 }
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-70-1.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-70-2.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-70-3.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-70-4.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-70-5.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-70-6.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-71-1.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-71-2.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-71-3.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-71-4.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-71-5.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-71-6.png" width="940px" height="529px" />
 
 #### Count distribution causal genes in hotspots vs causal genes not in hotspots (by chr)
 
@@ -2534,7 +2567,7 @@ for (ch in unique(res.causal[causal=="causal in hotspot"]$chr)){
 }
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-71-1.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-71-2.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-71-3.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-71-4.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-71-5.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-71-6.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-72-1.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-72-2.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-72-3.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-72-4.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-72-5.png" width="940px" height="529px" /><img src="analysis_files/figure-html/unnamed-chunk-72-6.png" width="940px" height="529px" />
 
 #### Count distribution causal genes in hotspots vs causal genes not in hotspots
 
@@ -2547,7 +2580,7 @@ p <- ggplot(res.causal[causal %in% c("causal in hotspot", "causal not in hotspot
 print(p)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-72-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-73-1.png" width="940px" height="529px" />
 
 ### Get hotspot name for each causal gene in hotspot
 
@@ -2588,7 +2621,7 @@ text(
 )
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-74-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-75-1.png" width="940px" height="529px" />
 The number of links might be higher than the number of genes in the dataset since several genes in the same hotspot might be affecting the same gene, which the plot does not take into account
 
 #### Get number of different genes and eqtls in each hotspot
@@ -2631,74 +2664,8 @@ if (!exists("genes_GO.bio")){
 # create geneset
 goframeData <- unique(genes_GO.bio[,.(GO.identifier, evidence, gene)])
 gs <- getgeneset(goframeData)
-```
 
-```
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
 
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-
-## Warning in result_fetch(res@ptr, n = n): SQL statements must be issued with
-## dbExecute() or dbSendStatement() instead of dbGetQuery() or dbSendQuery().
-```
-
-```r
 causal.hotspot <- unlist(unique(causalgenes_in_hotspot.hot.eqtl$geneA))
 
 # universe is genes involved in causality
@@ -2769,14 +2736,108 @@ GO:0022603    0.0497748    4.245953    0.8573777       3     14  regulation of a
 
 </div>
 
+# Some comparisons with paper
+
+## which genes from the paper have causal effects
+(not testing all for now)
 
 ```r
-knitr::include_graphics("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/output.pdf")
+causalgenes.pos.count.name <- merge(causalgenes.pos.count, unique(genes_GO.bio[,.(gene, symbol, gene.name)]), by.x="geneA", by.y="gene", all.x=T)
+causalgenes.pos.count.name[symbol %in% c("ERC1", "STB5", "KRE33")]
 ```
 
-<div class="figure">
-<img src="/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/output.pdf" alt="A caption" width="100%" height="100%" />
-<p class="caption">A caption</p>
+<div class="kable-table">
+
+geneA      chr.A   start.A     end.A   count.A   chr.strand   chr.start   chr.end  symbol   gene.name                       
+--------  ------  --------  --------  --------  -----------  ----------  --------  -------  --------------------------------
+YHR032W        8   5357867   5367741        27            1      173344    175089  ERC1     Ethionine Resistance Conferring 
+YHR178W        8   5643822   5654182         7            1      459299    461530  STB5     Sin Three Binding protein       
+
+</div>
+
+## which genes are in a causal hotspot
+
+```r
+causalgenes_in_hotspot.hot.eqtl[geneA %in% causalgenes.pos.count.name[symbol %in% c("ERC1", "STB5", "KRE33")]$geneA]
+```
+
+<div class="kable-table">
+
+geneA     eqtl.A                chr.A   start.A     end.A   count.A   chr.strand   chr.start   chr.end  hotspot          
+--------  -------------------  ------  --------  --------  --------  -----------  ----------  --------  -----------------
+YHR032W   chrVIII:172443_G/A        8   5357867   5367741        27            1      173344    175089  h_8_51111-211978 
+
+</div>
+
+
+```r
+find.effects_TF.names <- merge(unique(find.effects_TF[,.(geneA, geneB)]), unique(genes_GO.bio[,.(gene, symbol, gene.name, GO.identifier, GO.term)]), by.x="geneB", by.y="gene", allow.cartesian=T)
+setnames(find.effects_TF.names, old=c("symbol", "gene.name", "GO.identifier", "GO.term"), new=c("symbol.B", "gene.name.B", "GO.identifier.B", "GO.term.B"))
+find.effects_TF.names <- merge(find.effects_TF.names, unique(genes_GO.bio[,.(gene, symbol, gene.name, GO.identifier, GO.term)]), by.x="geneA", by.y="gene", allow.cartesian=T)
+setcolorder(find.effects_TF.names, neworder = c("geneA", "geneB", "symbol", "symbol.B", "gene.name", "GO.identifier", "GO.term"))
+
+# find.effects_TF.names[symbol=="ERC1"]
+```
+
+The paper mentions that "the ERC1 frameshift variant is linked to reduced mean expression levels of multiple genes in the methionine biosynthesis pathway"
+Is ERC1 affecting any gene involved in the methionine biosynthesis pathway?
+
+```r
+find.effects_TF.names[symbol=="ERC1" & grepl("methionine",GO.term.B, fixed = F)]
+```
+
+<div class="kable-table">
+
+geneA     geneB     symbol   symbol.B   gene.name                         GO.identifier   GO.term                                     gene.name.B            GO.identifier.B   GO.term.B                                
+--------  --------  -------  ---------  --------------------------------  --------------  ------------------------------------------  ---------------------  ----------------  -----------------------------------------
+YHR032W   YGR055W   ERC1     MUP1       Ethionine Resistance Conferring   GO:0006556      S-adenosylmethionine biosynthetic process   Methionine UPtake      GO:1903692        methionine import across plasma membrane 
+YHR032W   YGR055W   ERC1     MUP1       Ethionine Resistance Conferring   GO:0042908      xenobiotic transport                        Methionine UPtake      GO:1903692        methionine import across plasma membrane 
+YHR032W   YGR055W   ERC1     MUP1       Ethionine Resistance Conferring   GO:0055085      transmembrane transport                     Methionine UPtake      GO:1903692        methionine import across plasma membrane 
+YHR032W   YGR204W   ERC1     ADE3       Ethionine Resistance Conferring   GO:0006556      S-adenosylmethionine biosynthetic process   ADEnine requiring      GO:0009086        methionine biosynthetic process          
+YHR032W   YGR204W   ERC1     ADE3       Ethionine Resistance Conferring   GO:0042908      xenobiotic transport                        ADEnine requiring      GO:0009086        methionine biosynthetic process          
+YHR032W   YGR204W   ERC1     ADE3       Ethionine Resistance Conferring   GO:0055085      transmembrane transport                     ADEnine requiring      GO:0009086        methionine biosynthetic process          
+YHR032W   YIL046W   ERC1     MET30      Ethionine Resistance Conferring   GO:0006556      S-adenosylmethionine biosynthetic process   METhionine requiring   GO:0009086        methionine biosynthetic process          
+YHR032W   YIL046W   ERC1     MET30      Ethionine Resistance Conferring   GO:0042908      xenobiotic transport                        METhionine requiring   GO:0009086        methionine biosynthetic process          
+YHR032W   YIL046W   ERC1     MET30      Ethionine Resistance Conferring   GO:0055085      transmembrane transport                     METhionine requiring   GO:0009086        methionine biosynthetic process          
+YHR032W   YIR017C   ERC1     MET28      Ethionine Resistance Conferring   GO:0006556      S-adenosylmethionine biosynthetic process   METhionine             GO:0009086        methionine biosynthetic process          
+YHR032W   YIR017C   ERC1     MET28      Ethionine Resistance Conferring   GO:0042908      xenobiotic transport                        METhionine             GO:0009086        methionine biosynthetic process          
+YHR032W   YIR017C   ERC1     MET28      Ethionine Resistance Conferring   GO:0055085      transmembrane transport                     METhionine             GO:0009086        methionine biosynthetic process          
+YHR032W   YKR069W   ERC1     MET1       Ethionine Resistance Conferring   GO:0006556      S-adenosylmethionine biosynthetic process   METhionine requiring   GO:0009086        methionine biosynthetic process          
+YHR032W   YKR069W   ERC1     MET1       Ethionine Resistance Conferring   GO:0042908      xenobiotic transport                        METhionine requiring   GO:0009086        methionine biosynthetic process          
+YHR032W   YKR069W   ERC1     MET1       Ethionine Resistance Conferring   GO:0055085      transmembrane transport                     METhionine requiring   GO:0009086        methionine biosynthetic process          
+
+</div>
+ERC1 is affecting 5 genes that have a GO term associated with the methionine pathway. The genes are YGR055W, YGR204W, YIL046W, YIR017C, YKR069W (MUP1, ADE3, MET30, MET28, MET1)  
+
+
+The paper mentions that the most known causal variants underlying yeast eQTL hotspots are coding. Genes -> HAP1, MKT1, GPA1, AMN1, SSY1
+
+
+```r
+# with causal effect
+causalgenes.pos.count.name[symbol %in% c("HAP1", "MKT1", "GPA1", "AMN1","SSY1")]
+```
+
+<div class="kable-table">
+
+geneA      chr.A   start.A     end.A   count.A   chr.strand   chr.start   chr.end  symbol   gene.name                          
+--------  ------  --------  --------  --------  -----------  ----------  --------  -------  -----------------------------------
+YBR158W        2    817146    822385         4            1      556549    558198  AMN1     Antagonist of Mitotic exit Network 
+YHR005C        8   5298022   5307569        68           -1      113499    114917  GPA1     G Protein Alpha subunit            
+
+</div>
+
+```r
+# in hotspot
+causalgenes_in_hotspot.hot.eqtl[geneA %in% causalgenes.pos.count.name[symbol %in% c("HAP1", "MKT1", "GPA1", "AMN1","SSY1")]$geneA]
+```
+
+<div class="kable-table">
+
+geneA     eqtl.A                chr.A   start.A     end.A   count.A   chr.strand   chr.start   chr.end  hotspot          
+--------  -------------------  ------  --------  --------  --------  -----------  ----------  --------  -----------------
+YHR005C   chrVIII:105298_T/A        8   5298022   5307569        68           -1      113499    114917  h_8_51111-211978 
+
 </div>
 
 
@@ -2829,7 +2890,7 @@ legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), 
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-78-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-83-1.png" width="940px" height="529px" />
 
 ### Plot where (relative to the gene) the eqtls are located
 
@@ -2876,7 +2937,7 @@ bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-79-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-84-1.png" width="940px" height="529px" />
 
 ```r
 # bpB <- barplot(toplotB, 
@@ -2890,7 +2951,7 @@ bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position
 text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-79-2.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-84-2.png" width="940px" height="529px" />
 
 Most of the eqtls seem to be located before the gene.  
 
@@ -2911,4 +2972,5 @@ geneB.eqtlB.notinpaper <- combinegeneeqtlB[which(!combinegeneeqtlB %in% combine_
 ```
 
 There are 1 gene-eqtl pairs for the causal genes not in the provided gene-eqtl table.  
-There are 1 gene-eqtl pairs for the affected genes not in the provided gene-eqtl table
+There are 1 gene-eqtl pairs for the affected genes not in the provided gene-eqtl table  
+
