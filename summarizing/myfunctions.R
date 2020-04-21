@@ -489,3 +489,14 @@ find_hotspots <- function(rle.list, coordinates_plot, causalgenes, lim=10, separ
   # return the table with the hotspot limits
   return(hot)
 }
+
+read_excel_allsheets <- function(filename, tibble = FALSE) {
+  # library(readxl)  
+  # reads all sheets in an excel doc
+  # creates a list of data.tables
+  sheets <- readxl::excel_sheets(filename)
+  x <- lapply(sheets, function(X) readxl::read_excel(filename, sheet = X))
+  if(!tibble) x <- lapply(x, as.data.table)
+  names(x) <- sheets
+  x
+}

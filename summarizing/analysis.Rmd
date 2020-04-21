@@ -26,6 +26,20 @@ options(tinytex.verbose = TRUE)
 opts_chunk$set(fig.width=8, fig.height=4.5, dpi=300, out.width="940px", out.height="529px")
 ```
 
+```{r}
+packagesList <- c("data.table", "tidyr", "parallel", "igraph", "ggplot2", "Hmisc", "corrplot", "dplyr", "pheatmap", "plotfunctions", "reticulate", "tidyselect")
+newPackages <- packagesList[!(packagesList %in% installed.packages()[,"Package"])]
+if(length(newPackages) > 0) {
+  install.packages(newPackages)
+}
+
+packagesListBC <- c("GSEABase",  "GOstats", "GenomicRanges")
+newPackagesBC <- packagesListBC[!(packagesListBC %in% installed.packages()[,"Package"])]
+if(length(newPackagesBC) > 0) {
+  BiocManager::install(newPackagesBC)
+}
+```
+
 
 
 ```{r load libraries, message=FALSE, warning=FALSE}
@@ -39,7 +53,7 @@ library("dplyr")
 library("GSEABase")
 library("GOstats")
 library("pheatmap")
-library("reticulate")
+# library("reticulate")
 library("plotfunctions")
 library("tidyselect")
 library("GenomicRanges")
@@ -2014,6 +2028,24 @@ causalgenes.pos.count.name[symbol %in% c("HAP1", "MKT1", "GPA1", "AMN1","SSY1")]
 # in hotspot
 causalgenes_in_hotspot.hot.eqtl[geneA %in% causalgenes.pos.count.name[symbol %in% c("HAP1", "MKT1", "GPA1", "AMN1","SSY1")]$geneA]
 ```
+
+
+# Heritability
+Get causal genes with heritability >=0.9
+```{r message=FALSE, warning=FALSE}
+heritability_excel <- read_excel_allsheets("data/SI_Data_05_heritability.xlsx")
+for_heritability <- heritability_excel$heritability_A
+for_heritability[,h:=(A/(A+E))]
+
+heritability <- merge(causalgenes.pos.count.name, for_heritability, by.x="geneA", by.y="...1")
+
+heritability[h >= 0.9]
+
+# find if there are ENA genes in the causal genes
+heritability[grepl("ENA", symbol)]
+```
+
+
 
 
 # Others
