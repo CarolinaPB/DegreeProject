@@ -2005,8 +2005,15 @@ box <- ggplot(fract_less10_toplot, aes(x=causal, y=fraction)) +
   ggtitle("Fraction individuals with expression <=10 per gene")
 
 plot(box)
-```
 
+# violing plot
+violin <- ggplot(fract_less10_toplot, aes(x=causal, y=fraction)) + 
+  geom_violin() +
+  ggtitle("Fraction individuals with expression <=10 per gene")
+
+plot(violin)
+```
+The genes that are not in a hotspot seem to have less individuals with expression <=10 (?)
 
 ## GO enrichment for causal genes in hotspots
 which universe - causal genes + affected genes or only causal genes?
