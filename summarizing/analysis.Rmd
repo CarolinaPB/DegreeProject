@@ -1997,11 +1997,13 @@ box <- ggplot(fract_less10_toplot, aes(x=causal, y=fraction)) +
 plot(box)
 
 # boxplot of fraction of samples with expr <=10, separated by causal category + log10 scale
+breaks <- seq(0,1,0.25)
 box <- ggplot(fract_less10_toplot, aes(x=causal, y=fraction)) + 
   geom_boxplot()+
-  # scale_y_continuous(trans='log10')
-  scale_y_log10()+
-  ggtitle("Fraction individuals with expression <=10 per gene  (log10)")
+  scale_y_log10("fraction (log10) - showing original values", breaks = breaks, labels = breaks)+
+  # scale_y_log10("fraction (log10)", oob=squish_infinite, breaks = breaks, labels = breaks)+ # use squish_infinite to "squish infitite values into range"
+  ggtitle("Fraction individuals with expression <=10 per gene")
+
 plot(box)
 ```
 
