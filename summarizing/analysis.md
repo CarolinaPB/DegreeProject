@@ -1,7 +1,7 @@
 ---
 title: "Causality in Coexpression"
 author: "Carolina Pita Barros"
-date: "2020-04-21"
+date: "2020-04-22"
 output: 
   html_document: 
     fig_caption: yes
@@ -2665,6 +2665,65 @@ h_8_51111-211978             27          30
 
 </div>
 
+## Number of individuals in each gene with expression <=10
+
+```r
+# for each gene, get number of samples that has expression <= 10
+getless10 <- apply(counts$pheno, 1, function(x) {ifelse(x<=10, 1, 0)})
+howmany_less10 <- colSums(getless10)
+count_less10 <- data.table(gene=names(howmany_less10), nsamples_less10 =howmany_less10)
+count_less10 <- count_less10[order(-nsamples_less10)]
+
+# get fraction of samples have expr <=10 for each gene
+count_less10[,fraction:= nsamples_less10/ncol(counts$pheno)]
+
+# subset to get the causal genes
+fract_less10 <- count_less10[gene %in% causalgenes.pos.count$geneA]
+
+# add causal category - causal in hotspot or causal not in hotspot
+fract_less10[,causal:=ifelse(gene %in% causalgenes_in_hotspot.hotspot$geneA, "causal in hotspot", "causal not in hotspot")]
+
+# subset to get the genes with no causal effects
+count_less10_notcausal <- count_less10[!gene %in% find.effects_TF$geneA & gene %in% allgenes.location$gene]
+
+# add causal category - not causal in hotspot or not causal not in hotspot
+count_less10_notcausal[,causal := ifelse(gene %in% names(counts_notinhotspots), "not causal not in hotspot", "not causal in hotspot")]
+
+# join the two groups - genes with causal effects and without
+fract_less10_toplot <- rbind(fract_less10, count_less10_notcausal)
+
+# boxplot of fraction of samples with expr <=10, separated by causal category 
+box <- ggplot(fract_less10_toplot, aes(x=causal, y=fraction)) + 
+  geom_boxplot()+
+  # scale_y_continuous(trans='log10')
+  # scale_y_log10()+
+  ggtitle("Fraction individuals with expression <=10 per gene")
+plot(box)
+```
+
+<img src="analysis_files/figure-html/unnamed-chunk-78-1.png" width="940px" height="529px" />
+
+```r
+# boxplot of fraction of samples with expr <=10, separated by causal category + log10 scale
+box <- ggplot(fract_less10_toplot, aes(x=causal, y=fraction)) + 
+  geom_boxplot()+
+  # scale_y_continuous(trans='log10')
+  scale_y_log10()+
+  ggtitle("Fraction individuals with expression <=10 per gene  (log10)")
+plot(box)
+```
+
+```
+## Warning: Transformation introduced infinite values in continuous y-axis
+```
+
+```
+## Warning: Removed 4565 rows containing non-finite values (stat_boxplot).
+```
+
+<img src="analysis_files/figure-html/unnamed-chunk-78-2.png" width="940px" height="529px" />
+
+
 ## GO enrichment for causal genes in hotspots
 which universe - causal genes + affected genes or only causal genes?
 
@@ -2859,6 +2918,9 @@ YHR005C   chrVIII:105298_T/A        8   5298022   5307569        68           -1
 # Heritability
 Get causal genes with heritability >=0.9
 
+According to the paper, "The single eQTLs that by themselves generated heritability of >=0.9 were all local eQTLs for genes in regions of the genome with high, structurally complex variation".  
+By looking for causal genes that have heritability >= 0.9, I can find genes with structurally commplex variation
+
 ```r
 heritability_excel <- read_excel_allsheets("data/SI_Data_05_heritability.xlsx")
 for_heritability <- heritability_excel$heritability_A
@@ -2945,7 +3007,7 @@ legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), 
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-85-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-86-1.png" width="940px" height="529px" />
 
 ### Plot where (relative to the gene) the eqtls are located
 
@@ -2992,7 +3054,7 @@ bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-86-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-87-1.png" width="940px" height="529px" />
 
 ```r
 # bpB <- barplot(toplotB, 
@@ -3006,7 +3068,7 @@ bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position
 text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-86-2.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-87-2.png" width="940px" height="529px" />
 
 Most of the eqtls seem to be located before the gene.  
 
