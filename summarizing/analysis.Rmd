@@ -2101,8 +2101,18 @@ heritability[h >= 0.9]
 heritability[grepl("ENA", symbol)]
 ```
 
+# Validade causal pairs by comparing with list of eqtls
+If a gene-eqtl pair is in the reported list of genes with eqtls, then it means that the eqtl is affecting the gene. Applied to our causal genes: the eqtl of geneA is affecting gene B == geneA is affecting gene B. If the eqtl of geneA is in the reported list paired with geneB, then there's a confirmation that geneA affects geneB
 
+```{r}
+# add chr to find.effects_TF
+find.effects_TF.chr <- unique(merge(find.effects_TF, coordinates_plot_cor[,.(geneA, geneB, chr.A, chr.B)], by=c("geneA", "geneB")), all.x=T)
 
+# find cases in the reported gene-eqtl pairs where the eqtl of a causal gene is an eqtl for an affected gene
+find.effects_TF.trans <- unique(merge(find.effects_TF.chr, eqtl_results[,.(gene, pmarker, cis)], by.x=c("geneB", "eqtl.A"), by.y=c("gene", "pmarker")), all.x=T)
+```
+Out of `r nrow(unique(find.effects_TF.chr[,.(geneA, geneB, eqtl.A)]))` geneA affecting geneB pairs, `r nrow(unique(find.effects_TF.trans[,.(geneB, eqtl.A)]))` geneB-eqtlA pairs were in the reported list.  
+There are `r nrow(find.effects_TF.trans[cis==T])` cases where the gene and eqtl are in cis and `r nrow(unique(find.effects_TF.trans[,.(geneB, eqtl.A, cis)][cis==F]))` where eqtlA is in trans with geneB
 
 # Others
 ### Get distance between gene and eqtl

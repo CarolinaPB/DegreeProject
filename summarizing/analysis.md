@@ -2968,8 +2968,19 @@ YDR040C        4   2039040   2047187         4           -1      535192    53846
 
 </div>
 
+# Validade causal pairs by comparing with list of eqtls
+If a gene-eqtl pair is in the reported list of genes with eqtls, then it means that the eqtl is affecting the gene. Applied to our causal genes: the eqtl of geneA is affecting gene B == geneA is affecting gene B. If the eqtl of geneA is in the reported list paired with geneB, then there's a confirmation that geneA affects geneB
 
 
+```r
+# add chr to find.effects_TF
+find.effects_TF.chr <- unique(merge(find.effects_TF, coordinates_plot_cor[,.(geneA, geneB, chr.A, chr.B)], by=c("geneA", "geneB")), all.x=T)
+
+# find cases in the reported gene-eqtl pairs where the eqtl of a causal gene is an eqtl for an affected gene
+find.effects_TF.trans <- unique(merge(find.effects_TF.chr, eqtl_results[,.(gene, pmarker, cis)], by.x=c("geneB", "eqtl.A"), by.y=c("gene", "pmarker")), all.x=T)
+```
+Out of 28466 geneA affecting geneB pairs, 589 geneB-eqtlA pairs were in the reported list.  
+There are 2 cases where the gene and eqtl are in cis and 587 where eqtlA is in trans with geneB
 
 # Others
 ### Get distance between gene and eqtl
@@ -3020,7 +3031,7 @@ legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), 
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-86-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-87-1.png" width="940px" height="529px" />
 
 ### Plot where (relative to the gene) the eqtls are located
 
@@ -3067,7 +3078,7 @@ bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-87-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-88-1.png" width="940px" height="529px" />
 
 ```r
 # bpB <- barplot(toplotB, 
@@ -3081,7 +3092,7 @@ bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position
 text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-87-2.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-88-2.png" width="940px" height="529px" />
 
 Most of the eqtls seem to be located before the gene.  
 
