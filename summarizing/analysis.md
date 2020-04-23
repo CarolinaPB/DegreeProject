@@ -2615,7 +2615,7 @@ causalgenes_in_hotspot.hotspot$hotspot <- names(granges_myhotspots.original)[cau
 causalgenes_in_hotspot.hotspot[,c("query", "subject"):=NULL]
 ```
 
-### Plot number of links out of each hotspot 
+### Plot number of unique genes affected by  each hotspot 
 
 ```r
 # can have repeated affected genes (if two causal genes affect the same gene)
@@ -2623,7 +2623,7 @@ causalgenes_in_hotspot.hotspot[,c("query", "subject"):=NULL]
 
 # number of unique genes being affected
 n_affectedby_hotspot.geneB <- merge(causalgenes_in_hotspot.hotspot, unique(find.effects_TF[,.(geneA, geneB)]), all.x=T, by="geneA")
-n_affectedby_hotspot <- n_affectedby_hotspot.geneB[,.(geneB, hotspot)][,.N, by=hotspot]
+n_affectedby_hotspot <- unique(n_affectedby_hotspot.geneB[,.(geneB, hotspot)])[,.N, by=hotspot]
 
 
 g.ramp <- gray.colors(length(n_affectedby_hotspot$hotspot), start = 0, end = 1)
