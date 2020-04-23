@@ -2836,30 +2836,44 @@ GO:0022603    0.0497748    4.245953    0.8573777       3     14  regulation of a
 (not testing all for now)
 
 ```r
+# genes mentioned in the paper
+ge <- data.table(gene =   c("YNL132W", "YNL199C", "YNL198C", "YNL197C","YNL196C", "YNL085W", "YOL081W", "YHR005C", "YHR178W", "YHR032W", "YFL021W", "YOR032C", "YKL015W", "YLR176C", "YCR018C", "YBR150C", "YOR172W", "YMR019W", "YLR256W", "YNL085W", "YHR005C", "YBR158W", "YDR160W"),
+                 symbol = c("KRE33",   "GCR2",    "YNL198C", "WHI3",   "SLZ1",    "MKT1",    "IRA2",    "TIM10",   "STB5",    "ERC1" ,   "GAT1", "HMS1", "PUT3", "RFX1", "SRD1","TBS1", "YRM1","STB4", "HAP1", "MKT1", "GPA1", "AMN1", "SSY1"))
+
+
+
 causalgenes.pos.count.name <- merge(causalgenes.pos.count, unique(genes_GO.bio[,.(gene, symbol, gene.name)]), by.x="geneA", by.y="gene", all.x=T)
-causalgenes.pos.count.name[symbol %in% c("ERC1", "STB5", "KRE33")]
+causalgenes.pos.count.name[geneA %in% ge$gene]
 ```
 
 <div class="kable-table">
 
-geneA      chr.A   start.A     end.A   count.A   chr.strand   chr.start   chr.end  symbol   gene.name                       
---------  ------  --------  --------  --------  -----------  ----------  --------  -------  --------------------------------
-YHR032W        8   5357867   5367741        27            1      173344    175089  ERC1     Ethionine Resistance Conferring 
-YHR178W        8   5643822   5654182         7            1      459299    461530  STB5     Sin Three Binding protein       
+geneA      chr.A    start.A      end.A   count.A   chr.strand   chr.start   chr.end  symbol   gene.name                              
+--------  ------  ---------  ---------  --------  -----------  ----------  --------  -------  ---------------------------------------
+YBR150C        2     801806     808680         3           -1      541209    544493  TBS1     ThiaBendazole Sensitive                
+YBR158W        2     817146     822385         4            1      556549    558198  AMN1     Antagonist of Mitotic exit Network     
+YCR018C        3    1292508    1297662        16           -1      148238    148903  SRD1     NA                                     
+YHR005C        8    5298022    5307569        68           -1      113499    114917  GPA1     G Protein Alpha subunit                
+YHR032W        8    5357867    5367741        27            1      173344    175089  ERC1     Ethionine Resistance Conferring        
+YHR178W        8    5643822    5654182         7            1      459299    461530  STB5     Sin Three Binding protein              
+YMR019W       13    9162310    9180579        49            1      312156    315005  STB4     Sin Three Binding protein              
+YOR172W       15   11304241   11323306        10            1      654210    656570  YRM1     Yeast Reveromycin resistance Modulator 
 
 </div>
 
 ## which genes are in a causal hotspot
 
 ```r
-causalgenes_in_hotspot.hot.eqtl[geneA %in% causalgenes.pos.count.name[symbol %in% c("ERC1", "STB5", "KRE33")]$geneA]
+causalgenes_in_hotspot.hot.eqtl[geneA %in% causalgenes.pos.count.name[geneA %in% ge$gene]$geneA]
 ```
 
 <div class="kable-table">
 
-geneA     eqtl.A                chr.A   start.A     end.A   count.A   chr.strand   chr.start   chr.end  hotspot          
---------  -------------------  ------  --------  --------  --------  -----------  ----------  --------  -----------------
-YHR032W   chrVIII:172443_G/A        8   5357867   5367741        27            1      173344    175089  h_8_51111-211978 
+geneA     eqtl.A                chr.A   start.A     end.A   count.A   chr.strand   chr.start   chr.end  hotspot            
+--------  -------------------  ------  --------  --------  --------  -----------  ----------  --------  -------------------
+YHR005C   chrVIII:105298_T/A        8   5298022   5307569        68           -1      113499    114917  h_8_51111-211978   
+YHR032W   chrVIII:172443_G/A        8   5357867   5367741        27            1      173344    175089  h_8_51111-211978   
+YMR019W   chrXIII:313064_C/T       13   9162310   9180579        49            1      312156    315005  h_13_264541-390732 
 
 </div>
 

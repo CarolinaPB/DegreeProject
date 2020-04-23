@@ -2054,13 +2054,19 @@ res.causalhotspot.dt
 ## which genes from the paper have causal effects
 (not testing all for now)
 ```{r}
+# genes mentioned in the paper
+ge <- data.table(gene =   c("YNL132W", "YNL199C", "YNL198C", "YNL197C","YNL196C", "YNL085W", "YOL081W", "YHR005C", "YHR178W", "YHR032W", "YFL021W", "YOR032C", "YKL015W", "YLR176C", "YCR018C", "YBR150C", "YOR172W", "YMR019W", "YLR256W", "YNL085W", "YHR005C", "YBR158W", "YDR160W"),
+                 symbol = c("KRE33",   "GCR2",    "YNL198C", "WHI3",   "SLZ1",    "MKT1",    "IRA2",    "TIM10",   "STB5",    "ERC1" ,   "GAT1", "HMS1", "PUT3", "RFX1", "SRD1","TBS1", "YRM1","STB4", "HAP1", "MKT1", "GPA1", "AMN1", "SSY1"))
+
+
+
 causalgenes.pos.count.name <- merge(causalgenes.pos.count, unique(genes_GO.bio[,.(gene, symbol, gene.name)]), by.x="geneA", by.y="gene", all.x=T)
-causalgenes.pos.count.name[symbol %in% c("ERC1", "STB5", "KRE33")]
+causalgenes.pos.count.name[geneA %in% ge$gene]
 ```
 
 ## which genes are in a causal hotspot
 ```{r}
-causalgenes_in_hotspot.hot.eqtl[geneA %in% causalgenes.pos.count.name[symbol %in% c("ERC1", "STB5", "KRE33")]$geneA]
+causalgenes_in_hotspot.hot.eqtl[geneA %in% causalgenes.pos.count.name[geneA %in% ge$gene]$geneA]
 ```
 
 ```{r}
