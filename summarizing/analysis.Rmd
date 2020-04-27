@@ -2022,6 +2022,34 @@ plot(violin)
 ```
 The genes that are not in a hotspot seem to have less individuals with expression <=10 (?)
 
+## Histogram of fraction individuals with expression <=10 per gene
+```{r}
+hist <- ggplot(fract_less10_toplot[causal %in% c("causal in hotspot", "not causal not in hotspot")], aes(x=fraction, color=causal, fill=causal)) + 
+  geom_histogram(alpha=0.3, position="identity")+
+  ggtitle("Fraction individuals with expression <=10 per gene") + 
+  scale_y_sqrt()+
+  # theme(legend.position="top")+ 
+  coord_flip()
+plot(hist)
+```
+
+### Get sample of not causal not in hotspot that is the same size as causal in hotspot
+```{r}
+# take random sample of "not causal not in hotspot" the same size as causal in hotspot
+nsample <- length(fract_less10_toplot[causal=="causal in hotspot"]$gene)
+notcausal_nothotspot_sample <- sample(fract_less10_toplot[causal=="not causal not in hotspot"]$gene, nsample)
+
+# plot histogram
+hist <- ggplot(fract_less10_toplot[causal %in% c("causal in hotspot") | (causal %in% "not causal not in hotspot" & gene %in% notcausal_nothotspot_sample)], aes(x=fraction, color=causal, fill=causal)) + 
+  geom_histogram(alpha=0.3, position="identity")+
+  ggtitle("Fraction individuals with expression <=10 per gene") + 
+  scale_y_sqrt()+
+  # theme(legend.position="top")+ 
+  coord_flip()
+plot(hist)
+```
+
+
 ## GO enrichment for causal genes in hotspots
 which universe - causal genes + affected genes or only causal genes?
 

@@ -1,7 +1,7 @@
 ---
 title: "Causality in Coexpression"
 author: "Carolina Pita Barros"
-date: "2020-04-23"
+date: "2020-04-27"
 output: 
   html_document: 
     fig_caption: yes
@@ -2744,6 +2744,48 @@ plot(violin)
 <img src="analysis_files/figure-html/unnamed-chunk-78-3.png" width="940px" height="529px" />
 The genes that are not in a hotspot seem to have less individuals with expression <=10 (?)
 
+## Histogram of fraction individuals with expression <=10 per gene
+
+```r
+hist <- ggplot(fract_less10_toplot[causal %in% c("causal in hotspot", "not causal not in hotspot")], aes(x=fraction, color=causal, fill=causal)) + 
+  geom_histogram(alpha=0.3, position="identity")+
+  ggtitle("Fraction individuals with expression <=10 per gene") + 
+  scale_y_sqrt()+
+  # theme(legend.position="top")+ 
+  coord_flip()
+plot(hist)
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+<img src="analysis_files/figure-html/unnamed-chunk-79-1.png" width="940px" height="529px" />
+
+### Get sample of not causal not in hotspot that is the same size as causal in hotspot
+
+```r
+# take random sample of "not causal not in hotspot" the same size as causal in hotspot
+nsample <- length(fract_less10_toplot[causal=="causal in hotspot"]$gene)
+notcausal_nothotspot_sample <- sample(fract_less10_toplot[causal=="not causal not in hotspot"]$gene, nsample)
+
+# plot histogram
+hist <- ggplot(fract_less10_toplot[causal %in% c("causal in hotspot") | (causal %in% "not causal not in hotspot" & gene %in% notcausal_nothotspot_sample)], aes(x=fraction, color=causal, fill=causal)) + 
+  geom_histogram(alpha=0.3, position="identity")+
+  ggtitle("Fraction individuals with expression <=10 per gene") + 
+  scale_y_sqrt()+
+  # theme(legend.position="top")+ 
+  coord_flip()
+plot(hist)
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+<img src="analysis_files/figure-html/unnamed-chunk-80-1.png" width="940px" height="529px" />
+
+
 ## GO enrichment for causal genes in hotspots
 which universe - causal genes + affected genes or only causal genes?
 
@@ -3052,7 +3094,7 @@ legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), 
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-87-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-89-1.png" width="940px" height="529px" />
 
 ### Plot where (relative to the gene) the eqtls are located
 
@@ -3099,7 +3141,7 @@ bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-88-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-90-1.png" width="940px" height="529px" />
 
 ```r
 # bpB <- barplot(toplotB, 
@@ -3113,7 +3155,7 @@ bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position
 text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-88-2.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-90-2.png" width="940px" height="529px" />
 
 Most of the eqtls seem to be located before the gene.  
 
