@@ -2785,6 +2785,80 @@ plot(hist)
 
 <img src="analysis_files/figure-html/unnamed-chunk-80-1.png" width="940px" height="529px" />
 
+## Chi-square test
+H0: the categories are independent. 
+H1: the categories are not independent
+
+
+```r
+table.chi2 <- table(fract_less10_toplot$fraction, fract_less10_toplot$causal)
+chi2.result <- chisq.test(table.chi2)
+```
+
+```
+## Warning in chisq.test(table.chi2): Chi-squared approximation may be incorrect
+```
+
+```r
+print(chi2.result)
+```
+
+```
+## 
+## 	Pearson's Chi-squared test
+## 
+## data:  table.chi2
+## X-squared = 1600.1, df = 1437, p-value = 0.001608
+```
+
+```r
+if (chi2.result$p.value < 0.01){
+  print(paste0("since the p-value (",round(chi2.result$p.value, digits = 4), ") is less than the significance level 0.01, we reject the null hypothesis - there's an association between the causal categories")) 
+} else {
+  print("We don't reject the null hypothesis: there is no association between the causal categories")
+}
+```
+
+```
+## [1] "since the p-value (0.0016) is less than the significance level 0.01, we reject the null hypothesis - there's an association between the causal categories"
+```
+
+Testing the difference between "causal in hotspot" and "not causal not in hotspot"
+
+```r
+table.chi2 <- table(fract_less10_toplot[causal %in% c("causal in hotspot", "not causal not in hotspot")]$fraction, fract_less10_toplot[causal %in% c("causal in hotspot", "not causal not in hotspot")]$causal)
+chi2.result <- chisq.test(table.chi2)
+```
+
+```
+## Warning in chisq.test(table.chi2): Chi-squared approximation may be incorrect
+```
+
+```r
+print(chi2.result)
+```
+
+```
+## 
+## 	Pearson's Chi-squared test
+## 
+## data:  table.chi2
+## X-squared = 563.74, df = 417, p-value = 2.05e-06
+```
+
+```r
+if (chi2.result$p.value < 0.01){
+  print(paste0("since the p-value (",round(chi2.result$p.value, digits = 4), ") is less than the significance level 0.01, we reject the null hypothesis - there's an association between the causal categories")) 
+} else {
+  print("We don't reject the null hypothesis: there is no association between the causal categories")
+}
+```
+
+```
+## [1] "since the p-value (0) is less than the significance level 0.01, we reject the null hypothesis - there's an association between the causal categories"
+```
+
+
 
 ## GO enrichment for causal genes in hotspots
 which universe - causal genes + affected genes or only causal genes?
@@ -3094,7 +3168,7 @@ legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), 
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-89-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-91-1.png" width="940px" height="529px" />
 
 ### Plot where (relative to the gene) the eqtls are located
 
@@ -3141,7 +3215,7 @@ bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-90-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-92-1.png" width="940px" height="529px" />
 
 ```r
 # bpB <- barplot(toplotB, 
@@ -3155,7 +3229,7 @@ bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position
 text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-90-2.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-92-2.png" width="940px" height="529px" />
 
 Most of the eqtls seem to be located before the gene.  
 
