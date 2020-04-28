@@ -2172,7 +2172,25 @@ heritability[h >= 0.9]
 heritability[grepl("ENA", symbol)]
 ```
 
-# Validade causal pairs by comparing with list of eqtls
+
+## Chi-square heritability
+```{r warning=FALSE}
+chi2.causal <- data.table(for_heritability)
+chi2.causal[,causal := ifelse(...1 %in% causalgenes.pos.count.name$geneA, "causal", "not causal")]
+
+h.cutoff <- seq(0.5,0.95,0.05)
+chi2.res <- data.table(h.cutoff, pval=numeric())
+for (hcut in h.cutoff){
+  table.chi2 <- table(chi2.causal[h>=hcut]$h, chi2.causal[h>=hcut]$causal)
+  chi2.result <- chisq.test(table.chi2)
+  chi2.res[h.cutoff==hcut]$pval <- chi2.result$p.value
+}
+print(chi2.res)
+```
+
+
+
+# Validate causal pairs by comparing with list of eqtls
 If a gene-eqtl pair is in the reported list of genes with eqtls, then it means that the eqtl is affecting the gene. Applied to our causal genes: the eqtl of geneA is affecting gene B == geneA is affecting gene B. If the eqtl of geneA is in the reported list paired with geneB, then there's a confirmation that geneA affects geneB
 
 ```{r}

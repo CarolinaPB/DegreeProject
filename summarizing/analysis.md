@@ -1,7 +1,7 @@
 ---
 title: "Causality in Coexpression"
 author: "Carolina Pita Barros"
-date: "2020-04-27"
+date: "2020-04-28"
 output: 
   html_document: 
     fig_caption: yes
@@ -3105,7 +3105,40 @@ YDR040C        4   2039040   2047187         4           -1      535192    53846
 
 </div>
 
-# Validade causal pairs by comparing with list of eqtls
+
+## Chi-square heritability
+
+```r
+chi2.causal <- data.table(for_heritability)
+chi2.causal[,causal := ifelse(...1 %in% causalgenes.pos.count.name$geneA, "causal", "not causal")]
+
+h.cutoff <- seq(0.5,0.95,0.05)
+chi2.res <- data.table(h.cutoff, pval=numeric())
+for (hcut in h.cutoff){
+  table.chi2 <- table(chi2.causal[h>=hcut]$h, chi2.causal[h>=hcut]$causal)
+  chi2.result <- chisq.test(table.chi2)
+  chi2.res[h.cutoff==hcut]$pval <- chi2.result$p.value
+}
+print(chi2.res)
+```
+
+```
+##     h.cutoff      pval
+##  1:     0.50 0.4161368
+##  2:     0.55 0.4117129
+##  3:     0.60 0.4172618
+##  4:     0.65 0.4014093
+##  5:     0.70 0.4000156
+##  6:     0.75 0.4017685
+##  7:     0.80 0.4391729
+##  8:     0.85 0.4379470
+##  9:     0.90 0.7555125
+## 10:     0.95 0.5987516
+```
+
+
+
+# Validate causal pairs by comparing with list of eqtls
 If a gene-eqtl pair is in the reported list of genes with eqtls, then it means that the eqtl is affecting the gene. Applied to our causal genes: the eqtl of geneA is affecting gene B == geneA is affecting gene B. If the eqtl of geneA is in the reported list paired with geneB, then there's a confirmation that geneA affects geneB
 
 
@@ -3168,7 +3201,7 @@ legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), 
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-91-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-92-1.png" width="940px" height="529px" />
 
 ### Plot where (relative to the gene) the eqtls are located
 
@@ -3215,7 +3248,7 @@ bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-92-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-93-1.png" width="940px" height="529px" />
 
 ```r
 # bpB <- barplot(toplotB, 
@@ -3229,7 +3262,7 @@ bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position
 text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-92-2.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-93-2.png" width="940px" height="529px" />
 
 Most of the eqtls seem to be located before the gene.  
 
