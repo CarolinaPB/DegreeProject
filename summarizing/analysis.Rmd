@@ -2174,6 +2174,10 @@ heritability[grepl("ENA", symbol)]
 
 
 ## Chi-square heritability
+H0: The two categories have the same number of genes above and below hcut  
+H1: They do not
+
+Testing if the expression of the causal genes is more/less heritable than the non-causal ones
 ```{r warning=FALSE}
 chi2.causal <- data.table(for_heritability)
 chi2.causal[,causal := ifelse(...1 %in% causalgenes.pos.count.name$geneA, "causal", "not causal")]
@@ -2181,13 +2185,17 @@ chi2.causal[,causal := ifelse(...1 %in% causalgenes.pos.count.name$geneA, "causa
 h.cutoff <- seq(0.5,0.95,0.05)
 chi2.res <- data.table(h.cutoff, pval=numeric())
 for (hcut in h.cutoff){
-  table.chi2 <- table(chi2.causal[h>=hcut]$h, chi2.causal[h>=hcut]$causal)
-  chi2.result <- chisq.test(table.chi2)
+  higher <- chi2.causal[h>=hcut, .N, by="causal"][order(causal)]
+  lower <- chi2.causal[h<hcut, .N, by="causal"][order(causal)]
+  
+  table.chi2 <- data.table(causal=c("causal", "not causal"),higher=higher$N, lower=lower$N)
+  table.chi2 <- transpose(table.chi2, keep.names = "cond", make.names = "causal")
+  
+  chi2.result <- chisq.test(table.chi2[,2:ncol(table.chi2)])
   chi2.res[h.cutoff==hcut]$pval <- chi2.result$p.value
 }
 print(chi2.res)
 ```
-
 
 
 # Validate causal pairs by comparing with list of eqtls

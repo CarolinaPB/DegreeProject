@@ -3107,6 +3107,10 @@ YDR040C        4   2039040   2047187         4           -1      535192    53846
 
 
 ## Chi-square heritability
+H0: The two categories have the same number of genes above and below hcut  
+H1: They do not
+
+Testing if the expression of the causal genes is more/less heritable than the non-causal ones
 
 ```r
 chi2.causal <- data.table(for_heritability)
@@ -3115,27 +3119,31 @@ chi2.causal[,causal := ifelse(...1 %in% causalgenes.pos.count.name$geneA, "causa
 h.cutoff <- seq(0.5,0.95,0.05)
 chi2.res <- data.table(h.cutoff, pval=numeric())
 for (hcut in h.cutoff){
-  table.chi2 <- table(chi2.causal[h>=hcut]$h, chi2.causal[h>=hcut]$causal)
-  chi2.result <- chisq.test(table.chi2)
+  higher <- chi2.causal[h>=hcut, .N, by="causal"][order(causal)]
+  lower <- chi2.causal[h<hcut, .N, by="causal"][order(causal)]
+  
+  table.chi2 <- data.table(causal=c("causal", "not causal"),higher=higher$N, lower=lower$N)
+  table.chi2 <- transpose(table.chi2, keep.names = "cond", make.names = "causal")
+  
+  chi2.result <- chisq.test(table.chi2[,2:ncol(table.chi2)])
   chi2.res[h.cutoff==hcut]$pval <- chi2.result$p.value
 }
 print(chi2.res)
 ```
 
 ```
-##     h.cutoff      pval
-##  1:     0.50 0.4161368
-##  2:     0.55 0.4117129
-##  3:     0.60 0.4172618
-##  4:     0.65 0.4014093
-##  5:     0.70 0.4000156
-##  6:     0.75 0.4017685
-##  7:     0.80 0.4391729
-##  8:     0.85 0.4379470
-##  9:     0.90 0.7555125
-## 10:     0.95 0.5987516
+##     h.cutoff         pval
+##  1:     0.50 8.005096e-58
+##  2:     0.55 1.038775e-49
+##  3:     0.60 1.412253e-31
+##  4:     0.65 1.718501e-28
+##  5:     0.70 9.750816e-24
+##  6:     0.75 4.354398e-15
+##  7:     0.80 1.717123e-08
+##  8:     0.85 3.761463e-03
+##  9:     0.90 1.000000e+00
+## 10:     0.95 1.000000e+00
 ```
-
 
 
 # Validate causal pairs by comparing with list of eqtls
