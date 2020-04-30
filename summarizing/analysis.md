@@ -1,7 +1,7 @@
 ---
 title: "Causality in Coexpression"
 author: "Carolina Pita Barros"
-date: "2020-04-28"
+date: "2020-04-30"
 output: 
   html_document: 
     fig_caption: yes
@@ -2785,79 +2785,6 @@ plot(hist)
 
 <img src="analysis_files/figure-html/unnamed-chunk-80-1.png" width="940px" height="529px" />
 
-## Chi-square test
-H0: the categories are independent. 
-H1: the categories are not independent
-
-
-```r
-table.chi2 <- table(fract_less10_toplot$fraction, fract_less10_toplot$causal)
-chi2.result <- chisq.test(table.chi2)
-```
-
-```
-## Warning in chisq.test(table.chi2): Chi-squared approximation may be incorrect
-```
-
-```r
-print(chi2.result)
-```
-
-```
-## 
-## 	Pearson's Chi-squared test
-## 
-## data:  table.chi2
-## X-squared = 1600.1, df = 1437, p-value = 0.001608
-```
-
-```r
-if (chi2.result$p.value < 0.01){
-  print(paste0("since the p-value (",round(chi2.result$p.value, digits = 4), ") is less than the significance level 0.01, we reject the null hypothesis - there's an association between the causal categories")) 
-} else {
-  print("We don't reject the null hypothesis: there is no association between the causal categories")
-}
-```
-
-```
-## [1] "since the p-value (0.0016) is less than the significance level 0.01, we reject the null hypothesis - there's an association between the causal categories"
-```
-
-Testing the difference between "causal in hotspot" and "not causal not in hotspot"
-
-```r
-table.chi2 <- table(fract_less10_toplot[causal %in% c("causal in hotspot", "not causal not in hotspot")]$fraction, fract_less10_toplot[causal %in% c("causal in hotspot", "not causal not in hotspot")]$causal)
-chi2.result <- chisq.test(table.chi2)
-```
-
-```
-## Warning in chisq.test(table.chi2): Chi-squared approximation may be incorrect
-```
-
-```r
-print(chi2.result)
-```
-
-```
-## 
-## 	Pearson's Chi-squared test
-## 
-## data:  table.chi2
-## X-squared = 563.74, df = 417, p-value = 2.05e-06
-```
-
-```r
-if (chi2.result$p.value < 0.01){
-  print(paste0("since the p-value (",round(chi2.result$p.value, digits = 4), ") is less than the significance level 0.01, we reject the null hypothesis - there's an association between the causal categories")) 
-} else {
-  print("We don't reject the null hypothesis: there is no association between the causal categories")
-}
-```
-
-```
-## [1] "since the p-value (0) is less than the significance level 0.01, we reject the null hypothesis - there's an association between the causal categories"
-```
-
 
 
 ## GO enrichment for causal genes in hotspots
@@ -3117,7 +3044,7 @@ chi2.causal <- data.table(for_heritability)
 chi2.causal[,causal := ifelse(...1 %in% causalgenes.pos.count.name$geneA, "causal", "not causal")]
 
 h.cutoff <- seq(0.5,0.95,0.05)
-chi2.res <- data.table(h.cutoff, pval=numeric())
+chi2.res <- data.table(h.cutoff, pval=numeric(), "over/under.causal"=numeric(), "over/under.notcausal"=numeric())
 for (hcut in h.cutoff){
   higher <- chi2.causal[h>=hcut, .N, by="causal"][order(causal)]
   lower <- chi2.causal[h<hcut, .N, by="causal"][order(causal)]
@@ -3127,24 +3054,117 @@ for (hcut in h.cutoff){
   
   chi2.result <- chisq.test(table.chi2[,2:ncol(table.chi2)])
   chi2.res[h.cutoff==hcut]$pval <- chi2.result$p.value
+  
+  chi2.res[h.cutoff==hcut]$`over/under.causal` <- table.chi2[cond=="higher"]$causal/table.chi2[cond=="lower"]$causal
+  chi2.res[h.cutoff==hcut]$`over/under.notcausal` <- table.chi2[cond=="higher"]$`not causal`/table.chi2[cond=="lower"]$`not causal`
 }
 print(chi2.res)
 ```
 
 ```
-##     h.cutoff         pval
-##  1:     0.50 8.005096e-58
-##  2:     0.55 1.038775e-49
-##  3:     0.60 1.412253e-31
-##  4:     0.65 1.718501e-28
-##  5:     0.70 9.750816e-24
-##  6:     0.75 4.354398e-15
-##  7:     0.80 1.717123e-08
-##  8:     0.85 3.761463e-03
-##  9:     0.90 1.000000e+00
-## 10:     0.95 1.000000e+00
+##     h.cutoff         pval over/under.causal over/under.notcausal
+##  1:     0.50 8.005096e-58       0.512244898         0.1310767833
+##  2:     0.55 1.038775e-49       0.362132353         0.0918859649
+##  3:     0.60 1.412253e-31       0.218750000         0.0618468757
+##  4:     0.65 1.718501e-28       0.165094340         0.0435967302
+##  5:     0.70 9.750816e-24       0.119335347         0.0299958626
+##  6:     0.75 4.354398e-15       0.075471698         0.0202868852
+##  7:     0.80 1.717123e-08       0.045133992         0.0136400651
+##  8:     0.85 3.761463e-03       0.020661157         0.0083029567
+##  9:     0.90 1.000000e+00       0.005427408         0.0048435923
+## 10:     0.95 1.000000e+00       0.001351351         0.0008040201
 ```
 
+There's a difference in heritability between causal and non-causal genes
+
+
+
+```r
+plot(x=chi2.res$h.cutoff, y=chi2.res$`over/under.causal`, xlab="h2 cutoff", ylab="Over/under", type="b", col="green")
+lines(x=chi2.res$h.cutoff, y=chi2.res$`over/under.notcausal`, type="b", col="blue")
+legend("topright", legend=c("Causal", "Not causal"),
+       col=c("green", "blue"), lty=1, cex=0.8)
+```
+
+<img src="analysis_files/figure-html/unnamed-chunk-89-1.png" width="940px" height="529px" />
+There's enrichment for high heritability genes in the causal set of genes
+
+### Separating into in hotspot and not in hotspot
+
+```r
+chi2.causal.2 <- merge(for_heritability, fract_less10_toplot[,.(gene, causal)], by.x="...1", by.y="gene")
+
+
+h.cutoff <- seq(0.5,0.95,0.05)
+chi2.res <- data.table(h.cutoff, pval=numeric(), "O/U.causal.nothot"=numeric(), "O/U.causal.hot"=numeric(), "O/U.notcausal.nothot"=numeric(), "O/U.notcausal.hot"=numeric())
+for (hcut in h.cutoff){
+  higher <- chi2.causal.2[h>=hcut, .N, by="causal"][order(causal)]
+  lower <- chi2.causal.2[h<hcut, .N, by="causal"][order(causal)]
+  
+  
+  for (ca in unique(chi2.causal.2$causal)){
+    if (!ca %in% higher$causal){
+      toadd <- data.table(causal=ca, N=0)
+      higher <- rbind(higher, toadd)
+    }
+    if (!ca %in% higher$causal){
+      toadd <- data.table(causal=ca, N=0)
+      lower <- rbind(lower, toadd)
+    }
+  }
+  
+  table.chi2 <- data.table(causal=unique(chi2.causal.2$causal),higher=higher$N, lower=lower$N)
+  table.chi2 <- transpose(table.chi2, keep.names = "cond", make.names = "causal")
+  
+  chi2.result <- chisq.test(table.chi2[,2:ncol(table.chi2)])
+  chi2.res[h.cutoff==hcut]$pval <- chi2.result$p.value
+  
+  chi2.res[h.cutoff==hcut]$`O/U.causal.nothot` <- table.chi2[cond=="higher"]$`causal not in hotspot`/table.chi2[cond=="lower"]$`causal not in hotspot`
+  chi2.res[h.cutoff==hcut]$`O/U.causal.hot` <- table.chi2[cond=="higher"]$`causal in hotspot`/table.chi2[cond=="lower"]$`causal in hotspot`
+  chi2.res[h.cutoff==hcut]$`O/U.notcausal.nothot` <- table.chi2[cond=="higher"]$`not causal not in hotspot`/table.chi2[cond=="lower"]$`not causal not in hotspot`
+  chi2.res[h.cutoff==hcut]$`O/U.notcausal.hot` <- table.chi2[cond=="higher"]$`not causal in hotspot`/table.chi2[cond=="lower"]$`not causal in hotspot`
+}
+print(chi2.res)
+```
+
+```
+##     h.cutoff         pval O/U.causal.nothot O/U.causal.hot O/U.notcausal.nothot
+##  1:     0.50 2.565101e-56        0.52971576    0.111856823          0.446601942
+##  2:     0.55 2.071208e-48        0.37354988    0.071120690          0.318584071
+##  3:     0.60 4.982245e-30        0.21560575    0.050739958          0.231404959
+##  4:     0.65 5.063340e-27        0.16535433    0.033264033          0.164062500
+##  5:     0.70 1.380872e-22        0.12121212    0.018442623          0.111940299
+##  6:     0.75 1.716722e-14        0.07832423    0.008113590          0.064285714
+##  7:     0.80 6.409213e-08        0.04778761    0.006072874          0.034722222
+##  8:     0.85 1.407116e-02        0.02068966    0.004040404          0.020547945
+##  9:     0.90 9.841837e-44        0.00170068    0.046370968          0.026845638
+## 10:     0.95 2.627666e-07        0.00676819    0.000000000          0.006711409
+##     O/U.notcausal.hot
+##  1:       0.133249052
+##  2:       0.094238281
+##  3:       0.063092979
+##  4:       0.044755245
+##  5:       0.031293143
+##  6:       0.021654889
+##  7:       0.014486193
+##  8:       0.008777853
+##  9:       0.000000000
+## 10:       0.000000000
+```
+
+
+```r
+plot(x=chi2.res$h.cutoff, y=chi2.res$`O/U.causal.nothot`, xlab="h2 cutoff", ylab="Over/under", type="b", col="darkgreen")
+lines(x=chi2.res$h.cutoff, y=chi2.res$`O/U.causal.hot`, type="b", col="green")
+lines(x=chi2.res$h.cutoff, y=chi2.res$`O/U.notcausal.nothot`, type="b", col="darkblue")
+lines(x=chi2.res$h.cutoff, y=chi2.res$`O/U.notcausal.hot`, type="b", col="blue")
+legend("topright", legend=c("Causal not in hotspot", "Causal in hotspot", "Not causal not in hotspot", "Not causal in hotspot"),
+       col=c("darkgreen", "green", "darkblue", "blue"), lty=1, cex=0.8)
+```
+
+<img src="analysis_files/figure-html/unnamed-chunk-91-1.png" width="940px" height="529px" />
+
+There's a difference in heritability in genes in hotspot and genes not in hotspot
 
 # Validate causal pairs by comparing with list of eqtls
 If a gene-eqtl pair is in the reported list of genes with eqtls, then it means that the eqtl is affecting the gene. Applied to our causal genes: the eqtl of geneA is affecting gene B == geneA is affecting gene B. If the eqtl of geneA is in the reported list paired with geneB, then there's a confirmation that geneA affects geneB
@@ -3209,7 +3229,7 @@ legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), 
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-92-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-93-1.png" width="940px" height="529px" />
 
 ### Plot where (relative to the gene) the eqtls are located
 
@@ -3256,7 +3276,7 @@ bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-93-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-94-1.png" width="940px" height="529px" />
 
 ```r
 # bpB <- barplot(toplotB, 
@@ -3270,7 +3290,7 @@ bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position
 text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-93-2.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-94-2.png" width="940px" height="529px" />
 
 Most of the eqtls seem to be located before the gene.  
 

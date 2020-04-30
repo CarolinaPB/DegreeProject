@@ -2049,35 +2049,6 @@ hist <- ggplot(fract_less10_toplot[causal %in% c("causal in hotspot") | (causal 
 plot(hist)
 ```
 
-## Chi-square test
-H0: the categories are independent. 
-H1: the categories are not independent
-
-```{r}
-table.chi2 <- table(fract_less10_toplot$fraction, fract_less10_toplot$causal)
-chi2.result <- chisq.test(table.chi2)
-print(chi2.result)
-
-if (chi2.result$p.value < 0.01){
-  print(paste0("since the p-value (",round(chi2.result$p.value, digits = 4), ") is less than the significance level 0.01, we reject the null hypothesis - there's an association between the causal categories")) 
-} else {
-  print("We don't reject the null hypothesis: there is no association between the causal categories")
-}
-```
-
-Testing the difference between "causal in hotspot" and "not causal not in hotspot"
-```{r}
-table.chi2 <- table(fract_less10_toplot[causal %in% c("causal in hotspot", "not causal not in hotspot")]$fraction, fract_less10_toplot[causal %in% c("causal in hotspot", "not causal not in hotspot")]$causal)
-chi2.result <- chisq.test(table.chi2)
-print(chi2.result)
-
-if (chi2.result$p.value < 0.01){
-  print(paste0("since the p-value (",round(chi2.result$p.value, digits = 4), ") is less than the significance level 0.01, we reject the null hypothesis - there's an association between the causal categories")) 
-} else {
-  print("We don't reject the null hypothesis: there is no association between the causal categories")
-}
-```
-
 
 
 ## GO enrichment for causal genes in hotspots
@@ -2183,7 +2154,7 @@ chi2.causal <- data.table(for_heritability)
 chi2.causal[,causal := ifelse(...1 %in% causalgenes.pos.count.name$geneA, "causal", "not causal")]
 
 h.cutoff <- seq(0.5,0.95,0.05)
-chi2.res <- data.table(h.cutoff, pval=numeric())
+chi2.res <- data.table(h.cutoff, pval=numeric(), "over/under.causal"=numeric(), "over/under.notcausal"=numeric())
 for (hcut in h.cutoff){
   higher <- chi2.causal[h>=hcut, .N, by="causal"][order(causal)]
   lower <- chi2.causal[h<hcut, .N, by="causal"][order(causal)]
@@ -2193,10 +2164,71 @@ for (hcut in h.cutoff){
   
   chi2.result <- chisq.test(table.chi2[,2:ncol(table.chi2)])
   chi2.res[h.cutoff==hcut]$pval <- chi2.result$p.value
+  
+  chi2.res[h.cutoff==hcut]$`over/under.causal` <- table.chi2[cond=="higher"]$causal/table.chi2[cond=="lower"]$causal
+  chi2.res[h.cutoff==hcut]$`over/under.notcausal` <- table.chi2[cond=="higher"]$`not causal`/table.chi2[cond=="lower"]$`not causal`
 }
 print(chi2.res)
 ```
 
+There's a difference in heritability between causal and non-causal genes
+
+
+```{r}
+plot(x=chi2.res$h.cutoff, y=chi2.res$`over/under.causal`, xlab="h2 cutoff", ylab="Over/under", type="b", col="green")
+lines(x=chi2.res$h.cutoff, y=chi2.res$`over/under.notcausal`, type="b", col="blue")
+legend("topright", legend=c("Causal", "Not causal"),
+       col=c("green", "blue"), lty=1, cex=0.8)
+```
+There's enrichment for high heritability genes in the causal set of genes
+
+### Separating into in hotspot and not in hotspot
+```{r warning=FALSE}
+chi2.causal.2 <- merge(for_heritability, fract_less10_toplot[,.(gene, causal)], by.x="...1", by.y="gene")
+
+
+h.cutoff <- seq(0.5,0.95,0.05)
+chi2.res <- data.table(h.cutoff, pval=numeric(), "O/U.causal.nothot"=numeric(), "O/U.causal.hot"=numeric(), "O/U.notcausal.nothot"=numeric(), "O/U.notcausal.hot"=numeric())
+for (hcut in h.cutoff){
+  higher <- chi2.causal.2[h>=hcut, .N, by="causal"][order(causal)]
+  lower <- chi2.causal.2[h<hcut, .N, by="causal"][order(causal)]
+  
+  
+  for (ca in unique(chi2.causal.2$causal)){
+    if (!ca %in% higher$causal){
+      toadd <- data.table(causal=ca, N=0)
+      higher <- rbind(higher, toadd)
+    }
+    if (!ca %in% higher$causal){
+      toadd <- data.table(causal=ca, N=0)
+      lower <- rbind(lower, toadd)
+    }
+  }
+  
+  table.chi2 <- data.table(causal=unique(chi2.causal.2$causal),higher=higher$N, lower=lower$N)
+  table.chi2 <- transpose(table.chi2, keep.names = "cond", make.names = "causal")
+  
+  chi2.result <- chisq.test(table.chi2[,2:ncol(table.chi2)])
+  chi2.res[h.cutoff==hcut]$pval <- chi2.result$p.value
+  
+  chi2.res[h.cutoff==hcut]$`O/U.causal.nothot` <- table.chi2[cond=="higher"]$`causal not in hotspot`/table.chi2[cond=="lower"]$`causal not in hotspot`
+  chi2.res[h.cutoff==hcut]$`O/U.causal.hot` <- table.chi2[cond=="higher"]$`causal in hotspot`/table.chi2[cond=="lower"]$`causal in hotspot`
+  chi2.res[h.cutoff==hcut]$`O/U.notcausal.nothot` <- table.chi2[cond=="higher"]$`not causal not in hotspot`/table.chi2[cond=="lower"]$`not causal not in hotspot`
+  chi2.res[h.cutoff==hcut]$`O/U.notcausal.hot` <- table.chi2[cond=="higher"]$`not causal in hotspot`/table.chi2[cond=="lower"]$`not causal in hotspot`
+}
+print(chi2.res)
+```
+
+```{r}
+plot(x=chi2.res$h.cutoff, y=chi2.res$`O/U.causal.nothot`, xlab="h2 cutoff", ylab="Over/under", type="b", col="darkgreen")
+lines(x=chi2.res$h.cutoff, y=chi2.res$`O/U.causal.hot`, type="b", col="green")
+lines(x=chi2.res$h.cutoff, y=chi2.res$`O/U.notcausal.nothot`, type="b", col="darkblue")
+lines(x=chi2.res$h.cutoff, y=chi2.res$`O/U.notcausal.hot`, type="b", col="blue")
+legend("topright", legend=c("Causal not in hotspot", "Causal in hotspot", "Not causal not in hotspot", "Not causal in hotspot"),
+       col=c("darkgreen", "green", "darkblue", "blue"), lty=1, cex=0.8)
+```
+
+There's a difference in heritability in genes in hotspot and genes not in hotspot
 
 # Validate causal pairs by comparing with list of eqtls
 If a gene-eqtl pair is in the reported list of genes with eqtls, then it means that the eqtl is affecting the gene. Applied to our causal genes: the eqtl of geneA is affecting gene B == geneA is affecting gene B. If the eqtl of geneA is in the reported list paired with geneB, then there's a confirmation that geneA affects geneB
