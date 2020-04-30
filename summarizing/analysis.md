@@ -2672,6 +2672,27 @@ h_8_51111-211978             27          30
 
 </div>
 
+##### Plot number of causal genes in hotspot and number of genes affected by hotspot
+
+```r
+plot_numgeneshotspot_affected <- merge(num_genes_eqtls_hotspot,n_affectedby_hotspot, by="hotspot")
+
+
+plot_numgeneshotspot_affected <- separate(plot_numgeneshotspot_affected, col = hotspot, c(NA, "id", NA), sep = "[_]+", remove = F,
+         convert = T, extra = "warn", fill = "warn")[order(id)]
+
+plot(unique(causalgenes_in_hotspot.hotspot$chr.A),plot_numgeneshotspot_affected$N, 
+     type="b", ylim=c(0,max(plot_numgeneshotspot_affected$N)), 
+     xlab= "hotspot",ylab="# genes", col="green", main="Number of causal genes in a hotspot and number of genes affected by a hotspot")
+lines(plot_numgeneshotspot_affected$id, plot_numgeneshotspot_affected$num.genes, type="b", col="blue")
+legend("topleft", legend=c("Genes affected", "Causal genes in hotspot"),
+       col=c("green", "blue"), lty=1, cex=0.8)
+```
+
+<img src="analysis_files/figure-html/unnamed-chunk-78-1.png" width="940px" height="529px" />
+
+No link between number of genes in hotspot and number of genes affected?
+
 ## Number of individuals in each gene with expression <=10
 
 ```r
@@ -2708,7 +2729,7 @@ box <- ggplot(fract_less10_toplot, aes(x=causal, y=fraction)) +
 plot(box)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-78-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-79-1.png" width="940px" height="529px" />
 
 ```r
 # boxplot of fraction of samples with expr <=10, separated by causal category + log10 scale
@@ -2730,7 +2751,7 @@ plot(box)
 ## Warning: Removed 4565 rows containing non-finite values (stat_boxplot).
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-78-2.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-79-2.png" width="940px" height="529px" />
 
 ```r
 # violing plot
@@ -2741,7 +2762,7 @@ violin <- ggplot(fract_less10_toplot, aes(x=causal, y=fraction)) +
 plot(violin)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-78-3.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-79-3.png" width="940px" height="529px" />
 The genes that are not in a hotspot seem to have less individuals with expression <=10 (?)
 
 ## Histogram of fraction individuals with expression <=10 per gene
@@ -2760,7 +2781,7 @@ plot(hist)
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-79-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-80-1.png" width="940px" height="529px" />
 
 ### Get sample of not causal not in hotspot that is the same size as causal in hotspot
 
@@ -2783,7 +2804,7 @@ plot(hist)
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-80-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-81-1.png" width="940px" height="529px" />
 
 
 
@@ -3086,7 +3107,7 @@ legend("topright", legend=c("Causal", "Not causal"),
        col=c("green", "blue"), lty=1, cex=0.8)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-89-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-90-1.png" width="940px" height="529px" />
 There's enrichment for high heritability genes in the causal set of genes  
 
 How to read it:  
@@ -3167,7 +3188,7 @@ legend("topright", legend=c("Causal not in hotspot", "Causal in hotspot", "Not c
        col=c("darkgreen", "green", "darkblue", "blue"), lty=1, cex=0.8)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-91-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-92-1.png" width="940px" height="529px" />
 
 There's a difference in heritability in genes in hotspot and genes not in hotspot
 
@@ -3234,7 +3255,7 @@ legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), 
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-93-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-94-1.png" width="940px" height="529px" />
 
 ### Plot where (relative to the gene) the eqtls are located
 
@@ -3281,7 +3302,7 @@ bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-94-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-95-1.png" width="940px" height="529px" />
 
 ```r
 # bpB <- barplot(toplotB, 
@@ -3295,7 +3316,7 @@ bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position
 text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-94-2.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-95-2.png" width="940px" height="529px" />
 
 Most of the eqtls seem to be located before the gene.  
 

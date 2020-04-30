@@ -1969,6 +1969,24 @@ colnames(num_genes_eqtls_hotspot) <- c("hotspot", "num.eqtls", "num.genes")
 num_genes_eqtls_hotspot
 ```
 
+##### Plot number of causal genes in hotspot and number of genes affected by hotspot
+```{r}
+plot_numgeneshotspot_affected <- merge(num_genes_eqtls_hotspot,n_affectedby_hotspot, by="hotspot")
+
+
+plot_numgeneshotspot_affected <- separate(plot_numgeneshotspot_affected, col = hotspot, c(NA, "id", NA), sep = "[_]+", remove = F,
+         convert = T, extra = "warn", fill = "warn")[order(id)]
+
+plot(unique(causalgenes_in_hotspot.hotspot$chr.A),plot_numgeneshotspot_affected$N, 
+     type="b", ylim=c(0,max(plot_numgeneshotspot_affected$N)), 
+     xlab= "hotspot",ylab="# genes", col="green", main="Number of causal genes in a hotspot and number of genes affected by a hotspot")
+lines(plot_numgeneshotspot_affected$id, plot_numgeneshotspot_affected$num.genes, type="b", col="blue")
+legend("topleft", legend=c("Genes affected", "Causal genes in hotspot"),
+       col=c("green", "blue"), lty=1, cex=0.8)
+```
+
+No link between number of genes in hotspot and number of genes affected?
+
 ## Number of individuals in each gene with expression <=10
 ```{r}
 # for each gene, get number of samples that has expression <= 10
