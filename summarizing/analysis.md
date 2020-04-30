@@ -3087,7 +3087,12 @@ legend("topright", legend=c("Causal", "Not causal"),
 ```
 
 <img src="analysis_files/figure-html/unnamed-chunk-89-1.png" width="940px" height="529px" />
-There's enrichment for high heritability genes in the causal set of genes
+There's enrichment for high heritability genes in the causal set of genes  
+
+How to read it:  
+if Over/under (O/U) = 0.5, there are double amount of genes with h2 < cutoff than with h2 > cutoff  
+if O/U = 0.1, there are 10 times more genes with h2 < cutoff than with h2 > cutoff  
+Lower O/U == more genes with lower heritability than with higher heritability  
 
 ### Separating into in hotspot and not in hotspot
 

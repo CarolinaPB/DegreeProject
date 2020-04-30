@@ -2180,7 +2180,12 @@ lines(x=chi2.res$h.cutoff, y=chi2.res$`over/under.notcausal`, type="b", col="blu
 legend("topright", legend=c("Causal", "Not causal"),
        col=c("green", "blue"), lty=1, cex=0.8)
 ```
-There's enrichment for high heritability genes in the causal set of genes
+There's enrichment for high heritability genes in the causal set of genes  
+
+How to read it:  
+if Over/under (O/U) = 0.5, there are double amount of genes with h2 < cutoff than with h2 > cutoff  
+if O/U = 0.1, there are 10 times more genes with h2 < cutoff than with h2 > cutoff  
+Lower O/U == more genes with lower heritability than with higher heritability  
 
 ### Separating into in hotspot and not in hotspot
 ```{r warning=FALSE}
