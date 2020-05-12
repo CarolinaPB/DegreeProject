@@ -2300,13 +2300,80 @@ myColor <- colorRampPalette(c("white", "darkblue","blue","lightblue","green","li
 myBreaks <- c(seq(min(combined[,c(2,3)]), max(combined[,c(2, 3)])/paletteLength-0.000001, length.out=ceiling(paletteLength/2) + 1), 
               seq(max(combined[,c(2,3)])/paletteLength, max(combined[,c(2, 3)]), length.out=floor(paletteLength/2)))
 
-pdf(file = "results/figures/heatmap_enrichmentpvals_hotspots.pdf")
+# pdf(file = "results/figures/heatmap_enrichmentpvals_hotspots.pdf")
 pheatmap(as.matrix(combined, rownames = 1), 
          fontsize_row=3, cellwidth=70, cluster_col=F, cluster_rows=T, 
          fontsize = 10, treeheight_row = 0, color=myColor, breaks=myBreaks, border_color="white", 
          main="Heatmap enrichment p-value (-log10)")
-dev.off()
+# dev.off()
 ```
+
+
+# Essential genes analysis
+## get info on essential genes
+it's better to save to a file and run in the terminal
+```{python}
+# run with python3
+import os.path
+from os import path
+os.chdir("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/")
+if not path.isfile("results/essentialgenes.txt"):
+  # The following lines will be needed in every python script:
+  from intermine.webservice import Service
+  yeastmineAPItoken_file = open('data/yeastmineAPI.txt', 'r')
+  yeastmineAPItoken = yeastmineAPItoken_file.readline().rstrip()
+  service = Service("https://yeastmine.yeastgenome.org/yeastmine/service", token = yeastmineAPItoken)
+
+  # Get a new query on the class (table) you will be querying:
+  query = service.new_query("Gene")
+
+  # The view specifies the output columns
+  query.add_view("secondaryIdentifier", "symbol", "name", "phenotypeSummary")
+
+  # You can edit the constraint values below
+  query.add_constraint("Gene", "IN", "allgenes", code = "A")
+
+  terms = "gene", "symbol", "gene.name", "phenotype.summary"
+
+  terms_query = ["secondaryIdentifier", "symbol", "name", "phenotypeSummary"]
+  print("saving file")
+  with open("results/essentialgenes.txt", "w") as file:
+    # write headers
+    for term in terms[:-1]:
+      file.write(term)
+      file.write("\t")
+    else:
+      file.write(terms[-1])
+    file.write("\n")
+    #write content
+    for row in query.rows():
+      for t in terms_query[:-1]:
+        if row[t] != None:
+          file.write(str(row[t]))
+          file.write("\t")
+        else:
+          file.write("NA")
+          file.write("\t")
+      if row[terms_query[-1]] != None:
+        file.write(row[terms_query[-1]])
+      else:
+        file.write("NA")
+      file.write("\n")
+else:
+  print("file exists")
+```
+
+```{r}
+essential <- fread("results/essentialgenes.txt", sep="\t", fill=T)
+# remove empty rows
+essential <- essential[!apply(essential == "", 1, all),]
+
+# add new column with T/F for essential/not essential or NA if there's no info
+essential[, essential := ifelse(grepl("Non-essential", phenotype.summary),  F, ifelse(is.na(phenotype.summary), NA, T))]
+```
+
+
+
 
 
 # Others
