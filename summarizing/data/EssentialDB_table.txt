@@ -1,0 +1,357 @@
+ORF	Brief ID	Functional Catergories 	Previous deletion	Potential overlap with another gene	Distance to nearest upstream ORF (bp)	Distance to nearest downstream ORF (bp)	Cell Cycle Transcriptional Regulation	Cell cycle transcription profile	Relative transcript abundance (exon1)	Relative transcript abundance (exon2)	Yeart ORF with highest degree of similarity	Similar gene name	Smith-Waterman probability	Smith-Waterman Score	Notes
+YAL001C	 RNA polymerase transcription initiation factor TFIIIC	transcription; cellular organization 	lethal	No	1091	63	Yes	S	8	140.6666667	YDR243C	TFC3	4.35E-02	118	
+YAL003W	 translation elongation factor eEF1beta	protein synthesis; cellular organization 	lethal	No	840	767	No		1078.222222	3109.222222	YJL115W	TEF5	8.07E-02	105	
+YAL025C	 nuclear viral propagation protein	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	420	528	No		610.8888889		YKL172W	MAK16	5.40E-07	171	
+YAL032C	 similarity to S.pombe hypothetical  protein SPAC8A4.06	unclassified proteins 	lethal	No	275	108	No		92.11111111						
+YAL033W	 protein of unknown function	transcription; cellular organization 	lethal	No	108	605	No		407.5555556						
+YAL034W-a	 hypothetical protein	 	no data	Yes	123	-124	Yes	S	98.44444444		YAL034W		5.90E-140	1799	
+YAL035C-A		 	no data	Yes	-124	54	No		53.33333333		YAL035C		5.20E-54	741	exclude
+YAL038W	 pyruvate kinase	energy; metabolism; cellular organization 	lethal	No	732	2261	No		2693.222222		YOR347C	PYK1	8.60E-188	2388	
+YAL041W	 cell division control protein	"signal transduction; cell growth, division, DNA synthesis; cellular organization "	lethal	No	374	277	No		279.4444444		YGR070W	CDC24	9.40E-08	186	
+YAL043C	 pre-tRNA processing protein	transcription 	lethal	No	179	212	No		222.8888889		YKR092C	PTA1	1.32E-04	147	
+YAL069W	 similarity to lamins	cellular organization 	no data	No	1158	335	Yes	no detectable signal	12.11111111						
+YAR007C	 DNA replication factor-A protein 1	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	346	469	Yes	late G1	376.1111111						
+YAR008W	 protein of unknown function	transcription; cellular organization 	lethal	No	804	346	Yes	S	296.1111111		YPL216W	FUN4	7.18E-04	132	
+YAR019C	 protein kinase of the MAP kinase kinase kinase family	"cell growth, division, DNA synthesis "	lethal	No	1721	511	No		94.44444444		YJL095W	CDC15	1.80E-38	563	
+YBR190W	 questionable ORF	unclassified proteins 	no data	Yes	-7	458	No	very low expression	38.22222222						
+YBR192W	 mitochondrial carrier protein (MCF)	intracellular transport; transport facilitation; energy; cellular organization 	viable	No	297	512	No		341		YEL006W	RIM2	5.00E-33	491	"Previous knockouts grow slowly on glucose (Van Dyck, E., Jank, B., Ragnini, A., Schweyen, R. J., Duyckaerts, C., Sluse, F., and Foury, F. Overexpression of a novelmember of the mitochondrial carrier family rescues defects in both DNA and RNA metabolism in yeast mitochondria. Mol GenGenet 246, 426-36 (1995))."
+YBR193C	 hypothetical protein	transcription; cellular organization 	lethal	No	285	297	No		158.1111111						
+YBR196C	 glucose-6-phosphate isomerase	energy; metabolism; cellular organization 	viable	No	1303	354	No		1713.444444						"Gene is required for sporulation.  May only be essential on glucose media (Corominas, J., Clotet, J., Fernandez-Banares, I., Boles, E., Zimmermann, F. K., Guinovart, J. J., and Arino, J. Glycogen  metabolism in a Saccharomyces cerevisiae phosphoglucose isomerase (pgil) disruption mutant. FEBS Lett 310, 182-6 (1992))."
+YBR198C	" TFIID subunit (TBP-associated factor), 90 kD"	transcription; cellular organization 	lethal	No	386	271	No		244.2222222		YPR178W	TAF90	2.00E-25	402	
+YBR202W	 cell division control protein	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	859	1560	Yes	early G1	349.6666667		YPR019W	CDC47	1.00E-86	1153	
+YBR211C	 actin related protein	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	754	180	No		99.22222222		YEL043W	ARP100	1.41E-02	117	
+YBR234C	 hypothetical protein	unclassified proteins 	no data	No	309	769	No		384.7777778		YOL138C		1.54E-04	142	
+YBR236C	 methyltransferase	transcription; cellular organization 	lethal	No	276	120	No		288.7777778		YML008C	ABD1	1.92E-02	117	
+YBR237W	 pre-mRNA processing RNA-helicase	protein destination; transcription; cellular organization 	no data	No	589	276	No		67.88888889		YNL112W	PRP5	1.20E-69	944	
+YBR243C	 UDP-N-acetylglucosamine-1-phosphate transferase	"protein destination; cell growth, division, DNA synthesis; metabolism; cellular organization "	lethal	No	735	61	No		150.4444444						
+YBR247C	 N-glycosylation protein	protein destination; cellular organization 	lethal	No	352	250	No		402.1111111		YLR106C	ENP1	2.07E-04	142	
+YBR252W	" dUTP pyrophosphatase precursor, mitochondrial"	metabolism 	lethal	No	216	298	Yes	late G1	874.7777778						
+YBR253W	 DNA-directed RNA polymerase II suppressor protein	"transcription; cell growth, division, DNA synthesis; metabolism; cellular organization "	lethal	No	101	216	No		705.6666667						
+YBR254C	 hypothetical protein	intracellular transport; cellular organization 	no data	No	193	101	No		444.7777778						
+YBR256C	" riboflavin synthase, alpha chain"	metabolism 	viable	No	783	846	No		1139						"Null mutants may require riboflavin for sporulation (Santos, M. A., Garcia-Ramirez, J. J., and Revuelta, J. L. Riboflavin biosynthesis in Saccharomyces cerevisiae. Cloning, characterization, and expression of the RIB5 gene encoding riboflavin synthase. J Biol Chem 270, 437-44 (1995).)"
+YBR257W	 involved in processsing of tRNAs and rRNAs	cellular organization 	lethal	No	10	783	No		491.4444444		YNL250W	POP4	1.75E-02	115	
+YBR265W	 similarity to human FVT1 protein	metabolism; cellular organization 	lethal	No	283	156	No		401		YMR226C		1.90E-05	152	
+YCL003W		 	no data	No			No		62.77777778						
+YCL004W	 phosphatidylserine synthase	"cellular biogenesis; cell growth, division, DNA synthesis; metabolism "	viable	No	563	318	No		31						"Null mutant is temperature sensitive on glucose (Janitor, M., Jarosch, E., Schweyen, R. J., and Subik, J. Molecular characterization of the PEL1 gene encoding a putative phosphatidylserine synthase. Yeast 11, 1223-31 (1995))."
+YCL017C	 involved in tRNA-processing and mitochondrial metabolism	transcription; cellular organization 	lethal	No	352	359	No		698		YOL111C	NFS1	9.82E-02	109	
+YCL031C	 involved in pre-rRNA processing and ribosome assembly	protein destination; protein synthesis; transcription 	lethal	No	366	194	No		626.7777778						
+YCL043C	 protein disulfide-isomerase precursor	protein destination; metabolism; cellular organization 	lethal	Yes	-88	289	No		1589.666667		YDR518W	PDI1	8.60E-102	1335	
+YCL052C	 required for Prb1p expression	protein destination; cellular organization 	lethal	No	468	169	No		257.1111111						
+YCL059C	 strong similarity to human Rev interacting protein Rip-1	unclear classification; cellular organization 	lethal	No	144	1052	No		560.1111111		YOR145C	KRR1	2.00E-05	152	
+YDR052C	 regulatory subunit for Cdc7p protein kinase	"cell growth, division, DNA synthesis; cellular organization "	lethal	Yes	-376	451	No		422.6666667		YIL115C	DBF4	2.48E-04	143	
+YDR053W	 questionable ORF	unclassified proteins 	no data	Yes	796	-376	No		87						exclude
+YDR054C	 E2 ubiquitin-conjugating enzyme	"protein destination; cell growth, division, DNA synthesis; metabolism; cellular organization "	lethal	No	1200	796	No		566.7777778		YMR022W	CDC34	1.30E-29	448	
+YDR060W	 similarity to mouse putative CCAAT binding factor CBF1 and CBF2	cellular biogenesis; protein synthesis 	lethal	No	438	878	No		1269.888889		YHR077C		5.20E-07	178	
+YDR062W	 serine C-palmitoyltransferase subunit	metabolism 	lethal	No	505	691	No		721.5555556		YDR232W	LCB2	1.10E-27	428	
+YDR064W	 ribosomal protein	protein synthesis; cellular organization 	no data	No	235	346	No		2711.888889						
+YDR081C	 pyruvate decarboxylase regulatory protein	energy; metabolism; cellular organization 	viable	No	360	318	No		259.3333333		YEL007W	PDC2	6.40E-10	213	"Null mutant grows slowly on glucose (Hohmann, S. Characterisation of PDC2, a gene necessary for high level expression of pyruvate decarboxylase structural genes in Saccharomyces cerevisiae. Mol Gen Genet 241, 657-66 (1993))."
+YDR082W	 involved in telomere length regulation	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	91	360	No		142.5555556						
+YDR086C	 ER protein-translocase complex subunit	intracellular transport; transport facilitation; protein destination; cellular organization 	lethal	No	300	778	No		1415.333333						
+YDR087C	 similarity to hypothetical human KIAA0179 and C.elegans C47E12.7 protein	transcription 	lethal	No	191	300	No		637		YGR116W		4.54E-02	110	
+YDR088C	 pre-mRNA splicing factor affecting 3' splice site choice	transcription; cellular organization 	lethal	No	2467	191	No		179.2222222		YBR049C	SLU7	1.51E-03	130	
+YDR091C	 strong similarity to human RNase L inhibitor and M.jannaschii ABC transporter protein	transport facilitation 	no data	No	1342	710	No		553.8888889		YPL226W		3.30E-09	202	
+YDR113C	 cell cycle regulator	"cell growth, division, DNA synthesis; cellular organization "	viable	No	307	644	Yes	S	250		YLR114C	PDS1	4.55E-03	124	"Previously-reported null mutants are temperature-sensitive for growth (Yamamoto, A., Guacci, V., and Koshland, D. Pds1p is required for faithful execution of anaphase in the yeast, Saccharomyces cerevisiae. J Cell Biol 133, 85-97 (1996))."
+YDR118W	 subunit of the anaphase promoting complex	"protein destination; cell growth, division, DNA synthesis; cellular organization "	no data	No	387	239	No		105						
+YDR141C	 hypothetical protein	unclassified proteins 	no data	No	476	98	No		455.1111111		YLR106C		6.47E-02	118	
+YDR145W	 TFIID subunit (TBP-associated factor)	transcription 	lethal	No	256	637	No		691.4444444		YBR289W	TAF61	1.40E-18	316	
+YDR339C	 weak similarity to hypothetical protein YOR004w	unclassified proteins 	no data	No	361	485	No		826		YOR004W		3.90E-07	170	
+YDR341C	 strong similarity to arginine-tRNA ligase	protein synthesis; cellular organization 	no data	No	590	620	No		1501.888889		YHR091C		1.00E-190	2425	
+YDR353W	 thioredoxin reductase (NADPH)	metabolism 	viable	No	489	545	No		2083.444444		YHR106W	TRR1	2.30E-141	1817	"Previous null mutant grows slowly and does not germinate on YEPD (Machado, A. K., Morgan, B. A., and Merrill, G. F. Thioredoxin reductase-dependent inhibition of MCB cell cycle box activity in Saccharomyces cerevisiae. J Biol Chem 272, 17045-54 (1997))."
+YDR355C	 questionable ORF	unclassified proteins 	no data	Yes	-262	178	No	very low expression	19.33333333						exclude
+YDR356W	 spindle pole body component	"cellular biogenesis; cell growth, division, DNA synthesis; cellular organization "	lethal	Yes	258	-262	Yes	S	138.3333333		YDL058W	NUF1	1.30E-35	528	
+YDR361C	 hypothetical protein	unclassified proteins 	no data	No	416	427	No		522						
+YDR362C	 transcription factor IIIC subunit tau 91	transcription; cellular organization 	lethal	No	486	416	No		49		YPL221W	TFC6	3.09E-02	117	
+YDR365C	 weak similarity to Streptococcus M protein	unclassified proteins 	no data	No	6055	287	No		952.5555556		YDL058W		4.40E-07	176	
+YDR367W	 hypothetical protein	unclassified proteins 	no data	No	290	12	No		354.4444444						
+YDR373W	 strong similarity to human BDR-1 protein and other calcium binding proteins	unclear classification 	no data	No	143	610	No		412.4444444		YKL190W		2.70E-15	270	
+YDR376W	 similarity to human adrenodoxin reductase and ferredoxin-NADP+ reductase	metabolism; cellular organization 	lethal	No	308	286	No		183.4444444		YDL171C	ARH1	5.05E-03	125	
+YDR381W	 RNA annealing protein	transcription; cellular organization 	lethal	No	1488	433	No		2109.444444						
+YDR390C	 E1-like (ubiquitin-activating) enzyme	protein destination; transcription; cellular organization 	lethal	No	511	436	No		445.4444444		YKL210W	UBA2	4.90E-29	445	
+YDR394W	 26S proteasome regulatory subunit	protein destination; cellular organization 	lethal	No	357	410	No		626.5555556		YDL007W	YTA2	1.10E-87	1161	
+YDR396W	 hypothetical protein	unclassified proteins 	no data	Yes	-429	137	No		603.3333333						exclude
+YDR397C	 functional homolog of human NC2beta/Dr1	transcription; cellular organization 	lethal	Yes	573	-429	No		1428.111111		YBL021C	NCB2	3.48E-03	120	
+YDR398W	 similarity to human KIAA0007 gene	unclassified proteins 	no data	No	666	573	No		640.6666667		YCR057C		2.90E-05	154	
+YDR404C	" DNA-directed RNA polymerase II, 19 KD subunit"	"cell rescue, cell defense and cell aging; transcription; cellular organization "	lethal	No	477	442	No		928.3333333		YKL144C	RPB7	2.30E-10	209	
+YDR407C	 weak similarity to Myo1p	unclassified proteins 	no data	No	277	270	No		412		YGR014W		3.81E-04	144	
+YDR412W	 questionable ORF	unclassified proteins 	no data	Yes	-564	299	No		381.4444444		YBR081C		3.46E-04	135	exclude
+YDR413C	 weak similarity to NADH dehydrogenase	unclassified proteins 	no data	Yes	187	-564	No		462.1111111		YNL327W		6.34E-02	106	
+YDR416W	 synthetic lethal with CDC40	unclassified proteins 	lethal	No	544	271	No		180.1111111		YMR061W	SYF1	9.82E-02	112	
+YDR429C	 translation initiation factor eIF3 (p33 subunit)	protein synthesis; cellular organization 	no data	No	200	238	No		1194.555556		YNL016W	TIF35	1.62E-04	140	
+YDR434W	 similarity to S.pombe hypothetical protein	unclassified proteins 	no data	No	142	1197	No		530.7777778						
+YEL002C	 oligosaccharyl transferase beta subunit precursor	protein destination; metabolism; cellular organization 	no data	No	287	123	No		369.6666667						
+YEL019C	 DNA repair protein	"cell rescue, cell defense and cell aging; cell growth, division, DNA synthesis "	no data	No	170	199	No		16.44444444		YOR156C	MMS21	5.60E-03	121	
+YEL026W	 strong similarity to high mobility group-like protein Nhp2p	unclear classification 	no data	No	258	692	No		990.6666667		YDL208W		9.50E-16	273	conflicts with ty data
+YEL032W	 replication initiation protein	"cell growth, division, DNA synthesis; cellular organization "	no data	No	406	339	Yes	early G1	205.1111111		YBL023C	MCM3	4.40E-82	1097	
+YEL035C	 protein of unknown function	unclassified proteins 	no data	No	131	493	No		6.888888889						
+YEL055C	 hypothetical protein	unclear classification 	no data	No	1182	98	No		280.8888889		YOR054C		4.60E-05	154	
+YEL058W	 phosphoacetylglucosamine mutase	metabolism 	no data	No	95	292	No		379		YMR278W	PCM1	7.56E-02	111	
+YER003C	 mannose-6-phosphate isomerase	metabolism; cellular organization 	no data	No	462	238	Yes	S	270.3333333						
+YER006W	 similarity to P.polycephalum myosin-related protein mlpA	intracellular transport 	no data	No	242	281	No		590.7777778		YNR053C		2.60E-30	460	
+YER008C	 secretory pathway protein	"intracellular transport; cell growth, division, DNA synthesis; cellular organization "	no data	No	297	923	No		270.1111111		YKL201C	PSL1	1.00E-15	286	
+YER009W	 nuclear transport factor	intracellular transport; cellular organization 	no data	No	142	297	No		1088.222222		YNR051C	NTF2	8.35E-02	103	
+YER012W	 proteasome component C11	"cell rescue, cell defense and cell aging; protein destination; cell growth, division, DNA synthesis; cellular organization "	no data	No	410	1823	No		501.8888889		YJL001W	PRE1	4.10E-11	220	
+YER013W	 pre-mRNA splicing factor	transcription; cellular organization 	no data	No	322	410	No		40.44444444		YGL120C	PRP22	9.50E-159	2038	
+YER021W	 26S proteasome subunit	protein destination; cellular organization 	no data	No	293	431	No		275.7777778		YER033C	SUN2	1.39E-02	121	
+YER022W	 transcription factor	transcription; cellular organization 	no data	No	201	293	No		123.4444444		YDL074C	SRB4	1.61E-03	134	
+YER023W	 delta 1-pyrroline-5-carboxylate reductase	metabolism; cellular organization 	no data	No	256	201	No		478.5555556						
+YER025W	 translation initiation factor eIF2 gamma chain	protein synthesis; cellular organization 	no data	No	810	288	No		413		YOR187W	GCD11	1.50E-16	292	
+YER036C	 similarity to members of the ABC transporter family	transport facilitation 	no data	No	690	291	No		699.5555556		YFR009W		6.80E-93	1227	
+YER038C	 hypothetical  protein	unclassified proteins 	no data	Yes	204	4	No		49.77777778		YML034W		3.31E-03	128	
+YER043C	 S-adenosyl-L-homocysteine hydrolase	metabolism 	no data	No	451	279	No		1155.888889		YCR045C	SAH1	2.08E-02	118	
+YER082C	 hypothetical protein	unclassified proteins 	no data	No	238	177	No		268.7777778		YBR198C		1.94E-04	143	"yer083c (R neighbor) is Q1 by footprinting, but nonessential by sporulation."
+YGR128C	 hypothetical protein	unclassified proteins 	no data	No	309	214	No		237.8888889						
+YGR140W	" kinetochore protein complex CBF3, 110 KD subunit"	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	270	1365	Yes	S	153.3333333		YLR106C	CBF2	1.83E-03	134	
+YGR147C	 N-acetyltransferase for N-terminal methionine	protein destination; protein synthesis; cellular organization 	lethal	No	392	1196	No		339.7777778						
+YGR156W	 hypothetical protein	unclassified proteins 	no data	No	617	480	No		146.1111111		YDL195W		1.10E-05	157	
+YGR158C	 involved in mRNA transport	transcription; cellular organization 	lethal	No	391	220	No		187.4444444						
+YGR172C	 weak similarity to T.brucei mitochondrion (SGC6) hypothetical protein 6	intracellular transport; cellular organization 	lethal	No	263	294	No		350.5555556						
+YGR175C	 squalene monooxygenase	metabolism; cellular organization 	lethal	No	297	528	No		885.6666667						
+YGR179C	 hypothetical protein	unclassified proteins 	viable	No	369	460	No		87.66666667		YDR485C		9.60E-05	145	"Previous disruption reported (Caponigro, G., Abedi, M. R., Hurlburt, A. P., Maxfield, A., Judd, W., and Kamb, A. Transdominant genetic analysis of a growth control pathway. Proc Natl Acad Sci U S A 95, 7508-7513 (1998))."
+YGR185C	 tyrosyl-tRNA synthetase	protein synthesis; cellular organization 	lethal	No	254	583	No		607.5555556		YOL097C	TYS1	5.30E-05	148	
+YGR186W	" TFIIF subunit (transcription initiation factor), 105 kD"	transcription; cellular organization 	lethal	No	251	254	No		223.8888889		YMR039C	TFG1	7.00E-05	150	
+YGR190C	 questionable ORF	unclassified proteins 	no data	Yes	-241	2104	No	very low expression	41.55555556						exclude
+YGR191W	 histidine permease	ionic homeostasis; intracellular transport; transport facilitation; metabolism; cellular organization;	viable	Yes	581	-241	No		164.7777778		YKR039W	HIP1	9.90E-154	1972	"Null mutant requires supplementation with large amounts of histidine for growth (Tanaka, J., and Fink, G. R. The histidine permease gene (HIP1) of Saccharomyces cerevisiae. Gene 38, 205-14 (1985).)"
+YGR195W	 3'->5' exoribonuclease required for 3' end formation of 5.8S rRNA	cellular biogenesis; transcription; metabolism 	lethal	No	111	1007	No		257.4444444		YGR095C	ECM20	1.44E-04	140	
+YGR198W	 hypothetical protein	unclassified proteins 	lethal	No	356	553	No		84.44444444		YEL061C		8.44E-03	125	
+YGR211W	 weak similarity to M.jannaschii hypothetical protein	unclassified proteins 	lethal	No	339	503	No		301.4444444						
+YGR216C	 required for N-acetylglucosaminyl phosphatidylinositol synthesis	"signal transduction; cellular biogenesis; cell growth, division, DNA synthesis; metabolism; cellular organization;"	viable	No	232	126	No		141.3333333		YKR082W	GPI1	2.31E-02	118	"Temperature sensitive null (Orlean, P., Leidich, S. D., Drapp, D. A., and Colussi, P. Isolation of temperature-sensitive yeast GPI-anchoring mutants. Braz J Med Biol Res 27, 145-50 (1994), Leidich, S. D., and Orlean, P. Gpi1, a Saccharomyces cerevisiae protein that participates in the first step in glycosylphosphatidylinositol anchor synthesis. J Biol Chem 271, 27829-37 (1996))."
+YGR218W	 chromosome region maintenance protein	intracellular transport; transcription; cellular organization 	lethal	No	240	1726	No		175.5555556		YOR160W	CRM1	8.14E-04	139	
+YHL015W	 ribosomal protein	protein synthesis; cellular organization 	lethal	No	320	1168	No		1962.222222						
+YHR019C	 asparaginyl-tRNA-synthetase	protein synthesis 	lethal	No	438	492	No		597.4444444		YCR024C	DED81	6.80E-35	516	
+YHR020W	 strong similarity to human glutamyl-prolyl-tRNA synthetase and fruit fly multifunctional aminoacyl-tRNA synthetase	protein synthesis 	lethal	No	1809	438	No		540.3333333		YER087W		1.03E-02	123	
+YHR024C	" processing peptidase, catalytic 53kDa (alpha) subunit, mitochondrial"	protein destination; cellular organization 	lethal	No	246	292	No		106.5555556		YLR163C	MAS2	4.00E-39	567	
+YHR036W	 similarity to hypothetical protein YGL247w	unclassified proteins 	lethal	No	217	234	No		128		YGL247W		6.40E-09	197	
+YHR040W	 weak similarity to Hit1p	unclassified proteins 	lethal	No	107	245	No		293.8888889		YJR055W		1.25E-04	143	
+YHR042W	 NADPH-Cytochrome P450 reductase	"cell rescue, cell defense and cell aging; metabolism; cellular organization "	lethal	No	187	679	No		745.1111111		YFR030W	NCP1	2.20E-22	364	
+YHR062C	 hypothetical protein	transcription; cellular organization 	lethal	No	272	399	No		253.3333333						
+YHR065C	 required for maturation of the 35S primary transcript	transcription; cellular organization 	lethal	No	172	289	No		218.8888889		YHR169W	RRP3	7.20E-69	932	
+YHR068W	 deoxyhypusine synthase	metabolism 	lethal	No	283	321	No		730.7777778						
+YHR069C	 strong similarity to hypothetical S.pombe protein similarity to human protein	transcription; cellular organization 	lethal	No	223	283	No		161.1111111		YDR349C		8.45E-02	108	
+YHR070W	 strong similarity to N.crassa met-10+ protein	metabolism 	lethal	No	624	223	No		158.2222222						
+YHR072W	 lanosterol synthase	metabolism; cellular organization 	lethal	No	1289	1405	No		671.4444444						
+YHR074W	 weak similarity to B.subtilis spore outgrowth factor B	unclassified proteins 	lethal	No	102	621	No		425.7777778						
+YHR083W	 hypothetical protein	unclassified proteins 	lethal	No	558	1079	No		107.4444444		YOR177C		3.10E-02	113	
+YHR085W	 weak similarity to fruit fly brahma transcriptional activator	unclassified proteins 	lethal	No	385	524	No		248.4444444						
+YHR088W	 similarity to hypothetical protein YNL075w	unclassified proteins 	lethal	No	299	340	No		343.2222222		YNL075W		1.10E-23	375	
+YHR101C	 big cells phenotype	"cell growth, division, DNA synthesis; metabolism "	viable	No	604	201	No		23.44444444	67.55555556					"Null mutants are viable, but show slow growth on glucoseBickle, M., et al. (1998) Cell wall integrity modulates RHO1 activity via the exchange factor ROM2. EMBO J 17:2235-2245 "
+YHR107C	 septin	"cell growth, division, DNA synthesis; metabolism; cellular organization "	lethal	No	267	187	No		228.5555556		YGR059W	CDC12	2.40E-52	728	
+YHR118C	" origin recognition complex, 50 KD subunit"	"transcription; cell growth, division, DNA synthesis; cellular organization "	lethal	No	415	53	No		81.44444444		YMR016C	ORC6	4.41E-03	125	
+YHR122W	 hypothetical protein	unclassified proteins 	lethal	No	495	306	No		236.5555556						
+YHR143W-A	" DNA-directed RNA polymerases I, II, III 7.7 KD subunit"	 	no data	No	343	746	No		618		YHR143W	RPC10	9.20E-31	453	
+YHR148W	 similarity to ribosomal protein	protein synthesis 	lethal	No	370	251	No		217.2222222		YPL081W		5.60E-08	180	
+YHR164C	 DNA helicase	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	529	137	No		56.77777778		YKL017C	DNA2	4.10E-26	414	
+YHR166C	 subunit of anaphase-promoting complex (cyclosome)	"cellular biogenesis; protein destination; cell growth, division, DNA synthesis; cellular organization "	lethal	No	292	222	No		50.77777778		YBL084C	CDC23	5.10E-18	310	
+YHR172W	 spindle pole body component	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	9	730	Yes	S	63.55555556		YBL004W	SPC97	3.14E-02	118	
+YHR186C	 similarity to C.elegans hypothetical protein C10C5.6	unclassified proteins 	lethal	No	318	659	No		83.77777778		YBR289W		4.60E-08	193
+YHR188C	 hypothetical protein	unclassified proteins 	lethal	No	191	86	No		344.3333333					
+YHR190W	 farnesyl-diphosphate farnesyltransferase	metabolism; cellular organization 	lethal	No	51	245	No		838.5555556					
+YHR196W	 hypothetical protein	unclassified proteins 	lethal	No	238	219	No		337		YDR398W		2.31E-03	130
+YHR197W	 hypothetical protein	unclassified proteins 	lethal	No	128	238	No		248.7777778		YMR227C		7.88E-03	125
+YKL004W	 aureobasidin-resistance protein	cellular biogenesis; metabolism 	lethal	No	312	703	No		693.1111111		YDR072C	AUR1	3.00E-21	347
+YKL006C-A	 SNARE-like protein	 	no data	No	1274	90	No		679.3333333		YKL006C	SFT1	7.80E-43	603
+YKL012W	 splicing factor	transcription; cellular organization 	lethal	No	94	287	No		566.2222222		YPR152C	PRP40	7.57E-04	136
+YKL013C	 strong similarity to C.elegans hypothetical protein	intracellular transport; cellular organization 	no data	No	287	595	No		735.5555556					
+YKL014C	 hypothetical protein	unclassified proteins 	no data	No	595	136	No		446					
+YKL018W	 similarity to C.elegans hypothetical protein	unclassified proteins 	lethal	No	99	584	No		124.1111111		YCR057C		1.60E-07	178
+YKL019W	" protein farnesyltransferase, alpha subunit"	protein destination; metabolism; cellular organization 	lethal	No	584	488	No		295.5555556		YJL031C	RAM2	4.60E-15	270
+YKL021C	 involved in cell growth and replication of M1 dsRNA virus	"cell growth, division, DNA synthesis "	lethal	No	82	96	No		355.8888889		YNL006W	MAK11	3.10E-10	213
+YKL022C	 subunit of anaphase-promoting complex (cyclosome)	"protein destination; cell growth, division, DNA synthesis; cellular organization "	lethal	No	96	172	No		241.8888889		YBR112C	CDC16	1.70E-12	244
+YKL024C	 uridine-monophosphate kinase	metabolism; cellular organization 	no data	No	581	247	No		945.2222222		YDR226W	URA6	1.80E-13	248
+YKL028W	" TFIIE subunit (transcription initiation factor), 66 kD"	transcription; cellular organization 	lethal	No	356	1033	No		898		YLR106C	TFA1	7.50E-08	184
+YKL033W	 hypothetical protein	unclassified proteins 	no data	No	1493	768	No		55.44444444		YIR010W		6.14E-03	128
+YKL035W	 UTP--glucose-1-phosphate uridylyltransferase	protein destination; energy; metabolism 	lethal	Yes	439	-29	No		938.7777778		YHL012W	UGP1	2.70E-82	1096
+YKL036C	 questionable ORF	unclassified proteins 	no data	Yes	-29	-193	No	very low expression	46.77777778					
+YKL042W	 spindle pole body component	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	576	627	Yes	late G1	252.2222222		YGR238C	SPC42	1.03E-04	144
+YKL045W	" DNA-directed DNA polymerase alpha , 58 KD subunit (DNA primase)"	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	1243	869	Yes	late G1	449.1111111					
+YKL049C	 strong similarity to histone H3	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	725	455	Yes	G2	426.1111111		YBR010W	CSE4	8.60E-24	372
+YKL052C	 hypothetical protein	unclassified proteins 	no data	Yes	766	-278	Yes	G2	298.2222222		YDR409W		7.39E-03	120
+YKL058W	" TFIIA subunit (transcription initiation factor), 13.5 kD"	transcription; cellular organization 	lethal	No	322	723	No		768.5555556					
+YKL059C	 similarity to C.elegans hypothetical protein	unclassified proteins 	no data	No	723	631	No		443.1111111		YJR093C		1.75E-03	130
+YKL060C	 fructose-bisphosphate aldolase	energy; metabolism; cellular organization 	lethal	No	631	296	No		3787.111111					
+YKL078W	 strong similarity to ATP-dependent RNA helicases	transcription 	no data	No	401	272	No		366.2222222		YGL120C	JA2	1.90E-118	1541
+YKL083W	 questionable ORF	unclassified proteins 	no data	Yes	-510	62	No		644.5555556		YGR228W		1.06E-02	116
+YKL088W	" similarity to C.tropicalis hal3 protein, to C-term. of Sis2p and to hypothetical protein YOR054c"	"cell rescue, cell defense and cell aging "	no data	No	191	240	No		303.8888889		YKR072C		2.20E-46	657
+YKL089W	 required for normal chromosome segregation and spindle integrity	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	240	185	No		233.7777778		YDR170C	MIF2	6.20E-05	149
+YKL095W	 similarity to C.elegans hypothetical proteins	unclassified proteins; cellular organization 	lethal	No	236	426	No		64.11111111		YDL058W	YJU2	6.84E-03	120
+YLL003W	 protein of unknown function	unclassified proteins 	lethal	No	250	278	No		324.1111111		YKR095W	SFI1	3.00E-02	119
+YLL004W	" origin recognition complex, 62 kDa subunit"	"transcription; cell growth, division, DNA synthesis; cellular organization "	lethal	No	278	527	No		177.6666667		YGL150C	ORC3	6.32E-03	125	
+YLL008W	 RNA helicase of the DEAD box family	protein destination; transcription; cellular organization 	lethal	No	315	315	No		830.3333333		YHR065C	DRS1	2.60E-64	878	
+YLL011W	 involved in 18S pre-rRNA production	transcription; cellular organization 	lethal	No	338	268	No		825.5555556		YCR072C	SOF1	1.90E-10	216	
+YLL018C	" aspartyl-tRNA synthetase, cytosolic"	protein synthesis; cellular organization 	no data	No	659	930	No		792.5555556		YHR019C	DPS1	1.90E-32	486	
+YLL031C	 similarity to hypothetical protein YJL062w	unclassified proteins 	no data	No	151	405	No		362.6666667		YJL062W		1.70E-41	600	
+YLL034C	 similarity to mammalian valosin	unclear classification 	no data	No	263	155	No		470.2222222		YDL126C		3.60E-105	1379	
+YLL035W	 hypothetical protein	unclassified proteins 	no data	No	155	324	No		326.1111111		YOR250C		9.67E-04	135	
+YLL036C	 non-snRNP sliceosome component required for DNA repair	transcription; cellular organization 	lethal	Yes	324	-197	No		840.7777778						
+YLL037W	 weak similarity to human platelet-activating factor receptor	unclassified proteins 	no data	Yes	-197	44	No		578.5555556						exclude
+YLL050C	" cofilin, actin binding and severing protein"	"intracellular transport; protein destination; cell growth, division, DNA synthesis; cellular organization "	lethal	No	252	333	No		2079.555556		YCR088W	COF1	3.29E-03	120	
+YLR002C	 hypothetical protein	unclassified proteins 	no data	No	521	366	No		183.8888889		YKL201C		7.22E-04	137	
+YLR005W	" TFIIH subunit (transcription initiation factor), factor B"	"cell rescue, cell defense and cell aging; protein synthesis; transcription "	lethal	No	321	544	No		481.1111111						
+YLR007W	 hypothetical protein	unclassified proteins 	no data	No	175	499	No		411.6666667						
+YLR008C	 similarity to hypothetical protein YNL328c	unclassified proteins 	no data	No	454	175	No		724.3333333		YNL328C		1.90E-12	234	
+YLR009W	 similarity to ribosomal protein L24.e.B	protein synthesis 	no data	No	184	454	No		928.1111111		YGL031C		5.20E-12	230	
+YLR010C	 hypothetical protein	unclassified proteins 	no data	No	1301	184	No		129.5555556						
+YLR022C	 similarity to C.elegans and M.jannaschii hypothetical proteins	unclassified proteins 	no data	No	572	12	No		820.1111111						
+YLR026C	 syntaxin (T-SNARE)	intracellular transport; cellular organization 	lethal	No	357	276	No		425.5555556		YOR106W	SED5	2.00E-12	238	
+YLR029C	 ribosomal protein L15.e.c12	protein synthesis; cellular organization 	no data	No	700	661	No		4831		YMR121C	RPL13A	2.00E-105	1374	
+YLR045C	 suppressor of a cs tubulin mutation	unclear classification; cellular organization 	lethal	No	298	956	Yes	S	266.5555556		YDR356W	STU2	1.00E-06	172	
+YLR051C	 similarity to human acidic 82 kDa protein	unclassified proteins 	no data	No	224	252	No		825.3333333		YLR309C		2.81E-02	111	
+YLR060W	" phenylalanyl-tRNA synthetase, alpha subunit, cytosolic"	protein synthesis; cellular organization 	no data	No	428	432	No		1154						
+YLR066W	 signal peptidase subunit	protein destination; cellular organization 	lethal	No	90	251	No		939.6666667						
+YLR071C	 DNA-directed RNA polymerase II holoenzyme subunit	"transcription; cell growth, division, DNA synthesis; energy; metabolism; cellular organization;"	lethal	No	236	167	No		252.6666667						
+YLR075W	 ribosomal protein of the 60S subunit	"protein destination; protein synthesis; cell growth, division, DNA synthesis; cellular organization "	lethal	Yes	-407	471	No		3266.555556						
+YLR076C	 questionable ORF	unclassified proteins 	lethal	Yes	265	-407	No		4875.777778						exclude
+YLR078C	 secretory pathway protein	intracellular transport; cellular organization 	lethal	No	261	113	No		477.7777778						
+YLR086W	 Stable Maintenance of Chromosomes	cellular biogenesis 	lethal	No	356	254	No		172.6666667		YFL008W	SMC4	3.10E-86	1150	
+YLR088W	 required for attachment of GPI anchor onto proteins	intracellular transport; protein destination; metabolism; cellular organization 	lethal	No	286	376	No		315.5555556						
+YLR100W	 hypothetical protein	unclassified proteins 	lethal	Yes	-287	882	No		1131.666667						exclude
+YLR101C	 questionable ORF	unclassified proteins 	no data	Yes	9	-287	No		1573.111111						
+YLR103C	 required for minichromosome maintenance and initiation of chromosomal DNA replication	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	644	222	Yes	late G1	370.6666667		YDR186C	CDC45	1.30E-04	146	
+YLR105C	 tRNA splicing endonuclease beta subunit	transcription; cellular organization 	lethal	No	826	67	No		317.1111111		YKL082C	SEN2	2.40E-02	115	
+YLR106C	 hypothetical protein	unclassified proteins 	no data	No	378	826	No		1027		YFR016C		5.50E-15	284	
+YLR115W	" cleavage and polyadenylation specificity factor, part of CF II"	transcription; cellular organization 	lethal	No	258	747	No		296.8888889		YLR277C	CFT2	3.10E-09	204	
+YLR116W	 branch point bridging protein	transcription; cellular organization 	lethal	No	219	258	No		207.6666667		YIR019C	MSL5	4.00E-07	175	
+YLR117C	 strong similarity to Drosophila putative cell cycle control protein crn	"cell growth, division, DNA synthesis "	viable	No	191	219	No		214.5555556		YMR229C		3.90E-07	177	Null mutant reported as viable in MIPS as of 03/24/99.  No reference.
+YLR127C	 weak similaeity to fruit fly lin19 protein	"protein destination; cell growth, division, DNA synthesis "	no data	No	211	238	No		129.1111111		YFR031C		6.60E-02	114	
+YLR129W	 Dom34p-interacting protein	"cell growth, division, DNA synthesis "	lethal	No	306	224	No		544		YLR222C	DIP2	1.60E-36	539	
+YLR132C	 hypothetical protein	unclassified proteins 	no data	No	290	461	No		126.1111111						
+YLR140W	 questionable ORF	unclassified proteins 	no data	Yes	-117	1	No		185.5555556						
+YLR141W	 RNA polymerase I specific transcription initiation factor	transcription; cellular organization 	viable	Yes	412	-117	No		61.77777778		YLR009W	RRN5	6.95E-02	109	"May overlap another essential gene, YLR140W."
+YLR145W	 hypothetical protein	unclassified proteins 	no data	No	50	152	No		425.5555556						
+YLR147C	 strong similarity to small nuclear ribonucleoprotein D3	transcription; cellular organization 	lethal	No	178	433	No		1271.333333		YER112W	SMD3	2.64E-03	119	
+YLR163C	 mitochondrial processing peptidase	protein destination; cellular organization 	lethal	No	629	1938	No		435.4444444		YHR024C	MAS1	3.70E-39	567	
+YLR166C	 required for exocytosis	intracellular transport; cellular organization 	lethal	No	903	171	No		421		YEL061C	SEC10	4.60E-05	153	
+YLR167W	 ubiquitin	protein destination; protein synthesis; cellular organization 	viable	No	173	903	No		3998.333333		YIL148W	UBI3	2.10E-32	478	"Previously-reported null mutant is coled-sensitive (Mueller, P. P., Grueter, P., Hinnebusch, A. G., and Trachsel, H. A Ribosomal Protein Is Required for Translational Regulation of GCN4 mRNA. Evidence for involvement of the ribosome in eif2 recycling. J Biol Chem 273, 32870-32877 (1998))."
+YLR175W	 centromere/microtubule binding protein	"cellular biogenesis; transcription; cell growth, division, DNA synthesis; cellular organization "	lethal	No	212	305	No		1954.444444		YOR310C	CBF5	5.40E-13	247	
+YLR195C	 N-myristoyltransferase	protein destination; metabolism; cellular organization 	lethal	No	664	364	No		669.5555556		YAR018C	NMT1	7.29E-02	110	
+YLR196W	 periodic tryptophan protein	unclassified proteins 	viable	No	399	664	No		747.6666667		YEL056W	PWP1	1.90E-07	180	"Previously-reported null mutants are severely growth retarded (Duronio, R. J., Gordon, J. I., and Boguski, M. S. Comparative analysis of the beta transducin family with identification of several new members including PWP1, a nonessential gene of Saccharomyces cerevisiae that is divergently transcribed from NMT1. Proteins 13, 41-56 (1992))."
+YLR197W	 suppressor of toxicity of Gal4-IKB	transcription; cellular organization 	lethal	Yes	-325	399	No		1741.333333		YOR310C	SIK1	2.70E-94	1243	
+YLR198C	 questionable ORF	unclassified proteins 	no data	Yes	208	-325	No		1358.333333						
+YLR208W	 protein transport protein	intracellular transport; cellular organization 	lethal	No	353	262	No		928.6666667		YGL100W	SEC13	1.00E-20	339	
+YLR212C	 gamma tubulin	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	373	646	Yes	late G1	174.7777778		YML085C	TUB4	1.80E-51	718	
+YLR222C	 similarity to Dip2p	unclassified proteins 	no data	No	462	294	No		396.2222222		YLR129W		1.30E-36	539	
+YLR223C	 pre-rRNA processing machinery control protein	transcription; cellular organization 	lethal	No	974	462	No		493.3333333		YDR223W	IFH1	9.40E-19	322	
+YML010W	 transcription initiation protein	transcription; cellular organization 	lethal	Yes	-433	249	No		372.1111111		YPL190C	SPT5	2.30E-13	256	
+YML025C	 mitochondrial ribosomal protein	protein synthesis; cellular organization 	no data	No	524	578	No		436.6666667						
+YML043C	 component of rDNA transcription factor CF	transcription; cellular organization 	lethal	No	1021	515	No		278.5555556		YKL201C	RRN11	1.07E-02	121	
+YML049C	 hypothetical protein	intracellular transport; transcription 	viable	No	121	146	No		131.8888889						"Null mutant reported but does not grow at 30¡C (Chen, E.J.; Frand, A.R.; Chitouras, E.; Kaiser, C.A. Mol. Cell. Biol. 18(12): 7139-46 (1998))."
+YML064C	 GTP-binding protein of the ras superfamily	"signal transduction; cell growth, division, DNA synthesis "	lethal	No	606	185	No		447.4444444		YFL005W	TEM1	1.20E-13	251	
+YML065W	" origin recognition complex, large subunit"	"transcription; cell growth, division, DNA synthesis; cellular organization "	lethal	No	185	677	No		257.1111111		YLR442C	ORC1	1.30E-85	1140	
+YMR001C	 ser/thr protein kinase	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	1057	1219	Yes	M	354.5555556		YPL209C	CDC5	2.60E-37	547	
+YMR013C	 dolichol kinase	"cell growth, division, DNA synthesis; metabolism; cellular organization "	no data	No	2130	212	No		262.1111111						
+YMR028W	 component of the Tor signaling pathway	"signal transduction; protein synthesis; cell growth, division, DNA synthesis "	lethal	No	78	193	No		307.7777778		YPL174C	TAP42	3.76E-04	137
+YMR043W	 transcription factor of the MADS box family	"cell rescue, cell defense and cell aging; transcription; cell growth, division, DNA synthesis; metabolism; cellular organization;"	lethal	No	653	735	No		1602.666667		YMR042W	MCM1	3.10E-25	394
+YMR146C	" translation initiation factor eIF3, P39 subunit"	protein synthesis; cellular organization 	lethal	No	675	1006	No		2055.444444		YBR175W	TIF34	9.40E-12	230
+YMR149W	 oligosaccharyltransferase delta subunit	protein destination; metabolism; cellular organization 	lethal	No	100	184	No		786.7777778					
+YMR168C	" kinetochore protein complex, subunit B"	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	194	137	No		167.7777778		YLR256W	CBF3B	2.46E-03	130
+YMR197C	 similarity to Nuf1p	intracellular transport; protein destination; cellular organization 	lethal	No	547	203	No		575		YDL234C		9.50E-03	117
+YMR200W	 hypothetical protein	unclassified proteins 	lethal	No	323	468	No		1302.555556		YIL155C		4.17E-02	110
+YMR203W	 mitochondrial outer membrane import channel	intracellular transport; transport facilitation; protein destination; cellular organization 	lethal	No	408	287	No		653.8888889					
+YMR208W	 mevalonate kinase	metabolism; cellular organization 	lethal	No	113	903	No		682.8888889		YMR119W	ERG12	5.09E-02	112
+YMR211W	 weak similarity to beta tubulins	unclassified proteins 	no data	No	185	218	No		351.4444444		YLR212C		1.03E-02	121
+YMR213W	 similarity to S.pombe putative transcription factor cdc5	"cell growth, division, DNA synthesis "	lethal	No	116	338	No		204.4444444		YKR099W		1.00E-06	171
+YMR218C	 hypothetical protein	unclassified proteins 	no data	No	246	212	No		227					
+YMR220W	 phosphomevalonate kinase	metabolism; cellular organization 	lethal	No	260	207	No		965.1111111					
+YMR227C	 hypothetical protein	transcription; cellular organization 	lethal	No	241	217	No		348.8888889		YLR106C		1.00E-09	208
+YMR229C	 processing of pre-ribosomal RNA	transcription; cellular organization 	lethal	No	1291	283	No		983.1111111		YLR117C	RRP5	1.00E-06	177
+YMR235C	 GTPase activating protein	transcription; cellular organization 	lethal	No	236	200	No		328		YPR189W	RNA1	2.99E-04	139
+YMR236W	 similarity to human TAFII31	transcription; cellular organization 	lethal	No	305	236	No		818.2222222						
+YMR239C	 double-stranded ribonuclease	transcription; cellular organization 	lethal	No	253	533	No		383.2222222		YBR081C	RNT1	1.48E-02	119	
+YMR240C	 U2 snRNP protein	transcription; cellular organization 	lethal	No	721	253	No		211.8888889						
+YMR260C	 translation initiation factor eIF1a	protein synthesis; cellular organization 	lethal	No	366	495	No		1337.666667		YDR289C	TIF11	8.60E-02	103	
+YMR268C	 splicing factor	transcription; cellular organization 	lethal	No	442	184	No		224.2222222		YER165W	PRP24	5.00E-06	161	
+YMR270C	 RNA polymerase I-specific transcription initiation factor	transcription; cellular organization 	viable	No	442	235	No		321.7777778		YGL086W	RRN9	1.20E-03	131	"Previous null mutant reported (Keys, D.A.; Lee, B.S.; Dodd, J.A.; Nguyen, T.T.; Vu, L.; Fantino, E.; Burson, L.M.; Nogi, Y.; Nomura, M. Genes Dev. 10(7): 887-903 (1996))."
+YMR277W	 hypothetical protein	transcription; cellular organization 	lethal	No	309	308	No		440.3333333		YOR054C		3.00E-06	166	
+YMR281W	 hypothetical protein	unclassified proteins 	no data	No	103	1010	No		230.7777778						
+YMR288W	 strong similarity to hypothetical S.pombe protein	unclassified proteins 	no data	No	199	226	No		94		YGL195W		1.07E-03	137	
+YMR290C	 strong similarity to helicases of the DEAD/DEAH box family	transcription 	lethal	Yes	-169	265	No		710.5555556		YJL033W		3.00E-80	1071	
+YMR290W-A	 questionable ORF	 	no data	Yes	861	-169	No	very low expression	50.88888889		YMR290W		2.30E-52	721	exclude
+YMR296C	 serine C-palmitoyltransferase subunit	metabolism 	lethal	No	1031	325	No		456.4444444		YDR062W	LCB1	1.00E-26	416	
+YMR298W	 hypothetical protein	unclassified proteins 	no data	No	141	299	No		524.7777778						
+YMR301C	 mitochondrial ATP-binding cassette transporter protein	ionic homeostasis; intracellular transport; transport facilitation; cellular organization 	lethal	No	446	464	No		310.5555556		YPL270W	ATM1	2.00E-48	683	
+YMR308C	 protein secretion enhancer	intracellular transport; cellular organization 	lethal	No	767	270	No		967.2222222		YER110C	PSE1	1.80E-40	588	"Null mutant grows very slowly.  Chow, T.Y., et al. (1992) Screening and identification of a                gene, PSE-1, that affects protein secretion in Saccharomyces             cerevisiae. J Cell Sci 101:709-719"
+YMR309C	 associated with 40s ribosomal subunit	protein synthesis; cellular organization 	lethal	No	290	767	No		550.5555556		YGR159C	NIP1	4.00E-06	166	
+YNL245C	 hypothetical protein	unclassified proteins 	lethal	No	285	-3	No		451		YJL074C		1.66E-03	125
+YNL247W	 similarity to cysteinyl-tRNA synthetases	protein synthesis 	no data	No	282	267	No		546.4444444		YPL160W		3.84E-04	141
+YNL251C	 involved in regulation of nuclear pre-mRNA abundance	transcription; cellular organization 	lethal	No	1095	302	No		287.7777778		YNL124W	NRD1	1.00E-05	159
+YNL258C	 hypothetical protein	unclassified proteins 	lethal	No	258	244	No		115		YJL115W		1.01E-04	148
+YNL261W	" origin recognition complex, 50 kDa subunit"	"transcription; cell growth, division, DNA synthesis; cellular organization "	lethal	No	320	220	No		363.7777778		YOR046C	ORC5	3.71E-02	114
+YNL262W	" DNA-directed DNA polymerase epsilon, catalytic subunit A"	"cell rescue, cell defense and cell aging; cell growth, division, DNA synthesis; cellular organization "	lethal	No	220	372	Yes	late G1	376.5555556		YDL102W	POL2	3.94E-02	122
+YNL263C	 Slh1p Interacting Factor	unclassified proteins 	lethal	No	372	281	No		598.1111111					
+YNL272C	 protein transport protein	intracellular transport; cellular organization 	lethal	No	439	206	Yes	late G1	284.3333333		YKR092C	SEC2	3.70E-11	227
+YNL282W	 involved in processsing of tRNAs and rRNAs	transcription; cellular organization 	lethal	No	193	992	No		189.1111111					
+YNL290W	" DNA replication factor C, 40 kDa subunit"	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	657	403	No		262.6666667		YOL094C	RFC3	1.90E-47	667
+YNL306W	 hypothetical protein	protein synthesis; cellular organization 	no data	No	90	582	No		541.6666667					
+YNL308C	 similarity to S.pombe and C.elegans hypothetical proteins	unclassified proteins 	lethal	No	550	198	No		859.6666667		YDL058W		1.40E-08	194
+YNL310C	 similarity to S.pombe hypothetical protein SPAC24H6.02c	unclassified proteins 	no data	No	21	219	Yes	late G1	585.6666667					
+YNL312W	" DNA replication factor A, 36 kDa subunit"	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	181	265	Yes	late G1	766					
+YNL313C	 similarity to C.elegans hypothetical protein	unclassified proteins 	lethal	No	265	94	No		345.6666667		YBR112C		4.80E-05	153
+YNL317W	 similarity to A.thaliana PRL1/2 protein	unclassified proteins 	lethal	No	55	290	No		145.6666667		YPL151C		4.10E-16	285
+YOL005C	" DNA-directed RNA polymerase II subunit, 13.6 KD"	transcription; cellular organization 	lethal	No	763	426	No		890.2222222		YNL113W	RPB11	1.61E-04	135	
+YOL010W	 putative RNA 3'-terminal phosphate cyclase	transcription 	no data	No	283	529	No		215.1111111						
+YOL021C	 Ran binding protein	"transcription; cell growth, division, DNA synthesis; cellular organization "	lethal	No	746	923	No		441.1111111		YDR293C	DIS3	8.30E-35	518	
+YOL022C	 weak similarity to rat apoptosis protein RP-8	unclassified proteins 	viable	No	923	186	No		645.3333333		YHL007C		1.90E-03	129	"Previously-reported disruption is slow growing (Rad, M. R., Habbig, B., Jansen, G., Hattenhorst, U., Kroll, M., and Hollenberg, C. P. Analysis of the DNA sequence of a 34,038 bp region on the left arm of yeast chromosome XV. Yeast 13, 281-6 (1997))."
+YOL026C	 hypothetical protein	unclassified proteins 	no data	No	604	288	No		745.4444444						
+YOL034W	 similarity to human SB1.8/DXS423E protein	"cell growth, division, DNA synthesis "	viable	No	271	820	No		130.1111111		YLR383W		7.90E-19	323	viablity reported in MIPS.
+YOL038W	 20S proteasome subunit (alpha4)	protein destination; cellular organization 	no data	No	565	720	No		1169.111111		YGR135W	PRE6	3.70E-32	478	
+YOL040C	 ribosomal protein	protein synthesis; cellular organization 	no data	No	720	503	No		3695		YNR037C	RPS21	1.00E-05	151	
+YOL066C	 DRAP deaminase	metabolism 	no data	No	260	178	No		165.4444444		YDL036C	RIB2	8.90E-149	1911	
+YOL069W	 spindle pole body protein	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	71	217	Yes	M	54.22222222		YDL058W	NUF2	4.60E-11	223	
+YOL077C	 strong similarity to C.elegans K12H4.3 protein	unclassified proteins 	no data	No	301	636	No		897.3333333		YNL075W		4.63E-02	110	
+YOR004W	 weak similarity to hypothetical protein YDR339c	unclassified proteins 	no data	No	153	701	No		983.5555556		YDR339C		5.20E-07	170	
+YOR020C	" chaperonin, mitochondrial"	protein destination; cellular organization 	lethal	No	1954	205	No		1049.666667						
+YOR046C	 RNA helicase	unclear classification 	lethal	No	440	423	No		597.7777778		YJL138C	DBP5	8.10E-66	894	
+YOR048C	 5'-3' exoribonuclease	intracellular transport; transcription; cellular organization 	lethal	No	1018	949	No		297.1111111		YGL173C	RAT1	8.50E-104	1363	
+YOR056C	 weak similarity to human phosphorylation regulatory protein HP-10	unclassified proteins 	no data	No	560	335	No		733.8888889		YLR223C		3.39E-04	139	
+YOR057W	 suppressor of G2 allele of SKP1	unclassified proteins 	no data	No	315	560	No		317.2222222		YBL029W	SGT1	8.25E-03	121	
+YOR060C	 hypothetical protein	unclassified proteins 	no data	No	371	132	No		135.3333333						
+YOR063W	 ribosomal protein L3.e	protein synthesis; cellular organization 	lethal	No	230	1155	No		2168.444444		YGR220C	TCM1	3.58E-02	113	
+YOR074C	 thymidylate synthase	metabolism; cellular organization 	no data	No	623	132	Yes	late G1	43.33333333	367					
+YOR075W	 syntaxin (T-SNARE) of the ER	"intracellular transport; cell growth, division, DNA synthesis; cellular organization "	lethal	No	125	623	No		219.4444444		YLR026C	UFE1	5.00E-06	160	
+YOR077W	 similarity to mouse KIN17 protein	"cell growth, division, DNA synthesis "	no data	No	128	279	No		41.44444444						
+YOR095C	 D-ribose-5-phosphate ketol-isomerase	energy; metabolism; cellular organization 	viable	No	1466	206	No		597						"Null mutant reported as inviable (Miosga, T., and Zimmermann, F. K. Cloning and characterization of the first two genes of the non-oxidative part of the Saccharomyces cerevisiae pentose-phosphate pathway. Curr Genet 30, 404-9 (1996)). but viable by MIPS."
+YOR294W	 similarity to human hypothetical protein	unclassified proteins 	no data	No	257	488	No		510.1111111						
+YOR310C	 strong similarity to Sik1p	transcription; cellular organization 	lethal	Yes	696	-253	No		1811.555556		YLR197W		2.80E-94	1243	
+YOR319W	 similarity to human SAP49 and RNA-binding proteins	transcription; cellular organization 	lethal	No	156	386	No		343.6666667		YER165W	HSH49	6.40E-11	217	
+YOR326W	 myosin heavy chain	"cellular biogenesis; intracellular transport; cell growth, division, DNA synthesis; cellular organization "	lethal	No	289	671	No		735.6666667		YAL029C	MYO2	0.00E+00	4534	
+YOR329C	 suppressor of clathrin deficiency	intracellular transport; protein destination 	lethal	No	272	234	No		291.5555556		YBR289W	SCD5	6.30E-15	274	
+YOR335C	" alanyl-tRNA synthetase, cytosolic"	protein synthesis; cellular organization 	lethal	No	664	225	No		1147.444444		YNL040W	ALA1	1.79E-03	134	
+YOR340C	" DNA-directed RNA polymerase I, 36 KD subunit"	transcription; cellular organization 	lethal	No	805	370	No		459.2222222		YGL086W	RPA43	3.61E-02	112	
+YOR341W	" DNA-directed RNA polymerase I, 190 KD alpha subunit"	transcription; cellular organization 	lethal	No	685	805	No		834.6666667		YDL140C	RPA190	6.60E-115	1502	
+YOR353C	 weak similarity to adenylate cyclases	unclassified proteins 	no data	No	319	209	No		209		YJL005W		3.40E-08	191	
+YOR361C	 translation initiation factor eIF3 subunit	"protein synthesis; cell growth, division, DNA synthesis; cellular organization "	lethal	No	228	540	No		1617.111111		YGR054W	PRT1	3.60E-07	178	
+YOR362C	 20S proteasome subunit C1(alpha7)	protein destination; cellular organization 	lethal	No	1476	228	No		1261.555556		YML092C	PRE10	1.90E-27	421	
+YOR370C	 geranylgeranyltransferase regulatory subunit	protein destination; metabolism; cellular organization 	lethal	No	495	558	No		710		YER136W	MSI4	6.60E-25	394	
+YOR372C	 hypothetical protein	unclassified proteins 	no data	No	363	625	No		266.4444444		YIR019C		9.20E-09	196	
+YOR373W	 cell cycle regulatory protein	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	451	363	No		153.1111111		YJL005W	NUD1	7.00E-10	212	
+YPL093W	" similarity to M.jannaschii GTP-binding protein, GTP1/OBG-family, weak similarity to other GTP-binding proteins"	unclassified proteins 	no data	No	872	288	No		634.1111111		YMR023C		2.00E-06	169	
+YPL094C	 ER protein-translocation complex subunit	intracellular transport; transport facilitation; protein destination; cellular organization 	lethal	No	288	398	No		457.6666667						
+YPL117C	 isopentenyl-diphosphate delta-isomerase	metabolism; cellular organization 	lethal	No	876	202	No		794.2222222						
+YPL122C	 TFIIH subunit (transcription/repair factor)	"cell rescue, cell defense and cell aging; transcription; cellular organization "	lethal	No	195	281	No		314.1111111						
+YPL124W	 nuclear import protein	intracellular transport; cellular organization 	lethal	No	125	269	Yes	late G1	251.8888889		YBR156C	NIP29	9.02E-03	118	
+YPL126W	 weak similarity to fruit fly TFIID subunit p85	unclassified proteins 	no data	No	488	606	No		283.2222222		YJL112W		2.56E-04	144	
+YPL128C	 telomere TTAGGG repeat-binding factor 1	cellular organization 	lethal	No	607	396	No		152.7777778		YNL197C	TBF1	1.51E-03	132	
+YPL142C	 questionable ORF	unclassified proteins 	no data	Yes	461	-284	No		2009.555556						
+YPL143W	 ribosomal protein L35a.e.c16	protein synthesis; cellular organization 	viable	Yes	-284	1196	No		2426.333333		YOR234C	RPL37A	8.20E-50	689	"Previously-reported null mutant is severely impaired for growth (Tornow, J., and Santangelo, G. M. Saccharomyces cerevisiae ribosomal protein L37 is encoded by duplicate genes that are  differentially expressed. Curr Genet 25, 480-7 (1994))."
+YPL151C	 strong similarity to A.thaliana PRL1 and PRL2 proteins	unclassified proteins 	no data	No	653	76	No		76		YBR198C		3.80E-23	371	
+YPL153C	 ser/thr/tyr protein kinase	"cell rescue, cell defense and cell aging; signal transduction; cell growth, division, DNA synthesis; cellular organization "	lethal	No	836	796	Yes	late G1	104		YFR014C	SPK1	8.10E-38	554	
+YPL160W	" leucine--tRNA ligase, cytosolic"	protein synthesis; cellular organization 	no data	No	645	770	No		858		YNL247W	CDC60	5.49E-04	141	
+YPL169C	 weak similarity to human PHAPI	transcription; cellular organization 	lethal	No	379	267	No		834		YPL213W		2.97E-04	141	
+YPL175W	 N-acetylglucosaminyltransferase	cellular biogenesis; metabolism; cellular organization 	lethal	No	79	286	No		169.6666667						
+YPL190C	 polyadenylated RNA-binding protein	transcription; cellular organization 	lethal	No	1429	638	No		320.3333333		YBR289W	NAB3	1.40E-17	306	
+YPL204W	" casein kinase I, ser/thr/tyr protein kinase"	"cell rescue, cell defense and cell aging; cell growth, division, DNA synthesis; cellular organization "	viable	No	496	10	No		1046.444444		YHR135C	HRR25	3.10E-85	1132	"Previously reported null mutant is slow growing and is sporulation defective (Hoekstra, M. F., Liskay, R. M., Ou, A. C., De Maggio, A. J., Burbee, D. G., and Heffron, F. HRR25, a putative protein kinase from budding yeast: association with repair of damaged DNA. Science 253, 1031-4 (1991))."
+YPL209C	 ser/thr protein kinase	"cell growth, division, DNA synthesis "	lethal	No	249	260	Yes	late G1	57.22222222		YKL166C	IPL1	9.40E-47	659	
+YPL210C	 signal recognition particle protein	protein destination; cellular organization 	viable	No	260	250	No		628.2222222		YNL227C	SRP72	4.46E-03	127	"Previously-reported null mutants are slow-growing (Brown, J. D., Hann, B. C., Medzihradszky, K. F., Niwa, M., Burlingame, A. L., and Walter, P. Subunits of the Saccharomyces cerevisiae signal recognition particle required for its functional expression. EMBO J 13, 4390-400 (1994))."
+YPL211W	 similarity to A.thaliana hypothetical protein	transcription; cellular organization 	lethal	No	250	346	No		706						
+YPL218W	 GTP-binding protein of the ARF family	intracellular transport; cellular organization 	lethal	No	211	470	No		1560.777778		YDL192W	SAR1	1.60E-21	346	
+YPL228W	 similarity to YMR180c	transcription 	lethal	No	132	695	No		138.7777778		YMR180C		9.10E-17	294	
+YPL231W	" fatty-acyl-CoA synthase, alpha chain"	protein destination; metabolism; cellular organization 	lethal	No	997	505	No		967.5555556		YER061C	FAS2	8.30E-05	154	
+YPL233W	 hypothetical protein	unclassified proteins 	no data	No	453	732	No		268.6666667		YKR095W		1.33E-02	115	
+YPL235W	 strong similarity to YDR190c	unclassified proteins 	lethal	No	299	530	No		768.1111111		YDR190C		3.90E-84	1118	
+YPL237W	 translation initiation factor eIF2 beta subunit	protein synthesis; cellular organization 	lethal	Yes	255	-367	No		1678		YPR041W	SUI3	2.00E-08	188	
+YPL238C	 questionable ORF	unclassified proteins 	no data	Yes	-367	388	No		1799.444444						exclude
+YPL242C	 similarity to human RasGAP-related protein	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	263	306	Yes	M	332		YOR367W		3.70E-05	157	
+YPL243W	 signal recognition particle protein	protein destination; cellular organization 	viable	No	306	484	No		972.2222222		YLR309C	SRP68	7.24E-03	124	"Previously-reported null mutants are slow-growing (Brown, J. D., Hann, B. C., Medzihradszky, K. F., Niwa, M., Burlingame, A. L., and Walter, P. Subunits of the Saccharomyces cerevisiae signal recognition particle required for its functional expression. EMBO J 13, 4390-400 (1994))."
+YPL251W	 questionable ORF	unclassified proteins 	no data	Yes	382	-256	No		277.1111111						exclude
+YPL252C	 similarity to adrenodoxin and ferrodoxin	unclear classification 	lethal	Yes	-256	357	No		701.6666667						
+YPL255W	 cell division control protein	"cell growth, division, DNA synthesis; cellular organization "	lethal	No	603	1111	No		131.3333333		YKR095W	BBP1	3.10E-07	175	
+YPL266W	" rRNA (adenine-N6,N6-)-dimethyltransferase"	transcription; cellular organization 	lethal	No	966	323	No		712.2222222						

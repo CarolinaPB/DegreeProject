@@ -1,7 +1,7 @@
 ---
 title: "Causality in Coexpression"
 author: "Carolina Pita Barros"
-date: "2020-04-30"
+date: "2020-05-12"
 output: 
   html_document: 
     fig_caption: yes
@@ -15,11 +15,10 @@ output:
     toc: yes
 ---
 
-
-
+check if all needed packages are installed and installs the ones that are not
 
 ```r
-packagesList <- c("data.table", "tidyr", "parallel", "igraph", "ggplot2", "Hmisc", "corrplot", "dplyr", "pheatmap", "plotfunctions", "reticulate", "tidyselect")
+packagesList <- c("data.table", "tidyr", "parallel", "igraph", "ggplot2", "Hmisc", "corrplot", "dplyr", "pheatmap", "plotfunctions", "reticulate", "tidyselect", "BiocManager", "knitr", "R.utils")
 newPackages <- packagesList[!(packagesList %in% installed.packages()[,"Package"])]
 if(length(newPackages) > 0) {
   install.packages(newPackages)
@@ -31,6 +30,7 @@ if(length(newPackagesBC) > 0) {
   BiocManager::install(newPackagesBC)
 }
 ```
+
 
 
 
@@ -3206,6 +3206,55 @@ find.effects_TF.trans <- unique(merge(find.effects_TF.chr, eqtl_results[,.(gene,
 Out of 28466 geneA affecting geneB pairs, 589 geneB-eqtlA pairs were in the reported list.  
 There are 2 cases where the gene and eqtl are in cis and 587 where eqtlA is in trans with geneB
 
+# GO enrichment for genes in hotspots Vs genes not in hotspots
+
+```r
+goframeData <- unique(genes_GO.bio[,.(GO.identifier, evidence, gene)])
+gs <- getgeneset(goframeData)
+
+# genes in hotspot
+genesA <- genesinhotspot$gene
+# genes not in hotspot
+genesB <- names(phenotype[,2:ncol(phenotype)])[!names(phenotype[,2:ncol(phenotype)]) %in% genesinhotspot$gene]
+
+# universe is genes involved in causality
+universe <- names(phenotype[,2:ncol(phenotype)])
+
+# get enrichment
+hgCondA <- getenrichment(gs, universe = universe, interestinggenes = genesA, cond = T)
+hgCondA.dt <- data.table(summary(hgCondA))
+
+hgCondB <- getenrichment(gs, universe = universe, interestinggenes = genesB, cond = T)
+hgCondB.dt <- data.table(summary(hgCondB))
+
+# causal genes
+tocombine.A <- data.table(-log10(hgCondA.dt$Pvalue), hgCondA.dt$Term)
+tocombine.B <- data.table(-log10(hgCondB.dt$Pvalue), hgCondB.dt$Term)
+combined <- merge(tocombine.A, tocombine.B, by="V2", all=T)
+colnames(combined) <- c("term", "in hotspot", "not in hotspot")
+
+combined[is.na(`in hotspot`)]$`in hotspot` <- 0
+combined[is.na(`not in hotspot`)]$`not in hotspot` <- 0
+
+paletteLength <- 50
+myColor <- colorRampPalette(c("white", "darkblue","blue","lightblue","green","lightyellow", "yellow","orange", "red", "darkred"))(paletteLength)
+myBreaks <- c(seq(min(combined[,c(2,3)]), max(combined[,c(2, 3)])/paletteLength-0.000001, length.out=ceiling(paletteLength/2) + 1), 
+              seq(max(combined[,c(2,3)])/paletteLength, max(combined[,c(2, 3)]), length.out=floor(paletteLength/2)))
+
+pdf(file = "results/figures/heatmap_enrichmentpvals_hotspots.pdf")
+pheatmap(as.matrix(combined, rownames = 1), 
+         fontsize_row=3, cellwidth=70, cluster_col=F, cluster_rows=T, 
+         fontsize = 10, treeheight_row = 0, color=myColor, breaks=myBreaks, border_color="white", 
+         main="Heatmap enrichment p-value (-log10)")
+dev.off()
+```
+
+```
+## pdf 
+##   3
+```
+
+
 # Others
 ### Get distance between gene and eqtl
 
@@ -3255,7 +3304,7 @@ legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), 
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-94-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-95-1.png" width="940px" height="529px" />
 
 ### Plot where (relative to the gene) the eqtls are located
 
@@ -3302,7 +3351,7 @@ bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-95-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-96-1.png" width="940px" height="529px" />
 
 ```r
 # bpB <- barplot(toplotB, 
@@ -3316,7 +3365,7 @@ bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position
 text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-95-2.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-96-2.png" width="940px" height="529px" />
 
 Most of the eqtls seem to be located before the gene.  
 

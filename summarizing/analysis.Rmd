@@ -15,19 +15,9 @@ output:
     toc: yes
 ---
 
-```{r setup, include=FALSE}
-library(knitr)
-knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set('python', engine.path = '/usr/local/bin/python3')
-knitr::opts_chunk$set(python.reticulate = T)
-
-knitr::opts_knit$set(root.dir = normalizePath("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/")) 
-options(tinytex.verbose = TRUE)
-opts_chunk$set(fig.width=8, fig.height=4.5, dpi=300, out.width="940px", out.height="529px")
-```
-
+check if all needed packages are installed and installs the ones that are not
 ```{r}
-packagesList <- c("data.table", "tidyr", "parallel", "igraph", "ggplot2", "Hmisc", "corrplot", "dplyr", "pheatmap", "plotfunctions", "reticulate", "tidyselect")
+packagesList <- c("data.table", "tidyr", "parallel", "igraph", "ggplot2", "Hmisc", "corrplot", "dplyr", "pheatmap", "plotfunctions", "reticulate", "tidyselect", "BiocManager", "knitr", "R.utils")
 newPackages <- packagesList[!(packagesList %in% installed.packages()[,"Package"])]
 if(length(newPackages) > 0) {
   install.packages(newPackages)
@@ -40,6 +30,16 @@ if(length(newPackagesBC) > 0) {
 }
 ```
 
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set('python', engine.path = '/usr/local/bin/python3')
+knitr::opts_chunk$set(python.reticulate = T)
+
+knitr::opts_knit$set(root.dir = normalizePath("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/")) 
+options(tinytex.verbose = TRUE)
+opts_chunk$set(fig.width=8, fig.height=4.5, dpi=300, out.width="940px", out.height="529px")
+```
 
 
 ```{r load libraries, message=FALSE, warning=FALSE}
@@ -2265,6 +2265,49 @@ find.effects_TF.trans <- unique(merge(find.effects_TF.chr, eqtl_results[,.(gene,
 ```
 Out of `r nrow(unique(find.effects_TF.chr[,.(geneA, geneB, eqtl.A)]))` geneA affecting geneB pairs, `r nrow(unique(find.effects_TF.trans[,.(geneB, eqtl.A)]))` geneB-eqtlA pairs were in the reported list.  
 There are `r nrow(find.effects_TF.trans[cis==T])` cases where the gene and eqtl are in cis and `r nrow(unique(find.effects_TF.trans[,.(geneB, eqtl.A, cis)][cis==F]))` where eqtlA is in trans with geneB
+
+# GO enrichment for genes in hotspots Vs genes not in hotspots
+```{r warning=FALSE}
+goframeData <- unique(genes_GO.bio[,.(GO.identifier, evidence, gene)])
+gs <- getgeneset(goframeData)
+
+# genes in hotspot
+genesA <- genesinhotspot$gene
+# genes not in hotspot
+genesB <- names(phenotype[,2:ncol(phenotype)])[!names(phenotype[,2:ncol(phenotype)]) %in% genesinhotspot$gene]
+
+# universe is genes involved in causality
+universe <- names(phenotype[,2:ncol(phenotype)])
+
+# get enrichment
+hgCondA <- getenrichment(gs, universe = universe, interestinggenes = genesA, cond = T)
+hgCondA.dt <- data.table(summary(hgCondA))
+
+hgCondB <- getenrichment(gs, universe = universe, interestinggenes = genesB, cond = T)
+hgCondB.dt <- data.table(summary(hgCondB))
+
+# causal genes
+tocombine.A <- data.table(-log10(hgCondA.dt$Pvalue), hgCondA.dt$Term)
+tocombine.B <- data.table(-log10(hgCondB.dt$Pvalue), hgCondB.dt$Term)
+combined <- merge(tocombine.A, tocombine.B, by="V2", all=T)
+colnames(combined) <- c("term", "in hotspot", "not in hotspot")
+
+combined[is.na(`in hotspot`)]$`in hotspot` <- 0
+combined[is.na(`not in hotspot`)]$`not in hotspot` <- 0
+
+paletteLength <- 50
+myColor <- colorRampPalette(c("white", "darkblue","blue","lightblue","green","lightyellow", "yellow","orange", "red", "darkred"))(paletteLength)
+myBreaks <- c(seq(min(combined[,c(2,3)]), max(combined[,c(2, 3)])/paletteLength-0.000001, length.out=ceiling(paletteLength/2) + 1), 
+              seq(max(combined[,c(2,3)])/paletteLength, max(combined[,c(2, 3)]), length.out=floor(paletteLength/2)))
+
+pdf(file = "results/figures/heatmap_enrichmentpvals_hotspots.pdf")
+pheatmap(as.matrix(combined, rownames = 1), 
+         fontsize_row=3, cellwidth=70, cluster_col=F, cluster_rows=T, 
+         fontsize = 10, treeheight_row = 0, color=myColor, breaks=myBreaks, border_color="white", 
+         main="Heatmap enrichment p-value (-log10)")
+dev.off()
+```
+
 
 # Others
 ### Get distance between gene and eqtl
