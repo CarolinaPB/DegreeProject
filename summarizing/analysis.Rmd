@@ -2243,15 +2243,44 @@ print(chi2.res)
 ```
 
 ```{r}
-plot(x=chi2.res$h.cutoff, y=chi2.res$`O/U.causal.nothot`, xlab="h2 cutoff", ylab="Over/under", type="b", col="darkgreen")
-lines(x=chi2.res$h.cutoff, y=chi2.res$`O/U.causal.hot`, type="b", col="green")
-lines(x=chi2.res$h.cutoff, y=chi2.res$`O/U.notcausal.nothot`, type="b", col="darkblue")
-lines(x=chi2.res$h.cutoff, y=chi2.res$`O/U.notcausal.hot`, type="b", col="blue")
+plot(x=chi2.res$h.cutoff, y=chi2.res$`O/U.causal.nothot`, xlab="h2 cutoff", ylab="Over/under", type="b", col="darkgreen", pch=1, cex.lab=1.5, lwd=2)
+lines(x=chi2.res$h.cutoff, y=chi2.res$`O/U.causal.hot`, type="b", col="green", pch=2, lwd=2)
+lines(x=chi2.res$h.cutoff, y=chi2.res$`O/U.notcausal.nothot`, type="b", col="darkblue", pch=3, lwd=2)
+lines(x=chi2.res$h.cutoff, y=chi2.res$`O/U.notcausal.hot`, type="b", col="blue", pch=4, lwd=2)
 legend("topright", legend=c("Causal not in hotspot", "Causal in hotspot", "Not causal not in hotspot", "Not causal in hotspot"),
-       col=c("darkgreen", "green", "darkblue", "blue"), lty=1, cex=0.8)
+       col=c("darkgreen", "green", "darkblue", "blue"), lty=1, cex=0.8, pch=1:4,lwd=2)
 ```
 
 There's a difference in heritability in genes in hotspot and genes not in hotspot
+
+### Heritability hotspots
+```{r warning=FALSE}
+gene.location.all<- genepos
+# remove "chr" part of the chromosome name
+gene.location.all$chr.id <-gsub('chr', '', genepos$chr.id)
+
+# convert roman chromosome numbers to numbers
+gene.location.all$chr.id <- as.numeric(as.roman(gene.location.all$chr.id))
+gene.location.all <- gene.location.all[order(chr.id, chr.start, chr.end)]
+
+for_heritability.location <- merge(gene.location.all,for_heritability, by.x="gene", by.y="...1")
+
+rle.res <- rle_heritability(for_heritability.location, higher = T, lim=0.6)
+heritability_hot_0.6 <- find_heritability_hotspots(rle.list = rle.res, for_heritability.location = for_heritability.location, lim = 3)
+
+rle_h_results <- rle_heritability(for_heritability.location, lim = 0.3, higher=F)
+heritability.hotspots <- find_heritability_hotspots(rle_h_results, for_heritability.location =for_heritability.location, lim = 9)
+
+
+granges_heritability <- GRanges(seqnames = heritability.hotspots$chr,
+                                       ranges=IRanges(start=heritability.hotspots$start,
+                                                      end=heritability.hotspots$end))
+
+overlaps_0.3 <- subsetByOverlaps(granges_heritability, granges_myhotspots.original)
+```
+
+
+
 
 # Validate causal pairs by comparing with list of eqtls
 If a gene-eqtl pair is in the reported list of genes with eqtls, then it means that the eqtl is affecting the gene. Applied to our causal genes: the eqtl of geneA is affecting gene B == geneA is affecting gene B. If the eqtl of geneA is in the reported list paired with geneB, then there's a confirmation that geneA affects geneB
@@ -2300,12 +2329,12 @@ myColor <- colorRampPalette(c("white", "darkblue","blue","lightblue","green","li
 myBreaks <- c(seq(min(combined[,c(2,3)]), max(combined[,c(2, 3)])/paletteLength-0.000001, length.out=ceiling(paletteLength/2) + 1), 
               seq(max(combined[,c(2,3)])/paletteLength, max(combined[,c(2, 3)]), length.out=floor(paletteLength/2)))
 
-# pdf(file = "results/figures/heatmap_enrichmentpvals_hotspots.pdf")
-pheatmap(as.matrix(combined, rownames = 1), 
+pdf(file = "summarizing/results/figures/heatmap_enrichmentpvals_hotspots.pdf")
+ pheatmap(as.matrix(combined, rownames = 1), 
          fontsize_row=3, cellwidth=70, cluster_col=F, cluster_rows=T, 
          fontsize = 10, treeheight_row = 0, color=myColor, breaks=myBreaks, border_color="white", 
          main="Heatmap enrichment p-value (-log10)")
-# dev.off()
+dev.off()
 ```
 
 
@@ -2372,6 +2401,42 @@ essential <- essential[!apply(essential == "", 1, all),]
 essential[, essential := ifelse(grepl("Non-essential", phenotype.summary),  F, ifelse(is.na(phenotype.summary), NA, T))]
 ```
 
+Number of genes that are essential/not essential/NA in hotspots and not in hotspots
+```{r}
+# in hotspots
+in_hot <- essential[gene %in% genesinhotspot$gene][,.(in_hot=.N), by=essential][order(-essential)]
+# not in hotspots
+not_in_hot <- essential[!gene %in% genesinhotspot$gene][,.(not_in_hot=.N), by=essential][order(-essential)]
+
+# causal genes
+causal <- essential[gene %in% causalgenes.pos.count$geneA][,.(causal=.N), by=essential][order(-essential)]
+# not causal genes
+not_causal <- essential[!gene %in% causalgenes.pos.count$geneA][,.(not_causal=.N), by=essential][order(-essential)]
+
+# causal in hotspots
+causal_in_hot <- essential[gene %in% causalgenes_in_hotspot$geneA][,.(causal_in_hot=.N), by=essential][order(-essential)]
+# causal not in hotspots
+causal_not_in_not <-  essential[gene %in% causalgenes_notin_hotspot$geneA][,.(causal_not_in_not=.N), by=essential][order(-essential)]
+
+# not causal not in hotspots
+not_causal_not_in_hot <- essential[!gene %in% genesinhotspot$gene & !gene %in% causalgenes.pos.count$geneA][,.(not_causal_not_in_hot=.N), by=essential][order(-essential)]
+# not causal in hotspots
+not_causal_in_hot <- essential[gene %in% genesinhotspot$gene & !gene %in% causalgenes.pos.count$geneA][,.(not_causal_in_hot=.N), by=essential][order(-essential)]
+
+tomerge <- list(not_in_hot, causal, not_causal, causal_in_hot, causal_not_in_not, not_causal_not_in_hot, not_causal_in_hot)
+
+merge.dt.essential <- function(x, y) x[y, on = "essential"]
+numgenes_essential <- in_hot
+for (dt in tomerge){
+  numgenes_essential <- merge.dt.essential(numgenes_essential, dt)
+}
+
+numgenes_essential.ratio <- rbind(numgenes_essential, data.table(essential="T/F"), fill=T)
+
+
+cnames <- colnames(numgenes_essential.ratio[,2:ncol(numgenes_essential.ratio)])
+numgenes_essential.ratio[essential=="T/F", (cnames) := lapply(.SD, "*", -1), .SDcols = cnames]
+```
 
 
 

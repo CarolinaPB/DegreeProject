@@ -453,7 +453,7 @@ find_hotspots <- function(rle.list, coordinates_plot, causalgenes, lim=10, separ
     tab <- rle.list[[i]]
     
     # if there are more than "lim" genes in a row affecting a certain number of genes(defined when rle is ran)
-    if (nrow(tab[tab[[3]] == T & tab[[2]] > lim]) > 0) {
+    if (nrow(tab[tab[[3]] == T & tab[[2]] >= lim]) > 0) {
       chr <- i
       
       if (plt==T){
@@ -468,7 +468,7 @@ find_hotspots <- function(rle.list, coordinates_plot, causalgenes, lim=10, separ
         
       }
       
-      for (id in tab[tab[[3]] == T & tab[[2]] > lim][[1]]) {
+      for (id in tab[tab[[3]] == T & tab[[2]] >= lim][[1]]) {
         getrows <- (sum(tab[tab[[1]] <= id - 1][[2]]) + 1):sum(tab[tab[[1]] <= id][[2]])
         
         if (plt==T){
@@ -499,4 +499,55 @@ read_excel_allsheets <- function(filename, tibble = FALSE) {
   if(!tibble) x <- lapply(x, as.data.table)
   names(x) <- sheets
   x
+}
+
+rle_heritability <- function(for_heritability.location, lim=0.3, higher=T){
+  # rle of causal genes affecting >= lim other genes
+  # lim - heritability limit
+  # higher: if we want the genes that have heritability higher (T) or lower (F) than the limit
+  
+  rle.res.list <- list()
+  for (chr in unique(for_heritability.location[!is.na(chr.id)]$chr.id)){
+    if (higher ==T){
+      cond <- for_heritability.location[for_heritability.location$chr.id == chr][[ncol(for_heritability.location)]] > lim
+    } else if(higher==F){
+      cond <- for_heritability.location[for_heritability.location$chr.id == chr][[ncol(for_heritability.location)]] < lim
+    }
+    rle.res <- rle(cond)
+    rle.res.dt <- data.table(idx=1:length(rle.res$lengths),lengths=rle.res$lengths, values=rle.res$values)
+    rle.res.list[[chr]] <- rle.res.dt
+  }
+  return(rle.res.list)
+}
+
+find_heritability_hotspots <- function(rle.list, for_heritability.location, lim=5){
+  # function to find the causal hotspots
+  
+  # rle.list - list of tables where each table corresponds to the rle results for one chromosome
+  # lim - how many genes have to be "together" for us to say that this is a hotspot
+  
+  # where the hospot info will be stored
+  hot <- data.table(chr=numeric(), start=numeric(), end=numeric())
+  
+  # for each chromosome
+  for(i in 1:length(rle.list)) {
+    tab <- rle.list[[i]]
+    
+    # if there are more than "lim" genes in a row affecting a certain number of genes(defined when rle is ran)
+    if (nrow(tab[tab[[3]] == T & tab[[2]] > lim]) > 0) {
+      chr <- i
+      
+      for (id in tab[tab[[3]] == T & tab[[2]] > lim][[1]]) {
+        getrows <- (sum(tab[tab[[1]] <= id - 1][[2]]) + 1):sum(tab[tab[[1]] <= id][[2]])
+        
+        
+        add <- data.table(chr=chr, start=min(for_heritability.location[chr.id == chr][getrows, ]$chr.start), 
+                          end=max(for_heritability.location[chr.id == chr][getrows, ]$chr.end))
+        
+        hot <- rbind(hot, add)
+      }
+    }
+  }
+  # return the table with the hotspot limits
+  return(hot)
 }
