@@ -1,7 +1,7 @@
 ---
 title: "Causality in Coexpression"
 author: "Carolina Pita Barros"
-date: "2020-05-12"
+date: "2020-06-18"
 output: 
   html_document: 
     fig_caption: yes
@@ -18,7 +18,7 @@ output:
 check if all needed packages are installed and installs the ones that are not
 
 ```r
-packagesList <- c("data.table", "tidyr", "parallel", "igraph", "ggplot2", "Hmisc", "corrplot", "dplyr", "pheatmap", "plotfunctions", "reticulate", "tidyselect", "BiocManager", "knitr", "R.utils")
+packagesList <- c("data.table", "tidyr", "parallel", "igraph", "ggplot2", "Hmisc", "corrplot", "dplyr", "pheatmap", "plotfunctions", "reticulate", "tidyselect", "BiocManager", "knitr", "R.utils", "stringr")
 newPackages <- packagesList[!(packagesList %in% installed.packages()[,"Package"])]
 if(length(newPackages) > 0) {
   install.packages(newPackages)
@@ -50,6 +50,7 @@ library("pheatmap")
 library("plotfunctions")
 library("tidyselect")
 library("GenomicRanges")
+library("stringr")
 ```
 
 
@@ -168,7 +169,7 @@ if (!file.exists("results/effects_table.Rdata")){
   
   message("combining anova results with correlation")
   effects_table.cor <- merge(effects_table.anova, cor_matr, by=c("geneA","geneB"), all.x=T)
-  
+  effects_table <- effects_table.cor
   message("saving effects table with correlation between genes")
   save(effects_table, file="results/effects_table.Rdata")
   
@@ -283,15 +284,15 @@ linetype <- c(1:length(unique(res_table$nonsign.p)))
 for (p in cor.pvals){
   xrange <- range(-log(res_table$sign.p)) # set x-axis range
   yrange <- range(res_table$unique.genepairs) # set y-axis range
-  plot(xrange, yrange, type = "n", main=paste("corr pval = ", p), xlab = "-log(sign.p)",
-       ylab = " #unique gene pairs") # empty plot
+  plot(xrange, yrange, type = "n", main=paste("corr pval = ", p), xlab = "-log(significant p-value)",
+       ylab = "Number of unique gene pairs") # empty plot
   colors <- rainbow(length(unique(res_table$nonsign.p)))
   for (i in 1:length(unique(res_table$nonsign.p))){
-    x <- -log(res_table[nonsign.p==nonsign.p[i] & cor.p==p]$sign.p)
-    y <- res_table[nonsign.p==nonsign.p[i] & cor.p==p]$unique.genepairs
+    x <- -log(res_table[nonsign.p==unique(res_table$nonsign.p)[i] & cor.p==p]$sign.p)
+    y <- res_table[nonsign.p==unique(res_table$nonsign.p)[i] & cor.p==p]$unique.genepairs
     lines(x,y,  type="l", lwd=1.5,lty=linetype[i], col=colors[i])
   }
-  #legend(x=20, yrange[2], unique(res_table$nonsign.p), col=colors, lty=linetype, cex=0.8)
+  # legend(x=20, yrange[2], unique(res_table$nonsign.p), col=colors, lty=linetype, cex=0.8)
 }
 ```
 
@@ -306,8 +307,8 @@ par(mfrow=c(1,1))
 
 xrange <- range(-log(res_table$sign.p)) # set x-axis range
 yrange <- range(res_table$unique.genepairs) # set y-axis range
-plot(xrange, yrange, type = "n", xlab = "-log(p)", ylab = "#unique gene pairs",  
-     main="#gene pairs where A->B") # empty plot
+plot(xrange, yrange, type = "n", xlab = "-log(p)", ylab = "Number of unique gene pairs", 
+     cex.lab=1.2, cex.axis=1.2)
 colors <- rainbow(length(unique(res_table$nonsign.p)))
 linetype <- c(1:length(unique(res_table$nonsign.p)))
 for (i in 1:length(unique(res_table$nonsign.p))){
@@ -315,7 +316,7 @@ for (i in 1:length(unique(res_table$nonsign.p))){
   y <- res_table$unique.genepairs[res_table$nonsign.p==unique(res_table$nonsign.p)[i]]
   lines(x,y,  type="l", lwd=1.5,lty=linetype[i], col=colors[i])
 }
-legend(x=20, yrange[2], unique(res_table$nonsign.p), col=colors, lty=linetype, cex=0.8)
+legend(x="topright", legend=unique(res_table$nonsign.p), col=colors, lty=linetype, cex=1.2, title="Correlation p-value")
 ```
 
 <div class="figure">
@@ -3180,17 +3181,151 @@ print(chi2.res)
 
 
 ```r
-plot(x=chi2.res$h.cutoff, y=chi2.res$`O/U.causal.nothot`, xlab="h2 cutoff", ylab="Over/under", type="b", col="darkgreen")
-lines(x=chi2.res$h.cutoff, y=chi2.res$`O/U.causal.hot`, type="b", col="green")
-lines(x=chi2.res$h.cutoff, y=chi2.res$`O/U.notcausal.nothot`, type="b", col="darkblue")
-lines(x=chi2.res$h.cutoff, y=chi2.res$`O/U.notcausal.hot`, type="b", col="blue")
-legend("topright", legend=c("Causal not in hotspot", "Causal in hotspot", "Not causal not in hotspot", "Not causal in hotspot"),
-       col=c("darkgreen", "green", "darkblue", "blue"), lty=1, cex=0.8)
+realdata.melt <- melt(chi2.res[,.(h.cutoff, `O/U.causal.nothot`, `O/U.causal.hot`, `O/U.notcausal.nothot`, `O/U.notcausal.hot`)], id.vars=1)
+realdata.melt$variable <- str_replace(realdata.melt$variable, "O/U.", "")
+# add color
+realdata.melt[,"color":=as.numeric(factor(realdata.melt$variable))]
+
+ggplot(data=realdata.melt[order(variable)], aes(x=as.factor(h.cutoff), y=value, group=variable, color=as.factor(realdata.melt[order(variable)]$color))) +
+  geom_line()+
+    geom_point(data = realdata.melt[order(variable)], 
+             aes(x = as.factor(h.cutoff), y=value, 
+                 group = variable, color=factor(realdata.melt[order(variable)]$color)))+
+  scale_colour_discrete(name  ="Category",labels=unique(realdata.melt[order(variable)]$variable))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
 ```
 
 <img src="analysis_files/figure-html/unnamed-chunk-92-1.png" width="940px" height="529px" />
 
 There's a difference in heritability in genes in hotspot and genes not in hotspot
+### Permuation test
+#### preparation + calculation
+
+```r
+# 1. reshuffle gene names and h2
+h.cutoff <- seq(0.5,0.95,0.05)
+h2.shuffled <- chi2.causal.2[,.(h, causal)]
+h2.shuffled <- data.table(h2.shuffled)
+#LOOP
+res <- list()
+O.U_causal_not_hot <- data.table(h.cutoff)
+O.U_causal_hot <- data.table(h.cutoff)
+O.U_not_causal_not_hot <- data.table(h.cutoff)
+O.U_not_causal_hot <- data.table(h.cutoff)
+for (i in 1:1000){
+  
+  h2.shuffled$h <- sample(h2.shuffled$h)
+  
+  for (hcut in h.cutoff){
+    higher <- h2.shuffled[h>=hcut, .N, by="causal"][order(causal)]
+    lower <- h2.shuffled[h<hcut, .N, by="causal"][order(causal)]
+    
+    
+    for (ca in unique(h2.shuffled$causal)){
+      if (!ca %in% higher$causal){
+        toadd <- data.table(causal=ca, N=0)
+        higher <- rbind(higher, toadd)
+      }
+      if (!ca %in% higher$causal){
+        toadd <- data.table(causal=ca, N=0)
+        lower <- rbind(lower, toadd)
+      }
+    }
+    
+    table.chi2 <- data.table(causal=unique(h2.shuffled$causal),higher=higher$N, lower=lower$N)
+    table.chi2 <- transpose(table.chi2, keep.names = "cond", make.names = "causal")
+    
+    # O.U_causal_not_hot[,paste0("V", i)] <- table.chi2[cond=="higher"]$`causal not in hotspot`/table.chi2[cond=="lower"]$`causal not in hotspot`
+    
+    col.name <- paste0("iter_", i)
+
+    O.U_causal_not_hot[h.cutoff==hcut, (col.name) := table.chi2[cond=="higher"]$`causal not in hotspot`/table.chi2[cond=="lower"]$`causal not in hotspot`]
+    O.U_causal_hot[h.cutoff==hcut, (col.name) :=table.chi2[cond=="higher"]$`causal in hotspot`/table.chi2[cond=="lower"]$`causal in hotspot`]
+    O.U_not_causal_not_hot[h.cutoff==hcut, (col.name) :=table.chi2[cond=="higher"]$`not causal not in hotspot`/table.chi2[cond=="lower"]$`not causal not in hotspot`]
+    O.U_not_causal_hot[h.cutoff==hcut, (col.name) := table.chi2[cond=="higher"]$`not causal in hotspot`/table.chi2[cond=="lower"]$`not causal in hotspot`]
+  }
+}
+```
+
+#### post-processing and preparing to plot
+
+```r
+O.U_causal_not_hot.melt <- melt(O.U_causal_not_hot, id.vars=1)
+O.U_causal_not_hot.melt$group <- "Causal not in hotspot"
+
+O.U_causal_hot.melt <- melt(O.U_causal_hot, id.vars=1)
+O.U_causal_hot.melt$group <- "Causal in hotspot"
+
+O.U_not_causal_not_hot.melt <- melt(O.U_not_causal_not_hot, id.vars=1)
+O.U_not_causal_not_hot.melt$group <- "Not causal not in hotspot"
+
+O.U_not_causal_hot.melt <- melt(O.U_not_causal_hot, id.vars=1)
+O.U_not_causal_hot.melt$group <- "Not causal in hotspot"
+
+rb1 <- rbind(O.U_causal_not_hot.melt, O.U_causal_hot.melt)
+rb2 <- rbind(rb1, O.U_not_causal_not_hot.melt)
+final_res <- rbind(rb2, O.U_not_causal_hot.melt)
+
+final_res[,"color":=as.numeric(factor(final_res$group))]
+cat <- unique(realdata.melt$variable)
+```
+
+#### Plot
+
+```r
+# heri <- final_res[order(group)] %>% 
+heri <- ggplot(data=final_res[order(group)], aes(x=factor(h.cutoff),y=as.numeric(value)))+
+  geom_boxplot(aes(color=factor(final_res[order(group)]$color)), outlier.size = 0.5, show.legend = FALSE) +
+  geom_line(data = realdata.melt[order(variable)], 
+            aes(x = as.factor(h.cutoff), y=value, 
+                group = variable, color=factor(realdata.melt[order(variable)]$color)), show.legend = FALSE)+
+  geom_point(data = realdata.melt[order(variable)], 
+             aes(x = as.factor(h.cutoff), y=value, 
+                 group = variable, color=factor(realdata.melt[order(variable)]$color)))+
+  labs(x = "Heritability cut-off", y="Over/under", colour="legend to change") +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"), legend.text = element_text(size = 13), 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))+
+  scale_colour_discrete(name  ="Category",labels=unique(final_res[order(group)]$group))+
+  guides(colour = guide_legend(override.aes = list(shape = 19,
+                                                   size = 5)))
+plot(heri)
+```
+
+<img src="analysis_files/figure-html/unnamed-chunk-95-1.png" width="940px" height="529px" />
+
+
+### Heritability hotspots
+
+```r
+gene.location.all<- genepos
+# remove "chr" part of the chromosome name
+gene.location.all$chr.id <-gsub('chr', '', genepos$chr.id)
+
+# convert roman chromosome numbers to numbers
+gene.location.all$chr.id <- as.numeric(as.roman(gene.location.all$chr.id))
+gene.location.all <- gene.location.all[order(chr.id, chr.start, chr.end)]
+
+for_heritability.location <- merge(gene.location.all,for_heritability, by.x="gene", by.y="...1")
+
+rle.res <- rle_heritability(for_heritability.location, higher = T, lim=0.6)
+heritability_hot_0.6 <- find_heritability_hotspots(rle.list = rle.res, for_heritability.location = for_heritability.location, lim = 3)
+
+rle_h_results <- rle_heritability(for_heritability.location, lim = 0.3, higher=F)
+heritability.hotspots <- find_heritability_hotspots(rle_h_results, for_heritability.location =for_heritability.location, lim = 9)
+
+
+granges_heritability <- GRanges(seqnames = heritability.hotspots$chr,
+                                       ranges=IRanges(start=heritability.hotspots$start,
+                                                      end=heritability.hotspots$end))
+
+overlaps_0.3 <- subsetByOverlaps(granges_heritability, granges_myhotspots.original)
+```
+
+
+
 
 # Validate causal pairs by comparing with list of eqtls
 If a gene-eqtl pair is in the reported list of genes with eqtls, then it means that the eqtl is affecting the gene. Applied to our causal genes: the eqtl of geneA is affecting gene B == geneA is affecting gene B. If the eqtl of geneA is in the reported list paired with geneB, then there's a confirmation that geneA affects geneB
@@ -3241,17 +3376,185 @@ myColor <- colorRampPalette(c("white", "darkblue","blue","lightblue","green","li
 myBreaks <- c(seq(min(combined[,c(2,3)]), max(combined[,c(2, 3)])/paletteLength-0.000001, length.out=ceiling(paletteLength/2) + 1), 
               seq(max(combined[,c(2,3)])/paletteLength, max(combined[,c(2, 3)]), length.out=floor(paletteLength/2)))
 
-pdf(file = "results/figures/heatmap_enrichmentpvals_hotspots.pdf")
-pheatmap(as.matrix(combined, rownames = 1), 
-         fontsize_row=3, cellwidth=70, cluster_col=F, cluster_rows=T, 
-         fontsize = 10, treeheight_row = 0, color=myColor, breaks=myBreaks, border_color="white", 
-         main="Heatmap enrichment p-value (-log10)")
-dev.off()
+# pdf(file = "summarizing/results/figures/heatmap_enrichmentpvals_hotspots.pdf")
+#  pheatmap(as.matrix(combined, rownames = 1), 
+#          fontsize_row=3, cellwidth=70, cluster_col=F, cluster_rows=T, 
+#          fontsize = 10, treeheight_row = 0, color=myColor, breaks=myBreaks, border_color="white", 
+#          main="Heatmap enrichment p-value (-log10)")
+# dev.off()
+```
+
+
+# Essential genes analysis
+## get info on essential genes
+it's better to save to a file and run in the terminal
+
+```python
+# run with python3
+import os.path
+from os import path
+os.chdir("/Users/Carolina/Documents/GitHub/DegreeProject/summarizing/")
+if not path.isfile("results/essentialgenes.txt"):
+  # The following lines will be needed in every python script:
+  from intermine.webservice import Service
+  yeastmineAPItoken_file = open('data/yeastmineAPI.txt', 'r')
+  yeastmineAPItoken = yeastmineAPItoken_file.readline().rstrip()
+  service = Service("https://yeastmine.yeastgenome.org/yeastmine/service", token = yeastmineAPItoken)
+
+  # Get a new query on the class (table) you will be querying:
+  query = service.new_query("Gene")
+
+  # The view specifies the output columns
+  query.add_view("secondaryIdentifier", "symbol", "name", "phenotypeSummary")
+
+  # You can edit the constraint values below
+  query.add_constraint("Gene", "IN", "allgenes", code = "A")
+
+  terms = "gene", "symbol", "gene.name", "phenotype.summary"
+
+  terms_query = ["secondaryIdentifier", "symbol", "name", "phenotypeSummary"]
+  print("saving file")
+  with open("results/essentialgenes.txt", "w") as file:
+    # write headers
+    for term in terms[:-1]:
+      file.write(term)
+      file.write("\t")
+    else:
+      file.write(terms[-1])
+    file.write("\n")
+    #write content
+    for row in query.rows():
+      for t in terms_query[:-1]:
+        if row[t] != None:
+          file.write(str(row[t]))
+          file.write("\t")
+        else:
+          file.write("NA")
+          file.write("\t")
+      if row[terms_query[-1]] != None:
+        file.write(row[terms_query[-1]])
+      else:
+        file.write("NA")
+      file.write("\n")
+else:
+  print("file exists")
 ```
 
 ```
-## pdf 
-##   3
+## file exists
+```
+
+
+```r
+essential <- fread("results/essentialgenes.txt", sep="\t", fill=T)
+# remove empty rows
+essential <- essential[!apply(essential == "", 1, all),]
+
+# add new column with T/F for essential/not essential or NA if there's no info
+essential[, essential := ifelse(grepl("Non-essential", phenotype.summary),  F, ifelse(is.na(phenotype.summary), NA, T))]
+```
+
+Number of genes that are essential/not essential/NA in hotspots and not in hotspots
+
+```r
+# in hotspots
+in_hot <- essential[gene %in% genesinhotspot$gene][,.(in_hot=.N), by=essential][order(-essential)]
+# not in hotspots
+not_in_hot <- essential[!gene %in% genesinhotspot$gene][,.(not_in_hot=.N), by=essential][order(-essential)]
+
+# causal genes
+causal <- essential[gene %in% causalgenes.pos.count$geneA][,.(causal=.N), by=essential][order(-essential)]
+# not causal genes
+not_causal <- essential[!gene %in% causalgenes.pos.count$geneA][,.(not_causal=.N), by=essential][order(-essential)]
+
+# causal in hotspots
+causal_in_hot <- essential[gene %in% causalgenes_in_hotspot$geneA][,.(causal_in_hot=.N), by=essential][order(-essential)]
+# causal not in hotspots
+causal_not_in_not <-  essential[gene %in% causalgenes_notin_hotspot$geneA][,.(causal_not_in_not=.N), by=essential][order(-essential)]
+
+# not causal not in hotspots
+not_causal_not_in_hot <- essential[!gene %in% genesinhotspot$gene & !gene %in% causalgenes.pos.count$geneA][,.(not_causal_not_in_hot=.N), by=essential][order(-essential)]
+# not causal in hotspots
+not_causal_in_hot <- essential[gene %in% genesinhotspot$gene & !gene %in% causalgenes.pos.count$geneA][,.(not_causal_in_hot=.N), by=essential][order(-essential)]
+
+tomerge <- list(not_in_hot, causal, not_causal, causal_in_hot, causal_not_in_not, not_causal_not_in_hot, not_causal_in_hot)
+
+merge.dt.essential <- function(x, y) x[y, on = "essential"]
+numgenes_essential <- in_hot
+for (dt in tomerge){
+  numgenes_essential <- merge.dt.essential(numgenes_essential, dt)
+}
+
+numgenes_essential.ratio <- rbind(numgenes_essential, data.table(essential="T/F"), fill=T)
+
+
+cnames <- colnames(numgenes_essential.ratio[,2:ncol(numgenes_essential.ratio)])
+numgenes_essential.ratio[essential=="T/F", (cnames) := lapply(.SD, "*", -1), .SDcols = cnames]
+```
+# Essential genes from SaccharomycesGenome Deletion Project
+
+```r
+essential <- fread("data/Essential_ORFs.txt")
+essential <- unique(essential[,.(ORF_name)])
+```
+
+## chi-square
+
+```r
+chi2.causal <- data.table(essential)
+chi2.causal[,causal := ifelse(ORF_name %in% causalgenes.pos.count.name$geneA, "causal", "not causal")]
+
+
+chi2.table <- data.table(c("essential", "not essential"), "causal.nothot"=numeric(), "causal.hot"=numeric(), "notcausal.nothot"=numeric(), "notcausal.hot"=numeric())
+```
+
+```
+## Warning in as.data.table.list(x, keep.rownames = keep.rownames, check.names =
+## check.names, : Item 2 has 0 rows but longest item has 2; filled with NA
+```
+
+```
+## Warning in as.data.table.list(x, keep.rownames = keep.rownames, check.names =
+## check.names, : Item 3 has 0 rows but longest item has 2; filled with NA
+```
+
+```
+## Warning in as.data.table.list(x, keep.rownames = keep.rownames, check.names =
+## check.names, : Item 4 has 0 rows but longest item has 2; filled with NA
+```
+
+```
+## Warning in as.data.table.list(x, keep.rownames = keep.rownames, check.names =
+## check.names, : Item 5 has 0 rows but longest item has 2; filled with NA
+```
+
+```r
+E_causal_nothot  <- nrow(chi2.causal[ORF_name %in% causalgenes_notin_hotspot$geneA])
+NE_causal_nothot <- nrow(causalgenes_notin_hotspot[!geneA %in% chi2.causal$ORF_name])
+E_causal_hot     <- nrow(chi2.causal[ORF_name %in% causalgenes_in_hotspot.hot.eqtl$geneA])
+NE_causal_hot    <- nrow(causalgenes_in_hotspot.hot.eqtl[!geneA %in% chi2.causal$ORF_name])
+  
+E_notcausal_nothot  <- nrow(allgenes.location[gene %in% chi2.causal$ORF_name & !gene %in% causalgenes.pos.count.name$geneA & !gene %in% genesinhotspot_notcausal$gene])
+NE_notcausal_nothot <- nrow(allgenes.location[!gene %in% chi2.causal$ORF_name & !gene %in% causalgenes.pos.count.name$geneA & !gene %in% genesinhotspot_notcausal$gene])
+E_notcausal_hot     <- nrow(allgenes.location[gene %in% chi2.causal$ORF_name & !gene %in% causalgenes.pos.count.name$geneA & gene %in% genesinhotspot_notcausal$gene])
+NE_notcausal_hot    <- nrow(allgenes.location[!gene %in% chi2.causal$ORF_name & !gene %in% causalgenes.pos.count.name$geneA & gene %in% genesinhotspot_notcausal$gene])
+  
+chi2.table[V1=="essential"]$`causal.nothot`    <- E_causal_nothot
+chi2.table[V1=="essential"]$`causal.hot`       <- E_causal_hot
+chi2.table[V1=="essential"]$`notcausal.nothot` <- E_notcausal_nothot
+chi2.table[V1=="essential"]$`notcausal.hot`    <- E_notcausal_hot
+chi2.table[V1=="not essential"]$`causal.nothot`    <- NE_causal_nothot
+chi2.table[V1=="not essential"]$`causal.hot`       <- NE_causal_hot
+chi2.table[V1=="not essential"]$`notcausal.nothot` <- NE_notcausal_nothot
+chi2.table[V1=="not essential"]$`notcausal.hot`    <- NE_notcausal_hot
+  
+
+chi2.result <- chisq.test(chi2.table[,2:ncol(chi2.table)])
+chi2.result$p.value
+```
+
+```
+## [1] 0.05709322
 ```
 
 
@@ -3304,7 +3607,7 @@ legend("topright", legend=c("geneA-eqtlA", "geneB-eqtlB"),col=c("blue", "red"), 
 points(unique(causal.pos.eqtlB[,.(geneA, eqtl.A, dist.A)])[order(-dist.A)]$dist.A, pch=".", col="blue", cex=2)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-95-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-104-1.png" width="940px" height="529px" />
 
 ### Plot where (relative to the gene) the eqtls are located
 
@@ -3351,7 +3654,7 @@ bpAB <- barplot(toplotAB, main="Number of genes that have eqtls at each position
 text(bpAB, toplotAB, labels=toplotAB, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-96-1.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-105-1.png" width="940px" height="529px" />
 
 ```r
 # bpB <- barplot(toplotB, 
@@ -3365,7 +3668,7 @@ bpA <- barplot(toplotA, main = "Number of genes that have eqtls at each position
 text(bpA, toplotA, labels=toplotA, cex=1, pos=3)
 ```
 
-<img src="analysis_files/figure-html/unnamed-chunk-96-2.png" width="940px" height="529px" />
+<img src="analysis_files/figure-html/unnamed-chunk-105-2.png" width="940px" height="529px" />
 
 Most of the eqtls seem to be located before the gene.  
 

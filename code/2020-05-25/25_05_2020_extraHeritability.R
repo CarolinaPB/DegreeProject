@@ -45,16 +45,16 @@ for (i in 1:1000){
 }
 
 O.U_causal_not_hot.melt <- melt(O.U_causal_not_hot, id.vars=1)
-O.U_causal_not_hot.melt$group <- "causal_not_hot"
+O.U_causal_not_hot.melt$group <- "Causal not in hotspot"
 
 O.U_causal_hot.melt <- melt(O.U_causal_hot, id.vars=1)
-O.U_causal_hot.melt$group <- "causal_hot"
+O.U_causal_hot.melt$group <- "Causal in hotspot"
 
 O.U_not_causal_not_hot.melt <- melt(O.U_not_causal_not_hot, id.vars=1)
-O.U_not_causal_not_hot.melt$group <- "not_causal_not_hot"
+O.U_not_causal_not_hot.melt$group <- "Not causal not in hotspot"
 
 O.U_not_causal_hot.melt <- melt(O.U_not_causal_hot, id.vars=1)
-O.U_not_causal_hot.melt$group <- "not_causal_hot"
+O.U_not_causal_hot.melt$group <- "Not causal in hotspot"
 
 rb1 <- rbind(O.U_causal_not_hot.melt, O.U_causal_hot.melt)
 rb2 <- rbind(rb1, O.U_not_causal_not_hot.melt)
@@ -63,16 +63,34 @@ final_res <- rbind(rb2, O.U_not_causal_hot.melt)
 library(stringr)
 realdata.melt <- melt(chi2.res[,.(h.cutoff, `O/U.causal.nothot`, `O/U.causal.hot`, `O/U.notcausal.nothot`, `O/U.notcausal.hot`)], id.vars=1)
 realdata.melt$variable <- str_replace(realdata.melt$variable, "O/U.", "")
+# add color
+realdata.melt[,"color":=as.numeric(factor(realdata.melt$variable))]
+final_res[,"color":=as.numeric(factor(final_res$group))]
 cat <- unique(realdata.melt$variable)
-
-ggsave(filename = "mixed_heritability.pdf", plot=heri, device="pdf", limitsize=F, )
 
 # heri <- final_res[order(group)] %>% 
 heri <- ggplot(data=final_res[order(group)], aes(x=factor(h.cutoff),y=as.numeric(value)))+
-  geom_boxplot(aes(color=group), outlier.size = 0.5) +
-  geom_line(data = realdata.melt[order(variable)], aes(x = as.factor(h.cutoff), y=value, group = variable, color=variable))+
-  geom_point(data = realdata.melt[order(variable)], aes(x = as.factor(h.cutoff), y=value, group = variable, color=variable))
+  geom_boxplot(aes(color=factor(final_res[order(group)]$color)), outlier.size = 0.5, show.legend = FALSE) +
+  geom_line(data = realdata.melt[order(variable)], 
+            aes(x = as.factor(h.cutoff), y=value, 
+                group = variable, color=factor(realdata.melt[order(variable)]$color)), show.legend = FALSE)+
+  geom_point(data = realdata.melt[order(variable)], 
+             aes(x = as.factor(h.cutoff), y=value, 
+                 group = variable, color=factor(realdata.melt[order(variable)]$color)))+
+  labs(x = "Heritability cut-off", y="Over/under", colour="legend to change") +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"), legend.text = element_text(size = 13), 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))+
+  scale_colour_discrete(name  ="Category",labels=unique(final_res[order(group)]$group))+
+  guides(colour = guide_legend(override.aes = list(shape = 19,
+                                                   size = 5)))
 plot(heri)
 
-ggplot(data=realdata.melt[order(variable)], aes(x=as.factor(h.cutoff), y=value, group=variable)) +
-  geom_line()
+ggsave(filename = "mixed_heritability.pdf", plot=heri, device="pdf", limitsize=F)
+
+ggplot(data=realdata.melt[order(variable)], aes(x=as.factor(h.cutoff), y=value, group=variable, color=as.factor(realdata.melt[order(variable)]$color))) +
+  geom_line()+
+  scale_colour_discrete(name  ="Category",labels=unique(realdata.melt[order(variable)]$variable))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
